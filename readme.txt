@@ -310,16 +310,19 @@ A detailed list of attributes, together with instructions is shown below:
 **General Options**
 
 *Basic Functionalities*
+
 * **uploadid:** This is the ID of every instance of the plugin inside the same page. Valid values are 1,2,3... Please use a different value for every instance.
 * **singlebutton:** If this attribute is set to "true", only Upload Button will be shown and file will be automatically uploaded when selected. Default value is "false".
 * **uploadpath:** This is the path of the upload directory. The path must be relative to wp-content folder of your Wordpress website. For instance, if your upload directory is "wp-content/uploads/myuploaddir", then uploadpath must have the value "uploads/myuploaddir". The default value is "uploads", meaning that the files will be uploaded to wp-content/uploads dir. If you put the variable "%username%" inside the uploadpath string, then this variable will be replaced by the username of the user currently logged in. If you want to upload files outside wp-content folder, then put a double dot (..) at the beginning of your uploadpath value.
 
 *Filters*
+
 * **uploadrole:** This is the roles that are allowed to upload files. Default role is "administrator". If you use other roles, like "editor", then only users of this role and also of role "administrator" will be able to upload files. You can set multiple roles, separated by comma, e.g. "editor, author". If you set uploadrole to "all" then all users, even guests, will be able to upload files.
 * **uploadpatterns:** This is the filter of the uploaded files. Default value is "*.*", meaning that all files can be uploaded. Use this attribute to restrict the types of files that can be uploaded. For instance, in order to upload only pdf files put "\*.pdf". You can use more that one filters, separated by comma, for instance "\*.pdf,\*.doc".
 * **maxsize:** This is the maximum size in MBytes of the uploaded files. Use this attribute to restrict the upload of files larger that this value. Default value is "10", meaning that you cannot upload files larger than 10MBytes.
 
 *Upload Path and Files*
+
 * **createpath:** If this attribute is set to "true", the upload directory, defined by uploadpath, will be created in case it does not exist. Default value is "false".
 * **accessmethod:** This attributes defines the method to create directories and upload files. Default value is "normal". If it is set to "ftp", then the plugin will attempt to create directories and upload files using ftp access. In order to do this, the attribute *ftpinfo* must also be filled with valid ftp access information. Use this attribute when you cannot upload files, access uploaded files or cannot copy or delete uploaded files because of SAFE MODE restrictions, or because the owner of the file is the domain administrator.
 * **ftpinfo:** This attribute defines the ftp access information. It has the syntax *username:password@domain*. If username, password or domain contains the characters (:) or (@), then replace them with (\\:) and (\\@) in order to avoid misreading of the attribute.
@@ -331,6 +334,7 @@ A detailed list of attributes, together with instructions is shown below:
 * **uniquepattern:** This attribute defines how to save the upload file when a file with the same name already exists inside the target directory. If it is set to "index" then the upload file will be saved with a numeric suffix, like (1), (2) etc. in order to keep the name of the uploaded file unique. If it is set to "datetimestamp", then the suffix will be an encoded datetime of the upload operation. The plugin ensures that the name of the uploaded file will be unique, in order to avoid accidental replacement of existing files. Default value is "index".
 
 *Redirection*
+
 * **redirect:** This attribute defines if the user will be redirected to another web page when the file is uploaded successfully. Default value is "false".
 * **redirectlink:** This attribute defines the url of the redirection page. Please use the prefix "http://" if the redirection page is in another domain, otherwise the server will assume that the url is relative to the server path.
 
@@ -342,21 +346,26 @@ A detailed list of attributes, together with instructions is shown below:
 **Placements**
 
 *Plugin Component Positions*
+
 * **placements:** This attribute can be used to change the placement of the objects of the plugin. Default value is "title/filename+selectbutton+uploadbutton/subfolders/userdata/progressbar/message". Every line is separated by a slash (/). To put more than one objects to the same line, separate them with a plus (+). The name of every object is shown below.
 
 **Labels**
 
 *Title*
+
 * **uploadtitle:** The title of the plugin. Default value is "Upload a file".
 
 *Buttons*
+
 * **selectbutton:** The title of the select button. Default value is "Select File".
 * **uploadbutton:** The title of the upload button. Default value is "Upload File".
 
 *Upload Folder*
+
 * **targetfolderlabel:** This attribute defines the text for the message for the upload directory. Default value is "Upload Directory".
 
 *Upload Messages*
+
 * **successmessage:** This attribute defines the message to be shown upon successful upload. Default value is "File %filename% uploaded successfully". You can use the variables %filename% and %filepath% inside the message, as explained below.
 * **warningmessage:** This attribute defines the message to be shown upon successful upload but with warnings. Default value is "File %filename% uploaded successfully but with warnings". You can use the variables %filename% and %filepath% inside the message, as explained below.
 * **errormessage:** This attribute defines the message to be shown upon upload failure. Default value is "File %filename% not uploaded". You can use the variables %filename% and %filepath% inside the message, as explained below.
@@ -365,6 +374,7 @@ A detailed list of attributes, together with instructions is shown below:
 **Notifications**
 
 *Email Notifications*
+
 * **notify:** If this attribute is set to "true", then an email will be sent to the addresses defined by the attribute *notifyrecipients* to inform them that a new file has been uploaded.
 * **notifyrecipients:** This attribute defines the list of email addresses to receive the notification message that a new file has been uploaded. More that one address can be defined, separated by comma (,). You can use variables inside this attribute, as explained below.
 * **notifyheaders:** This attribute defines additional headers to be included in the notification email (e.g. set "From", "Cc" and "Bcc" parameters or use HTML code instead of text). Default value is "". For example, in order to send HTML email please set this attribute to "Content-type: text/html".
@@ -375,6 +385,7 @@ A detailed list of attributes, together with instructions is shown below:
 **Colors**
 
 *Upload Message Colors*
+
 * **successmessagecolor:** This attribute defines the color of the message shown upon successful upload. Default value is "green". This attribute is no longer used but is maintained for backward compatibility. Please use successmessagecolors instead.
 * **successmessagecolors:** This attribute defines the colors of the message shown upon successful upload. Default value is "#006600,#EEFFEE,#006666". The first value is the text color, the second the background color and the third the border color.
 * **warningmessagecolors:** This attribute defines the colors of the message shown upon successful upload but with warnings. Default value is "#F88017,#FEF2E7,#633309". The first value is the text color, the second the background color and the third the border color.
@@ -384,20 +395,24 @@ A detailed list of attributes, together with instructions is shown below:
 **Dimensions**
 
 *Plugin Component Widths*
+
 * **widths:** This attribute can be used to define the width of every individual object of the plugin. Default value is "". To define the width of an individual object, simply put the name of the object and the width, separated by the (:) character (e.g. "title:100px"). To define more than one objects separate them with comma (,).
 
 *Plugin Component Heights*
+
 * **heights:** This attribute can be used to define the height of every individual object of the plugin. Default value is "". To define the height of an individual object, simply put the name of the object and the height, separated by the (:) character (e.g. "title:20px"). To define more than one objects separate them with comma (,).
 
 **Additional Fields**
 
 *Additional Data Fields*
+
 * **userdata:** This attribute defines if additional text information will be requested by the user. If set to "true", then an additional textbox will appear, prompting the user to put text data. These data will be sent to email recipients, if email notification has been activated and %userdata% variable exists inside notifymessage attribute. Default value is "false".
 * **userdatalabel:** This attribute defines the labels of the userdata fields. Separate each field with slash "/". If you want a field to be required, then preceed an asterisk (*) before the label. Example to create 2 fields, an optional Name and a required Email field: userdatalabel="Name/*Email (required)". Default value is "Your message".
 
 **Interoperability**
 
 *Connection With Other Plugins*
+
 * **filebaselink:** This attribute defines if this plugin will be linked to wp-filebase plugin. Wp-filebase is another plugin with which you can upload files and then show them in your pages in a customizable way. If you set this attribute to "true", then you can upload files inside wp-filebase directories using wordpress_file_upload and then update the databases of wp-filebase, so that it is informed about the new uploads. The default value is "false". Please note that this attribute does not check to see if wp-filebase is installed and active, so be sure to have wp-filebase active if you want to use it.
 
 You can use any of these attributes to customize the plugin. The way to use these attributes is the following:
@@ -440,5 +455,5 @@ For the time being, the following variables are supported:
 
 == Requirements ==
 
-The plugin requires to have Javascript enabled in your browser. For Internet Explorer you also need to have Active-X enabled. 
+The plugin requires to have Javascript enabled in your browser. For Internet Explorer you also need to have Active-X enabled.
 Please note that old desktop browsers or mobile browsers may not support all of the plugin's features. In order to get full functionality use the latest versions of browsers, supporting HTML5, AJAX and CSS3.
