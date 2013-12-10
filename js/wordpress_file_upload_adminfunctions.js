@@ -51,8 +51,9 @@ function wfu_admin_onoff_clicked(key) {
 
 function wfu_admin_radio_clicked(key) {
 	var radios = document.getElementsByName("wfu_radioattribute_" + key);
-	var shadows = document.getElementsByName("wfu_shadow_" + key);
-	var shadows_inv = document.getElementsByName("wfu_shadow_" + key + "_inv");
+	var container = document.getElementById("wfu_wrapper");
+	var shadows = document.getElementsByClassName("wfu_shadow_" + key, "div", container);
+	var shadows_inv = document.getElementsByClassName("wfu_shadow_" + key + "_inv", "div", container);
 	var val = "";
 	for (i = 0; i < radios.length; i++)
 		if (radios[i].checked) val = radios[i].value;
@@ -396,6 +397,10 @@ function wfu_update_text_value(e) {
 	var item = e.target;
 	var attribute = item.id.replace("wfu_attribute_", "");
 	var val = item.value;
+	//if it is a multiline element, then replace line breaks with %n%
+	if (item.tagName == "TEXTAREA") {
+		val = val.replace(/(\r\n|\n|\r)/gm,"%n%");
+	}
 	if (val !== item.oldVal) {
 		item.oldVal = val;
 		document.getElementById("wfu_attribute_value_" + attribute).value = val;
@@ -449,13 +454,22 @@ function wfu_update_ptext_value(attribute) {
 }
 
 function wfu_update_rolelist_value(attribute) {
-	var options = document.getElementById("wfu_attribute_" + attribute).options;
 	var value = "";
-	for (var i = 0; i < options.length; i++)
-		if (options[i].selected) {
-			if (value != "") value += ",";
-			value += options[i].value;
-		}
+	var rolelist = document.getElementById("wfu_attribute_" + attribute);
+	var checkall = document.getElementById("wfu_attribute_" + attribute + "_all");
+	if (checkall.checked) {
+		rolelist.disabled = true;
+		value = "all";
+	}
+	else {
+		rolelist.disabled = false;
+		var options = rolelist.options;
+		for (var i = 0; i < options.length; i++)
+			if (options[i].selected) {
+				if (value != "") value += ",";
+				value += options[i].value;
+			}
+	}
 	document.getElementById("wfu_attribute_value_" + attribute).value = value;
 	wfu_generate_shortcode();
 }

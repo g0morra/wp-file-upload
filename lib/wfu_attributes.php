@@ -255,7 +255,7 @@ function wfu_attribute_definitions() {
 		array(
 			"name"		=> "List of Subfolders",
 			"attribute"	=> "subfoldertree",
-			"type"		=> "mtext",
+			"type"		=> "text",
 			"listitems"	=> null,
 			"value"		=> WFU_SUBFOLDERTREE,
 			"mode"		=> "free",
@@ -267,7 +267,7 @@ function wfu_attribute_definitions() {
 			"help"		=> "The list of folders a user can select. Please see documentation on how to create the list of folders."
 		),
 		array(
-			"name"		=> "File Dublicates Policy",
+			"name"		=> "File Duplicates Policy",
 			"attribute"	=> "dublicatespolicy",
 			"type"		=> "radio",
 			"listitems"	=> array("overwrite", "reject", "*maintain both"),
@@ -515,7 +515,7 @@ function wfu_attribute_definitions() {
 			"subcategory"	=> "Email Notifications",
 			"parent"	=> "notify",
 			"dependencies"	=> null,
-			"variables"	=> array("%useremail%"),
+			"variables"	=> array("%useremail%", "%n%"),
 			"help"		=> "Defines the recipients of the email notification. Can be dynamic by using variables. Please check Documentation on how to use variables in atributes."
 		),
 		array(
@@ -529,13 +529,13 @@ function wfu_attribute_definitions() {
 			"subcategory"	=> "Email Notifications",
 			"parent"	=> "notify",
 			"dependencies"	=> null,
-			"variables"	=> null,
+			"variables"	=> array("%n%"),
 			"help"		=> "Defines additional email headers, in case you want to sent an HTML message, or use Bcc list, or use a different From address and name or other more advanced email options."
 		),
 		array(
 			"name"		=> "Email Subject",
 			"attribute"	=> "notifysubject",
-			"type"		=> "text",
+			"type"		=> "ltext",
 			"listitems"	=> null,
 			"value"		=> WFU_NOTIFYSUBJECT,
 			"mode"		=> "free",

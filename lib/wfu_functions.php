@@ -267,20 +267,24 @@ function wfu_send_notification_email($user, $only_filename_list, $target_path_li
 		$user_email = $user->user_email;
 	}
 	$notifyrecipients =  trim(preg_replace('/%useremail%/', $user_email, $params["notifyrecipients"]));
+	$search = array ('/%n%/');	 
+	$replace = array ("\n");
+	$notifyheaders =  preg_replace($search, $replace, $params["notifyheaders"]);
 	$search = array ('/%username%/', '/%useremail%/', '/%filename%/', '/%filepath%/', '/%n%/');	 
 	$replace = array ($user_login, ( $user_email == "" ? "no email" : $user_email ), $only_filename_list, $target_path_list, "\n");
 	foreach ( $userdata_fields as $userdata_key => $userdata_field ) { 
-		array_push($search, '/%userdata'.$userdata_key.'%/');  
+		$ind = 1 + $userdata_key;
+		array_push($search, '/%userdata'.$ind.'%/');  
 		array_push($replace, $userdata_field["value"]);
 	}   
 	$notifysubject =  preg_replace($search, $replace, $params["notifysubject"]);
 	$notifymessage =  preg_replace($search, $replace, $params["notifymessage"]);
 	if ( $params["attachfile"] == "true" ) {
 		$attachments = explode(",", $attachment_list);
-		$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $params["notifyheaders"], $attachments); 
+		$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $notifyheaders, $attachments); 
 	}
 	else {
-		$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $params["notifyheaders"]); 
+		$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $notifyheaders); 
 	}
 	return ( $notify_sent ? "" : WFU_WARNING_NOTIFY_NOTSENT_UNKNOWNERROR );
 }

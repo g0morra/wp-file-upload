@@ -266,18 +266,22 @@ function wfu_shortcode_composer() {
 				$echo_str .= $dlp."\t\t".'<span class="wfu_variable wfu_variable_p_'.$attr.'" title'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
 		}
 		elseif ( $def['type'] == "mtext" ) {
-			$echo_str .= $dlp."\t\t".'<textarea id="wfu_attribute_'.$attr.'" name="wfu_text_elements" rows="5">'.$def['value'].'</textarea>';
+			$val = str_replace("%n%", "\n", $def['value']);
+			$echo_str .= $dlp."\t\t".'<textarea id="wfu_attribute_'.$attr.'" name="wfu_text_elements" rows="5">'.$val.'</textarea>';
 			if ( $def['variables'] != null ) foreach ( $def['variables'] as $variable )
-				$echo_str .= $dlp."\t\t".'<span class="wfu_variable wfu_variable_'.$attr.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
+				if ( $variable != "%n%" ) $echo_str .= $dlp."\t\t".'<span class="wfu_variable wfu_variable_'.$attr.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
 		}
 		elseif ( $def['type'] == "rolelist" ) {
 			$roles = $wp_roles->get_names();
-			$selected = explode(",", $def['value']);
+			$def['value'] = strtolower($def['value']);
+			if ( $def['value'] == "all" ) $selected = array("administrator");
+			else $selected = explode(",", $def['value']);
 			foreach ( $selected as $key => $item ) $selected[$key] = trim($item);
-			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.count($roles).'" onchange="wfu_update_rolelist_value(\''.$attr.'\');">';
+			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.count($roles).'" onchange="wfu_update_rolelist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' disabled="disabled"' : '' ).'>';
 			foreach ( $roles as $roleid => $rolename )
 				$echo_str .= $dlp."\t\t\t".'<option value="'.$roleid.'"'.( in_array($roleid, $selected) ? ' selected="selected"' : '' ).'>'.$rolename.'</option>';
 			$echo_str .= $dlp."\t\t".'</select>';
+			$echo_str .= $dlp."\t\t".'<div class="wfu_rolelist_checkall"><input id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_rolelist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' checked="checked"' : '' ).' /> Select all (including guests)</div>';
 		}
 		elseif ( $def['type'] == "dimensions" ) {
 			$vals_arr = explode(",", $def['value']);

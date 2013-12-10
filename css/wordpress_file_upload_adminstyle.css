@@ -95,6 +95,13 @@ span.wfu_ptext_span
 	width: 60px;
 }
 
+div.wfu_rolelist_checkall
+{
+	display: inline-block;
+	vertical-align: top;
+	margin: 0px 0px 0px 10px;
+}
+
 div.wfu_shadow
 {
 	position: absolute;

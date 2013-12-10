@@ -92,6 +92,11 @@ The plugin is designed not to expose website information by using sessions. Para
 
 == Changelog ==
 
+= 2.0.2 =
+* Bug fixes in Dashboard Settings Shortcode Composer.
+* Correction of important bug that was breaking page in some cases.
+* Minor improvements of user data fields and notification email attributes.
+
 = 2.0.1 =
 This is the initial release of Wordpress File Upload. Since this plugin is the successor of Inline Upload, the whole changelog since the creation of the later is included.
 
@@ -217,6 +222,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.0.2 =
+Important upgrade to address some serious bugs.
 
 = 2.0.1 =
 Optional upgrade to add new features.
@@ -451,7 +459,7 @@ For the time being, the following variables are supported:
 * **%filepath%:** Is replaced by the filepath (full path and filename) of the uploaded file. Can be used inside attributes *notifysubject*, *notifymessage* and *successmessage*.
 * **%blogid%:** Is replaced by the blog_id of the current site. Can be used inside attribute *uploadpath*.
 * **%userdataXXX%:** Is replaced by the additional message that the user has sent together with the file upload. XXX is the number of the field (starting from 0). The shortcode attribute userdata must have been set to "true". Can be used inside attributes *notifysubject*, *notifymessage*.
-* **%n%:** Denotes change of line (equivalent of \n). Can be used inside attribute *notifymessage*. It exists because of problems of using \n inside the classic page editor of Wordpress.
+* **%n%:** Denotes change of line (equivalent of \n). Can be used inside attributes *notifymessage* and *notifyheaders*. It exists because of problems of using \n inside the classic page editor of Wordpress.
 
 == Requirements ==
 

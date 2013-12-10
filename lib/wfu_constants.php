@@ -20,7 +20,7 @@ DEFINE("WFU_FILEBASELINK", "false");
 DEFINE("WFU_NOTIFY", "false");
 DEFINE("WFU_NOTIFYRECIPIENTS", "");
 DEFINE("WFU_NOTIFYSUBJECT", __('File Upload Notification', 'wordpress-file-upload'));
-DEFINE("WFU_NOTIFYMESSAGE", __("Dear Recipient,\n\n   This is an automatic delivery message to notify you that a new file has been uploaded.\n\nBest Regards", 'wordpress-file-upload'));
+DEFINE("WFU_NOTIFYMESSAGE", __("Dear Recipient,%n%%n%   This is an automatic delivery message to notify you that a new file has been uploaded.%n%%n%Best Regards", 'wordpress-file-upload'));
 DEFINE("WFU_NOTIFYHEADERS", "");    
 DEFINE("WFU_ATTACHFILE", "false");
 DEFINE("WFU_REDIRECT", "false");
