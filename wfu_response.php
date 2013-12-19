@@ -13,7 +13,7 @@ if ( isset($_GET['shortcode_id']) && isset($_GET['session_token']) ) {
 		$_SESSION['wfu_check_refresh_'.$_GET['shortcode_id']] = 'form button pressed';
 		$_SESSION['wfu_start_time_'.$_GET['shortcode_id']] = $_GET['start_time'];
 
-		die("success:");
+		die("wfu_response_success:");
 	}
 }
 die();

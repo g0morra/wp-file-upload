@@ -59,6 +59,16 @@ function wfu_join_strings($delimeter) {
 	return join($delimeter, $arr);
 }
 
+function wfu_create_string($size) {
+	$piece = str_repeat("0", 1024);
+	$str = "";
+	$reps = $size / 1024;
+	$rem = $size - 1024 * $reps;
+	for ( $i = 0; $i < $reps; $i++ ) $str .= $piece;
+	$str .= substr($piece, 0, $rem);
+	return $str;
+}
+
 //********************* Array Functions *****************************************************************************************************
 
 function wfu_encode_array_to_string($arr) {
@@ -162,12 +172,15 @@ function wfu_generate_current_params_index($shortcode_id, $user_login) {
 	$index = explode("&&", $index_str);
 	foreach ($index as $key => $value) if ($value == "") unset($index[$key]);
 	$index_match = preg_grep("/".$cur_index_str_search."$/", $index);
-	if ( count($index_match) == 1 && $index_match[0] == "" ) unset($index_match[0]);
+	if ( count($index_match) == 1 )
+		foreach ( $index_match as $key => $value )
+			if ( $value == "" ) unset($index_match[$key]);
 	if ( count($index_match) <= 0 ) {
 		$cur_index_rand = wfu_create_random_string(16);
 		array_push($index, $cur_index_rand.$cur_index_str);
 	}
 	else {
+		reset($index_match);
 		$cur_index_rand = substr(current($index_match), 0, 16);
 		if ( count($index_match) > 1 ) {
 			$index_match_keys = array_keys($index_match);
@@ -189,9 +202,13 @@ function wfu_get_params_fields_from_index($params_index) {
 	$index_str = get_option('wfu_params_index');
 	$index = explode("&&", $index_str);
 	$index_match = preg_grep("/^".$params_index."/", $index);
-	if ( count($index_match) == 1 && $index_match[0] == "" ) unset($index_match[0]);
-	if ( count($index_match) > 0 )
+	if ( count($index_match) == 1 )
+		foreach ( $index_match as $key => $value )
+			if ( $value == "" ) unset($index_match[$key]);
+	if ( count($index_match) > 0 ) {
+		reset($index_match);
 		list($fields['unique_id'], $fields['page_id'], $fields['shortcode_id'], $fields['user_login']) = explode("||", current($index_match));
+	}
 	return $fields; 
 }
 

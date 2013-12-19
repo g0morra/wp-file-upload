@@ -561,6 +561,25 @@ div.file_messageblock_subheader_adminmessage
 	margin: 0;
 	padding: 2px;
 	background-color: #F7F7F7;
+	overflow: scroll;
+}
+
+label.file_messageblock_subheader_debugmessage_label
+{
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	font-weight: bold;
+}
+
+div.file_messageblock_subheader_debugmessage_container
+{
+	margin: 0 0 0 20px;
+	padding: 0px;
+	background: none;
+	border: none;
+	font-size: 10px;
 }
 
 label.file_messageblock_subheader_adminmessagelabel

@@ -37,7 +37,7 @@ function wfu_prepare_message_block_skeleton($sid, $styles, $test) {
 	$messageblock_header = 'wfu_messageblock_header_'.$sid;
 	$messageblock_arrow = 'wfu_messageblock_arrow_'.$sid;
 	$messageblock_subheader = 'wfu_messageblock_subheader_'.$sid;
-	$dlp .= "\n\t\t\t\t\t\t\t";
+	$dlp = "\n\t\t\t\t\t\t\t";
 
 	/* Prepare header HTML template
 	   Variables:

@@ -365,6 +365,20 @@ function wfu_attribute_definitions() {
 			"help"		=> "If enabled then the plugin will be shown in test mode, meaning that all selected features will be shown but no upload will be possible. Use it to review how the plugin looks like and style it according to your needs."
 		),
 		array(
+			"name"		=> "Debug Mode",
+			"attribute"	=> "debugmode",
+			"type"		=> "onoff",
+			"listitems"	=> null,
+			"value"		=> WFU_DEBUGMODE,
+			"mode"		=> "free",
+			"category"	=> "general",
+			"subcategory"	=> "Other Administrator Options",
+			"parent"	=> "",
+			"dependencies"	=> null,
+			"variables"	=> null,
+			"help"		=> "If enabled then the plugin will show to administrators any internal PHP warnings and errors generated during the upload process inside the message box."
+		),
+		array(
 			"name"		=> "Plugin Component Positions",
 			"attribute"	=> "placements",
 			"type"		=> "placements",

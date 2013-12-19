@@ -4,7 +4,7 @@ session_start();
 Plugin Name: Wordpress File Upload
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.0.2
+Version: 2.1.2
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -56,8 +56,19 @@ add_action('wp_ajax_wfu_ajax_action', 'wfu_ajax_action_callback');
 add_action('wp_ajax_nopriv_wfu_ajax_action', 'wfu_ajax_action_callback');
 add_action('wp_ajax_wfu_ajax_action_send_email_notification', 'wfu_ajax_action_send_email_notification');
 add_action('wp_ajax_nopriv_wfu_ajax_action_send_email_notification', 'wfu_ajax_action_send_email_notification');
-foreach ( glob( plugin_dir_path( __FILE__ )."lib/*.php" ) as $file )
-	include_once $file;
+wfu_include_lib();
+//foreach ( glob( plugin_dir_path( __FILE__ )."lib/*.php" ) as $file )
+//	include_once $file;
+
+function wfu_include_lib() {
+	if ( $handle = opendir(plugin_dir_path( __FILE__ )."lib/") ) {
+		$blacklist = array('.', '..');
+		while ( false !== ($file = readdir($handle)) )
+			if ( !in_array($file, $blacklist) )
+				include_once plugin_dir_path( __FILE__ )."lib/".$file;
+		closedir($handle);
+	}
+}
 
 /* exit if we are in admin pages (in case of ajax call) */
 if ( is_admin() ) return;
@@ -76,6 +87,7 @@ function wordpress_file_upload_handler($incomingfrompost) {
 
 function wordpress_file_upload_function($incomingfromhandler) {
 	global $post;
+	global $blog_id;
 	$params = wfu_plugin_parse_array($incomingfromhandler);
 	$sid = $params["uploadid"];
 
@@ -158,19 +170,8 @@ function wordpress_file_upload_function($incomingfromhandler) {
 		update_option('wfu_params_'.$params_index, $params_str);
 		$ajax_params['shortcode_id'] = $sid;
 		$ajax_params['params_index'] = $params_index;
-		$ajax_params['max_time_limit'] = ini_get("max_input_time");
+		$ajax_params['debugmode'] = $params["debugmode"];
 		$ajax_params["fail_colors"] = $params["failmessagecolors"];
-		$ajax_params["default_colors"] = WFU_DEFAULTMESSAGECOLORS;
-		$ajax_params["error_message_header"] = WFU_ERRORMESSAGE;
-		$ajax_params["error_message_failed"] = WFU_ERROR_UPLOAD_FAILED_WHILE;
-		$ajax_params["error_message_cancelled"] = WFU_ERROR_UPLOAD_CANCELLED;
-		$ajax_params["error_message_unknown"] = WFU_ERROR_UNKNOWN;
-		$ajax_params["error_adminmessage_unknown"] = WFU_FAILMESSAGE_DETAILS;
-		$ajax_params["error_message_timelimit"] = WFU_ERROR_FILE_PHP_TIME;
-		$ajax_params["error_message_admin_timelimit"] = WFU_ERROR_ADMIN_FILE_PHP_TIME;
-		$ajax_params["error_jsonparse_headermessage"] = WFU_ERROR_JSONPARSE_HEADERMESSAGE;
-		$ajax_params["error_jsonparse_headeradminmessage"] = WFU_ERROR_JSONPARSE_HEADERADMINMESSAGE;
-		$ajax_params["open_url"] = site_url().'/wp-admin/admin-ajax.php';
 
 		$ajax_params_str = wfu_encode_array_to_string($ajax_params);
 		$upload_clickaction = 'wfu_HTML5UploadFile('.$sid.', \''.$ajax_params_str.'\', \''.$_SESSION['wfu_token_'.$sid].'\')';
@@ -269,7 +270,7 @@ function wordpress_file_upload_function($incomingfromhandler) {
 	unset($wfu_process_file_array["general"]['safe_output']);
 
 	$wfu_process_file_array_str = wfu_encode_array_to_string($wfu_process_file_array);
-	$ProcessUploadComplete_functiondef = 'function(){wfu_ProcessUploadComplete('.$sid.', 1, "'.$wfu_process_file_array_str.'", "no-ajax", "", "", "'.$safe_output.'");}';
+	$ProcessUploadComplete_functiondef = 'function(){wfu_ProcessUploadComplete('.$sid.', 1, "'.$wfu_process_file_array_str.'", "no-ajax", "", "", "'.$safe_output.'", ["false", ""]);}';
 	$wordpress_file_upload_output .= '<script type="text/javascript">window.onload='.$ProcessUploadComplete_functiondef.'</script>';
 	
 

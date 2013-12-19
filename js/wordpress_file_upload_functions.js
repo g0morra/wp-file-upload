@@ -15,9 +15,8 @@ function wfu_Initialize_Consts(consts) {
 	var consts_arr = consts.split(";");
 	var const_arr;
 	for (var i = 0; i < consts_arr.length; i++) {
-		const_txt = wfu_plugin_decode_string(consts_arr[i]);
-		const_arr = const_txt.split(":");
-		GlobalData.consts[const_arr[0]] = const_arr[1];
+		const_txt = consts_arr[i].split(":");
+		GlobalData.consts[wfu_plugin_decode_string(const_txt[0])] = wfu_plugin_decode_string(const_txt[1]);
 	}
 }
 
@@ -317,7 +316,7 @@ function wfu_uploadProgress(evt) {
 	var percentComplete = 0;
 	var simplebar = document.getElementById('progressbar_' + sid + '_animation');
 	if (evt.lengthComputable) {
-		if (this.xhr.size == 0) this.xhr.size = evt.total;
+		if (this.xhr.size != evt.total && evt.total > 0) this.xhr.size = evt.total;
 		if (simplebar) {
 			var total = 0;
 			var totalloaded = 0;
@@ -343,14 +342,14 @@ function wfu_notify_WPFilebase(url) {
 }
 
 /* wfu_send_email_notification: function to send notification message as ajax request */
-function wfu_send_email_notification(sid, unique_id, params_index, session_token, notify_only_filename_list, notify_target_path_list, notify_attachment_list) {
+function wfu_send_email_notification(sid, unique_id, params_index, session_token, notify_only_filename_list, notify_target_path_list, notify_attachment_list, debugmode) {
 	var xhr = wfu_GetHttpRequestObject();
 	if (xhr == null) {
 		// error sending email
 		return;
 	}
 
-	var url = '/wp-admin/admin-ajax.php';
+	var url = GlobalData.consts.ajax_url;
 	var userdata_count = wfu_get_userdata_count(sid);
 	params = new Array(7 + userdata_count);
 	params[0] = new Array(2);
@@ -385,11 +384,21 @@ function wfu_send_email_notification(sid, unique_id, params_index, session_token
 		parameters += (i > 0 ? "&" : "") + params[i][0] + "=" + encodeURI(params[i][1]);
 	}
 
+	var d = new Date();
 	xhr.shortcode_id = sid;
+	xhr.requesttype = "email";
 	xhr.file_id = 0;
 	xhr.unique_id = unique_id;
+	xhr.debugmode = debugmode;
 	xhr.params_index = params_index;
 	xhr.session_token = session_token;
+	xhr.finish_time = d.getTime() + parseInt(GlobalData.consts.max_time_limit) * 1000;
+	xhr.fail_colors = GlobalData.consts.fail_colors;
+	xhr.error_message_header = "";
+	xhr.error_message_failed = GlobalData.consts.message_failed;
+	xhr.error_message_cancelled = GlobalData.consts.message_cancelled;
+	xhr.error_adminmessage_unknown = "";
+
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xhr.setRequestHeader("Content-length", parameters.length);
@@ -401,6 +410,17 @@ function wfu_send_email_notification(sid, unique_id, params_index, session_token
 	xhr.send(parameters);
 }
 
+//wfu_format_debug_data: function to format and prepare debug data for output
+function wfu_format_debug_data(data, title) {
+	output = '<label class="file_messageblock_subheader_debugmessage_label">';
+	output += 'Debug Data' + title;
+	output += '</label>';
+	output += '<div class="file_messageblock_subheader_debugmessage_container">';
+	output += data;
+	output += '</div>';
+	return output;
+}
+
 //wfu_uploadComplete: function that is called after successfull file upload
 function wfu_uploadComplete(evt) {
 	var sid = this.shortcode_id;
@@ -408,15 +428,24 @@ function wfu_uploadComplete(evt) {
 	var last = false;
 	var upload_params = "";
 	var safe_params = "";
+	var debug_data = "";
+	var result_data = evt.target.responseText;
 	if (evt.target.responseText != -1) {
 		var txt = evt.target.responseText;
-		var pos = txt.indexOf(":");
-		var txt_header = txt.substr(0, pos);
-		var txt_value = txt.substr(pos + 1, txt.length - pos - 1);
-		if (txt_header == "success") {
-			pos = txt_value.indexOf(":");
-			safe_params = txt_value.substr(0, pos);
-			upload_params = txt_value.substr(pos + 1, txt_value.length - pos - 1);
+		var success_txt = "wfu_fileupload_success:";
+		var pos = txt.indexOf(success_txt);
+		if ( pos > -1 ) {
+			if (this.debugmode == "true") debug_data = txt.substr(0, pos);
+			result_data = txt.substr(pos + success_txt.length);
+			pos = result_data.indexOf(":");
+			safe_params = result_data.substr(0, pos);
+			upload_params = result_data.substr(pos + 1);
+		}
+		if (debug_data != "") {
+			var title = "";
+			if (this.requesttype == "fileupload") title = ' - File: ' + this.file_id;
+			else if (this.requesttype == "email") title = ' - Email Notification';
+			debug_data = wfu_format_debug_data(debug_data, title);
 		}
 	}
 
@@ -426,31 +455,37 @@ function wfu_uploadComplete(evt) {
 		Params.general.shortcode_id = sid;
 		Params.general.unique_id = this.unique_id;
 		Params.general.state = 7;
-		Params.general.files_count = 1;
+		Params.general.files_count = (this.requesttype == "fileupload") ? 1 : 0;
 		Params.general.upload_finish_time = this.finish_time;
-		Params.general.fail_message = this.error_message_unknown;
-		Params.general.fail_admin_message = this.error_adminmessage_unknown;
-		Params[0] = {};
-		Params[0]['color'] = error_colors[0];
-		Params[0]['bgcolor'] = error_colors[1];
-		Params[0]['borcolor'] = error_colors[2];
-		Params[0]['message_type'] = "error";
-		Params[0]['header'] = this.error_message_header;
-		Params[0]['message'] = this.error_message_timelimit;
-		Params[0]['admin_messages'] = this.error_message_admin_timelimit;
-		// if upload_finish_time is non-zero, then we have a failed upload, probably due to exceeded upload time limit
+		Params.general.fail_message = GlobalData.consts.message_unknown;
+		Params.general.fail_admin_message = wfu_join_strings("<br />", this.error_adminmessage_unknown, this.requesttype + ":" + result_data);
+		if (Params.general.files_count > 0) {
+			Params[0] = {};
+			Params[0]['color'] = error_colors[0];
+			Params[0]['bgcolor'] = error_colors[1];
+			Params[0]['borcolor'] = error_colors[2];
+			Params[0]['message_type'] = "error";
+			Params[0]['header'] = this.error_message_header;
+			Params[0]['message'] = GlobalData.consts.message_timelimit;
+			Params[0]['admin_messages'] = GlobalData.consts.message_admin_timelimit;
+		}
+		else Params.general.admin_messages.other = GlobalData.consts.message_admin_timelimit;
+		//check if we have a failed upload probably due to exceeded upload time limit
 		if (Params.general.upload_finish_time > 0) {
 			var d = new Date();
 			if (d.getTime() < Params.general.upload_finish_time) {
-				Params[0]['message'] = Params.general.fail_message;
-				Params[0]['admin_messages'] = Params.general.fail_admin_message;
+				if (Params.general.files_count > 0) {
+					Params[0]['message'] = Params.general.fail_message;
+					Params[0]['admin_messages'] = Params.general.fail_admin_message;
+				}
+				else Params.general.admin_messages.other = Params.general.fail_admin_message;
 			}
 		}
 		// note that upload_params is passed as object, so no need to pass a safe_output string
-		last = wfu_ProcessUploadComplete(sid, this.file_id, Params, this.unique_id, this.params_index, this.session_token, "");
+		last = wfu_ProcessUploadComplete(sid, this.file_id, Params, this.unique_id, this.params_index, this.session_token, "", [this.debugmode, debug_data]);
 	}
 	else {
-		last = wfu_ProcessUploadComplete(sid, this.file_id, upload_params, this.unique_id, this.params_index, this.session_token, safe_params);
+		last = wfu_ProcessUploadComplete(sid, this.file_id, upload_params, this.unique_id, this.params_index, this.session_token, safe_params, [this.debugmode, debug_data]);
 	}
 	if (last) {
 		wfu_unlock_upload(evt.target.shortcode_id);
@@ -460,7 +495,7 @@ function wfu_uploadComplete(evt) {
 }
 
 //wfu_ProcessUploadComplete: function to perform actions after successfull upload
-function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, params_index, session_token, safe_output) {
+function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, params_index, session_token, safe_output, debug_data) {
 	//initial checks to process or not the data
 	if (!sid || sid < 0) return;
 	if (upload_params == null || upload_params == "") return;
@@ -549,6 +584,7 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 		G.admin_messages.wpfilebase = Params.general.admin_messages.wpfilebase;
 		G.admin_messages.notify = Params.general.admin_messages.notify;
 		G.admin_messages.redirect = Params.general.admin_messages.redirect;
+		G.admin_messages.debug = debug_data[1];
 		G.admin_messages.other = Params.general.admin_messages.other;
 		G.errors = {};
 		G.errors.wpfilebase = Params.general.errors.wpfilebase;
@@ -577,6 +613,7 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 		G.notify_only_filename_list = wfu_join_strings(", ", G.notify_only_filename_list, Params.general.notify_only_filename_list);
 		G.notify_target_path_list = wfu_join_strings(", ", G.notify_target_path_list, Params.general.notify_target_path_list);
 		G.notify_attachment_list = wfu_join_strings(",", G.notify_attachment_list, Params.general.notify_attachment_list);
+		G.admin_messages.debug = wfu_join_strings("<br />", G.admin_messages.debug, debug_data[1]);
 		G.admin_messages.other = wfu_join_strings("<br />", G.admin_messages.other, Params.general.admin_messages.other);
 		if (G.admin_messages.wpfilebase == "") G.admin_messages.wpfilebase = Params.general.admin_messages.wpfilebase;
 		if (G.admin_messages.notify == "") G.admin_messages.notify = Params.general.admin_messages.notify;
@@ -596,7 +633,7 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 		}
 		if (G.notify_only_filename_list != "") {
 			G.admin_messages.notify = "";
-			wfu_send_email_notification(sid, unique_id, params_index, session_token, G.notify_only_filename_list, G.notify_target_path_list, G.notify_attachment_list);
+			wfu_send_email_notification(sid, unique_id, params_index, session_token, G.notify_only_filename_list, G.notify_target_path_list, G.notify_attachment_list, debug_data[0]);
 			// in email notification we declare that this is not the last call, because we wait for a last answer from email sending result
 			G.last = false;
 			G.notify_only_filename_list = "";   //reset this variable so that repetitive email messages are not sent
@@ -610,13 +647,14 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 		}
 	}
 	
-	// last adjustment of header messages due to json parse error of UploadState
+	// last adjustment of header messages due to json parse error of UploadState or debug messages
 	var nonadmin_message = G.message;
 	var admin_message = wfu_join_strings("<br />", 
-		Params.general.admin_messages.other,
-		Params.general.admin_messages.wpfilebase,
-		Params.general.admin_messages.notify,
-		Params.general.admin_messages.redirect);
+		G.admin_messages.other,
+		G.admin_messages.wpfilebase,
+		G.admin_messages.notify,
+		G.admin_messages.redirect,
+		G.admin_messages.debug);
 	if (!UploadStates_Ok) {
 		var error_jsonparse_headermessage = GlobalData.consts.jsonparse_headermessage;
 		var error_jsonparse_headeradminmessage = GlobalData.consts.jsonparse_headeradminmessage;
@@ -634,11 +672,11 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 		else if (G.upload_state == 5 && !admin_message == "" && nonadmin_message == "") G.upload_state --;
 	}
 
-//	if (typeof console != "undefined") {
-//		console.log(Params);
-//		var GG = G;
-//		console.log(GG);
-//	}
+	if (typeof console != "undefined") {
+		console.log(Params);
+		var GG = G;
+		console.log(GG);
+	}
 
 	// section to update message box, executed only if message box is activated
 	if (message_table) {
@@ -835,16 +873,13 @@ function wfu_redirect_to_classic(sid, session_token, flag, adminerrorcode) {
 //wfu_redirect_to_classic_cont: function thatinforms the page to process the file after reloading, informs the page if this is a redirection from HTML5 to classic functionality and submits the file
 function wfu_redirect_to_classic_cont(sid, session_token, flag, adminerrorcode, other_params) {
 	var process_function = function(responseText) {
-		var pos = responseText.indexOf(":");
-		var txt_header = responseText.substr(0, pos);
-		var txt_value = responseText.substr(pos + 1, responseText.length - pos - 1);
-		if (txt_header == "success") {
+		if (responseText.indexOf("wfu_response_success:") > -1) {
 			// show message in wait for upload state 
 			var Params = wfu_Initialize_Params();
 			Params.general.shortcode_id = sid;
 			Params.general.unique_id = "";
 			Params.general.files_count = wfu_filesselected(sid);
-			wfu_ProcessUploadComplete(sid, 0, Params, "no-ajax", "", session_token, "");
+			wfu_ProcessUploadComplete(sid, 0, Params, "no-ajax", "", session_token, "", ["false", ""]);
 
 			if (flag == 1) {
 				var suffice = "";
@@ -959,6 +994,8 @@ function wfu_HTML5UploadFile(sid, JSONtext, session_token) {
 	var numfiles = wfu_filesselected(sid);
 	if (numfiles == 0) return;
 
+	console.log(numfiles);
+
 	// check if there are empty user data fields that are required
 	if (!wfu_check_required_userdata(sid)) return; 
 
@@ -966,6 +1003,66 @@ function wfu_HTML5UploadFile(sid, JSONtext, session_token) {
 }
 
 function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
+	function sendfile(ind, file) {
+		// initialise AJAX and FormData objects
+		var xhr = wfu_GetHttpRequestObject();
+		if (xhr == null) return;
+		var fd = null;
+		try {
+			var fd = new FormData();
+		}
+		catch(e) {}
+		if (fd == null) return;
+
+		// define POST parameters
+		fd.append("uploadedfile_" + sid + suffice, file);
+		fd.append("action", "wfu_ajax_action");
+		fd.append("params_index", JSONobj.params_index);
+		fd.append("subdir_sel_index", subdir_sel_index);
+		fd.append("session_token", session_token);
+		fd.append("unique_id", rand_str);
+		var userdata_count = wfu_get_userdata_count(sid); 
+		for (var ii = 0; ii < userdata_count; ii++)  
+			fd.append("hiddeninput_" + sid + "_userdata_" + ii, document.getElementById('hiddeninput_' + sid + '_userdata_' + ii).value);
+
+		// define variables
+		GlobalData[sid].xhrs.push(xhr);
+		var d = new Date();
+		xhr.shortcode_id = sid;
+		xhr.requesttype = "fileupload";
+		xhr.file_id = ind + 1;
+		xhr.size = file.size;
+		xhr.sizeloaded = 0;
+		xhr.unique_id = rand_str;
+		xhr.params_index = JSONobj.params_index;
+		xhr.session_token = session_token;
+		xhr.debugmode = JSONobj.debugmode;
+		xhr.finish_time = d.getTime() + parseInt(GlobalData.consts.max_time_limit) * 1000;
+		xhr.fail_colors = JSONobj.fail_colors;
+		xhr.error_message_header = GlobalData.consts.message_header.replace(/%username%/g, "no data");
+		xhr.error_message_header = xhr.error_message_header.replace(/%useremail%/g, "no data");
+		xhr.error_message_header = xhr.error_message_header.replace(/%filename%/g, file.name);
+		xhr.error_message_header = xhr.error_message_header.replace(/%filepath%/g, file.name);
+		xhr.error_message_failed = GlobalData.consts.message_failed;
+		xhr.error_message_cancelled = GlobalData.consts.message_cancelled;
+		xhr.error_adminmessage_unknown = GlobalData.consts.adminmessage_unknown.replace(/%username%/g, "no data");
+		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%useremail%/g, "no data");
+		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%filename%/g, file.name);
+		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%filepath%/g, file.name);
+
+		xhr.upload.xhr = xhr;
+
+		// event listeners
+		xhr.upload.addEventListener("loadstart", wfu_loadStart, false);
+		xhr.upload.addEventListener("progress", wfu_uploadProgress, false);
+		xhr.addEventListener("load", wfu_uploadComplete, false);
+		xhr.addEventListener("error", wfu_uploadFailed, false);
+		xhr.addEventListener("abort", wfu_uploadCanceled, false);
+
+		xhr.open("POST", GlobalData.consts.ajax_url);
+		xhr.send(fd);
+		inc ++;
+	}
 	// get index of subdirectory if subdirectory dropdown list is activated
 	var subdir_sel_index = -1;
 	if (document.getElementById('selectsubdir_' + sid) != null)
@@ -996,6 +1093,7 @@ function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
 	GlobalData[sid].admin_messages.wpfilebase = "";
 	GlobalData[sid].admin_messages.notify = "";
 	GlobalData[sid].admin_messages.redirect = "";
+	GlobalData[sid].admin_messages.debug = "";
 	GlobalData[sid].admin_messages.other = "";
 	GlobalData[sid].errors = {};
 	GlobalData[sid].errors.wpfilebase = "";
@@ -1009,71 +1107,11 @@ function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
 	var Params = wfu_Initialize_Params();
 	Params.general.shortcode_id = sid;
 	Params.general.unique_id = rand_str;
-	wfu_ProcessUploadComplete(sid, 0, Params, rand_str, JSONobj.params_index, session_token, "");
+	wfu_ProcessUploadComplete(sid, 0, Params, rand_str, JSONobj.params_index, session_token, "", ["false", ""]);
 
+	var inc = 0;
 	for (var i = 0; i < farr.length; i++) {
-		// initialise AJAX and FormData objects
-		var xhr = wfu_GetHttpRequestObject();
-		if (xhr == null) return;
-		var fd = null;
-		try {
-			var fd = new FormData();
-		}
-		catch(e) {}
-		if (fd == null) return;
-
-		// define POST parameters
-		fd.append("uploadedfile_" + sid + suffice, farr[i]);
-		fd.append("action", "wfu_ajax_action");
-		fd.append("params_index", JSONobj.params_index);
-		fd.append("subdir_sel_index", subdir_sel_index);
-		fd.append("session_token", session_token);
-		fd.append("unique_id", rand_str);
-		var userdata_count = wfu_get_userdata_count(sid); 
-		for (var ii = 0; ii < userdata_count; ii++)  
-			fd.append("hiddeninput_" + sid + "_userdata_" + ii, document.getElementById('hiddeninput_' + sid + '_userdata_' + ii).value);
-
-		// define variables
-		GlobalData[sid].xhrs.push(xhr);
-		var d = new Date();
-		xhr.shortcode_id = sid;
-		xhr.file_id = i + 1;
-		xhr.size = 0;
-		xhr.sizeloaded = 0;
-		xhr.unique_id = rand_str;
-		xhr.params_index = JSONobj.params_index;
-		xhr.session_token = session_token;
-		xhr.finish_time = d.getTime() + JSONobj.max_time_limit * 1000;
-		xhr.fail_colors = JSONobj.fail_colors;
-		xhr.default_colors = JSONobj.default_colors;
-		xhr.error_message_header = JSONobj.error_message_header.replace(/%username%/g, "no data");
-		xhr.error_message_header = xhr.error_message_header.replace(/%useremail%/g, "no data");
-		xhr.error_message_header = xhr.error_message_header.replace(/%filename%/g, farr[i].name);
-		xhr.error_message_header = xhr.error_message_header.replace(/%filepath%/g, farr[i].name);
-		xhr.error_message_failed = JSONobj.error_message_failed;
-		xhr.error_message_cancelled = JSONobj.error_message_cancelled;
-		xhr.error_message_unknown = JSONobj.error_message_unknown;
-		xhr.error_adminmessage_unknown = JSONobj.error_adminmessage_unknown.replace(/%username%/g, "no data");
-		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%useremail%/g, "no data");
-		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%filename%/g, farr[i].name);
-		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%filepath%/g, farr[i].name);
-		xhr.error_jsonparse_headermessage = JSONobj.error_jsonparse_headermessage;
-		xhr.error_jsonparse_headeradminmessage = JSONobj.error_jsonparse_headeradminmessage;
-
-		xhr.error_message_timelimit = JSONobj.error_message_timelimit;
-		xhr.error_message_admin_timelimit = JSONobj.error_message_admin_timelimit;
-		xhr.upload.xhr = xhr;
-
-		// event listeners
-		xhr.upload.addEventListener("loadstart", wfu_loadStart, false);
-		xhr.upload.addEventListener("progress", wfu_uploadProgress, false);
-		xhr.addEventListener("load", wfu_uploadComplete, false);
-		xhr.addEventListener("error", wfu_uploadFailed, false);
-		xhr.addEventListener("abort", wfu_uploadCanceled, false);
-
-		// xhr.open("POST", "/wp-admin/admin-ajax.php");
-		xhr.open("POST", JSONobj.open_url);
-		xhr.send(fd);
+			sendfile(i, farr[i]);
 	}
 }
 

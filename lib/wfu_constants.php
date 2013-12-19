@@ -1,5 +1,7 @@
 <?php
 
+$siteurl = site_url();
+
 //define plugin defaults
 DEFINE("WFU_UPLOADID", "1");
 DEFINE("WFU_UPLOADTITLE", __('Upload files', 'wordpress-file-upload'));
@@ -41,6 +43,7 @@ DEFINE("WFU_ASKFORSUBFOLDERS", "false");
 DEFINE("WFU_SUBFOLDERTREE", "");
 DEFINE("WFU_FORCECLASSIC", "false");
 DEFINE("WFU_TESTMODE", "false");
+DEFINE("WFU_DEBUGMODE", "false");
 DEFINE("WFU_WIDTHS", "");
 DEFINE("WFU_HEIGHTS", "");
 DEFINE("WFU_PLACEMENTS", "title/filename+selectbutton+uploadbutton/subfolders"."/userdata"."/message");    
@@ -135,7 +138,9 @@ DEFINE("WFU_UPLOAD_STATE8", __("There are no files to upload!", "wordpress-file-
 DEFINE("WFU_UPLOAD_STATE9", __("Test upload message", "wordpress-file-upload"));
 DEFINE("WFU_UPLOAD_STATE10", __("JSON parse warning!", "wordpress-file-upload"));
 DEFINE("WFU_UPLOAD_STATE11", __("please wait while redirecting...", "wordpress-file-upload"));
-DEFINE("WFU_RESPONSE_URL", WPFILEUPLOAD_DIR."wfu_response.php");
+DEFINE("WFU_MAX_TIME_LIMIT", ini_get("max_input_time"));
+DEFINE("WFU_RESPONSE_URL", $siteurl.WPFILEUPLOAD_DIR."wfu_response.php");
+DEFINE("WFU_AJAX_URL", $siteurl."/wp-admin/admin-ajax.php");
 
 //define colors
 DEFINE("WFU_TESTMESSAGECOLORS", "#666666,#EEEEEE,#333333");  
@@ -154,26 +159,37 @@ DEFINE("WFU_HEADERMESSAGECOLORS_STATE10", "#F88017,#FEF2E7,#633309");
 DEFINE("WFU_HEADERMESSAGECOLORS_STATE11", "#666666,#EEEEEE,#333333"); 
 
 //define images
-DEFINE("WFU_IMAGE_ADMIN_HELP", WPFILEUPLOAD_DIR.'images/help_16.png');
-DEFINE("WFU_IMAGE_ADMIN_USERDATA_ADD", WPFILEUPLOAD_DIR.'images/add_12.png');
-DEFINE("WFU_IMAGE_ADMIN_USERDATA_REMOVE", WPFILEUPLOAD_DIR.'images/remove_12.png');
-DEFINE("WFU_IMAGE_SIMPLE_PROGBAR", WPFILEUPLOAD_DIR.'images/progbar.gif');
+DEFINE("WFU_IMAGE_ADMIN_HELP", $siteurl.WPFILEUPLOAD_DIR.'images/help_16.png');
+DEFINE("WFU_IMAGE_ADMIN_USERDATA_ADD", $siteurl.WPFILEUPLOAD_DIR.'images/add_12.png');
+DEFINE("WFU_IMAGE_ADMIN_USERDATA_REMOVE", $siteurl.WPFILEUPLOAD_DIR.'images/remove_12.png');
+DEFINE("WFU_IMAGE_SIMPLE_PROGBAR", $siteurl.WPFILEUPLOAD_DIR.'images/progbar.gif');
 
 function wfu_set_javascript_constants() {
 	$consts = array(
 		"nofilemessage" => WFU_ERROR_UPLOAD_NOFILESELECTED,
 		"userdata_empty" => WFU_ERROR_USERDATA_EMPTY,
 		"remoteserver_noresult" => WFU_ERROR_REMOTESERVER_NORESULT,
+		"message_header" => WFU_ERRORMESSAGE,
+		"message_failed" => WFU_ERROR_UPLOAD_FAILED_WHILE,
+		"message_cancelled" => WFU_ERROR_UPLOAD_CANCELLED,
+		"message_unknown" => WFU_ERROR_UNKNOWN,
+		"adminmessage_unknown" => WFU_FAILMESSAGE_DETAILS,
+		"message_timelimit" => WFU_ERROR_FILE_PHP_TIME,
+		"message_admin_timelimit" => WFU_ERROR_ADMIN_FILE_PHP_TIME,
 		"jsonparse_filemessage" => WFU_ERROR_JSONPARSE_FILEMESSAGE,
 		"jsonparse_message" => WFU_ERROR_JSONPARSE_MESSAGE,
 		"jsonparse_adminmessage" => WFU_ERROR_JSONPARSE_ADMINMESSAGE,
 		"jsonparse_headermessage" => WFU_ERROR_JSONPARSE_HEADERMESSAGE,
 		"jsonparse_headeradminmessage" => WFU_ERROR_JSONPARSE_HEADERADMINMESSAGE,
-		"response_url" => WFU_RESPONSE_URL
+		"default_colors" => WFU_DEFAULTMESSAGECOLORS,
+		"fail_colors" => WFU_FAILMESSAGECOLORS,
+		"max_time_limit" => WFU_MAX_TIME_LIMIT,
+		"response_url" => WFU_RESPONSE_URL,
+		"ajax_url" => WFU_AJAX_URL
 	);
 	$consts_txt = "";
 	foreach ( $consts as $key => $val )
-		$consts_txt .= ( $consts_txt == "" ? "" : ";" ).wfu_plugin_encode_string($key.":".$val);
+		$consts_txt .= ( $consts_txt == "" ? "" : ";" ).wfu_plugin_encode_string($key).":".wfu_plugin_encode_string($val);
 
 	return $consts_txt;
 }

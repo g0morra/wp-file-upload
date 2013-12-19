@@ -55,7 +55,7 @@ function wfu_upload_file($source, $target, $method, $ftpdata) {
 			$ret_message = WFU_ERROR_ADMIN_DIR_PERMISSION;
 		}
 	}
-	else if ( $method == "ftp" &&  $ftpdata != "" ) {
+	elseif ( $method == "ftp" &&  $ftpdata != "" ) {
 		$result = false;
 		$ftpdata_flat =  str_replace(array('\:', '\@'), array('\_', '\_'), $ftpdata);
 		$pos1 = strpos($ftpdata_flat, ":");

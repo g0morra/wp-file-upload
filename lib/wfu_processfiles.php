@@ -81,7 +81,7 @@ function wfu_process_files($params, $method) {
 	if ( $files_count == 1 ) {
 
 		foreach ( $_FILES[$uploadedfile] as $key => $prop )
-				$fileprops[$key] = $prop;
+			$fileprops[$key] = $prop;
 
 		$upload_path_ok = false;
 		$allowed_file_ok = false;
@@ -210,10 +210,10 @@ function wfu_process_files($params, $method) {
 							$name_part = substr($name_part, 0, $dot_pos);
 						}
 						if ( $params["uniquepattern"] != "datetimestamp" ) {
-							$unique_id = 1;
+							$unique_ind = 1;
 							do {
-								$unique_id += 1;
-								$only_filename = $name_part . "(" . $unique_id . ")" . $ext_part;
+								$unique_ind += 1;
+								$only_filename = $name_part . "(" . $unique_ind . ")" . $ext_part;
 								$target_path = $full_path . $only_filename;
 							}
 							while ( file_exists($target_path) );
@@ -234,6 +234,8 @@ function wfu_process_files($params, $method) {
 						$file_copied = $wfu_upload_file_ret["uploaded"];
 						//process warning messages from move_uploaded_file
 						$echo_message = ob_get_contents();
+						//finish redirecting of echo to internal buffer
+						ob_end_clean();
 						if ( $echo_message != "" && !$file_copied ) {
 							$file_output['message_type'] = "error";
 							if ( stristr($echo_message, "warning") && stristr($echo_message, "permission denied") && stristr($echo_message, "unable to move") ) {
@@ -246,14 +248,8 @@ function wfu_process_files($params, $method) {
 							}
 							$message_processed = true;
 						}
-						//finish redirecting of echo to internal buffer
-						ob_end_clean();
 						if ( $wfu_upload_file_ret["admin_message"] != "" ) {
 							$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], $wfu_upload_file_ret["admin_message"]);
-						}
-						if ( $file_copied ) {
-							$file_output['message_type'] = "success";
-							$message_processed = true;
 						}
 					}
 					else {
@@ -361,7 +357,7 @@ function wfu_process_files($params, $method) {
 		/* suppress again any admin messages if user is not administrator or adminmessages is not activated */		
 		if ( $suppress_admin_messages ) $file_output['admin_messages'] = "";
 
-			$params_output_array[0] = $file_output;
+		$params_output_array[0] = $file_output;
 	}
 
 	$somefiles_Ok = ( ( $warning_count + $success_count ) > 0 );

@@ -14,6 +14,7 @@ function wfu_prepare_subfolders_block($params, $widths, $heights) {
 	if ( $widths["subfolders_select"] != "" ) $styles2 .= 'width: '.$widths["subfolders_select"].'; ';
 	if ( $heights["subfolders_select"] != "" ) $styles2 .= 'height: '.$heights["subfolders_select"].'; ';
 	$styles2 = ' style="'.$styles2.'"';
+	$subfolder_paths = array ( );
 	if ( $params["testmode"] == "true" ) {
 		$subfolders_item["title"] = 'wordpress_file_upload_subfolders_'.$sid;
 		$subfolders_item["hidden"] = false;
@@ -34,7 +35,6 @@ function wfu_prepare_subfolders_block($params, $widths, $heights) {
 		$subfolders_item["line2"] = '<select class="file_item_clean"'.$styles2.' id="'.$selectsubdir.'" onchange="javascript: document.getElementById(\''.$hiddeninput.'\').value = document.getElementById(\''.$selectsubdir.'\').selectedIndex;">';
 		$subfolders_lastline = 3;
 		$dir_levels = array ( wfu_upload_plugin_directory($params["uploadpath"]) );
-		$subfolder_paths = array ( );
 		$prev_level = 0;
 		foreach ($subfolders as $subfolder) {
 			$subfolder = trim($subfolder);			
@@ -188,10 +188,10 @@ function wfu_prepare_progressbar_block($params, $widths, $heights) {
 	if ( $styles != "" ) $styles = ' style="'.$styles.'"';
 	$progressbar_item["line1"] = '<div id="'.$progress_bar.'" class="file_progress_bar"'.$styles.'>';
 	$progressbar_item["line2"] = "\t".'<div id="'.$progress_bar.'_inner" class="file_progress_inner">';
-	$progressbar_item["line4"] = "\t\t".'<span id="'.$progress_bar.'_animation" class="file_progress_noanimation">&nbsp;</span>';
-	$progressbar_item["line5"] = "\t\t".'<img id="'.$progress_bar.'_imagesafe" class="file_progress_imagesafe" src="'.WFU_IMAGE_SIMPLE_PROGBAR.'" style="display:none;" />';
-	$progressbar_item["line6"] = "\t".'</div>';
-	$progressbar_item["line7"] = '</div>';
+	$progressbar_item["line3"] = "\t\t".'<span id="'.$progress_bar.'_animation" class="file_progress_noanimation">&nbsp;</span>';
+	$progressbar_item["line4"] = "\t\t".'<img id="'.$progress_bar.'_imagesafe" class="file_progress_imagesafe" src="'.WFU_IMAGE_SIMPLE_PROGBAR.'" style="display:none;" />';
+	$progressbar_item["line5"] = "\t".'</div>';
+	$progressbar_item["line6"] = '</div>';
 
 	return $progressbar_item;
 }

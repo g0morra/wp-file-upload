@@ -58,7 +58,7 @@ function wfu_ajax_action_send_email_notification() {
 	/* construct safe output */
 	$sout = "0;".WFU_DEFAULTMESSAGECOLORS.";0";
 
-	die("success:".$sout.":".wfu_encode_array_to_string($params_output_array)); 
+	die("wfu_fileupload_success:".$sout.":".wfu_encode_array_to_string($params_output_array)); 
 }
 
 function wfu_ajax_action_callback() {
@@ -78,7 +78,7 @@ function wfu_ajax_action_callback() {
 	// extract safe_output from wfu_process_file_array and pass it as separate part of the response text
 	$safe_output = $wfu_process_file_array["general"]['safe_output'];
 	unset($wfu_process_file_array["general"]['safe_output']);
-	die("success:".$safe_output.":".wfu_encode_array_to_string($wfu_process_file_array)); 
+	die("wfu_fileupload_success:".$safe_output.":".wfu_encode_array_to_string($wfu_process_file_array)); 
 }
 
 ?>
