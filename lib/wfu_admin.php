@@ -65,13 +65,20 @@ function wfu_shortcode_composer() {
 	global $wpdb;
 	global $wp_roles;
  
-//	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
 	$components = wfu_component_definitions();
 
 	$cats = wfu_category_definitions();
 	$defs = wfu_attribute_definitions();
-	foreach ( $defs as $key => $def ) $defs[$key]['default'] = $def['value'];
-	
+
+	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
+	$shortcode_attrs = wfu_shortcode_string_to_array($plugin_options['shortcode']);
+	foreach ( $defs as $key => $def ) {
+		$defs[$key]['default'] = $def['value'];
+		if ( array_key_exists($def['attribute'], $shortcode_attrs) ) {
+			$defs[$key]['value'] = $shortcode_attrs[$def['attribute']];
+		}
+	}
+
 	// index $components
 	$components_indexed = array();
 	foreach ( $components as $component ) $components_indexed[$component['id']] = $component;
@@ -84,6 +91,7 @@ function wfu_shortcode_composer() {
 	$echo_str .= "\n\t".'<div style="margin-top:10px;">';
 	$echo_str .= "\n\t\t".'<div class="wfu_shortcode_container">';
 	$echo_str .= "\n\t\t\t".'<span><strong>Generated Shortcode</strong></span>';
+	$echo_str .= "\n\t\t\t".'<span id="wfu_save_label" class="wfu_save_label">saved</span>';
 	$echo_str .= "\n\t\t\t".'<textarea id="wfu_shortcode" class="wfu_shortcode" rows="5">[wordpress_file_upload]</textarea>';
 	$echo_str .= "\n\t\t\t".'<div id="wfu_attribute_defaults" style="display:none;">';
 	foreach ( $defs as $def )
@@ -193,8 +201,7 @@ function wfu_shortcode_composer() {
 		}
 		elseif ( $def['type'] == "text" ) {
 			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="text" name="wfu_text_elements" value="'.$def['value'].'" />';
-			if ( $def['variables'] != null ) foreach ( $def['variables'] as $variable )
-				$echo_str .= $dlp."\t\t".'<span class="wfu_variable wfu_variable_'.$attr.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
+			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
 		}
 		elseif ( $def['type'] == "placements" ) {
 			$components_used = array();
@@ -235,8 +242,7 @@ function wfu_shortcode_composer() {
 		}
 		elseif ( $def['type'] == "ltext" ) {
 			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="text" name="wfu_text_elements" class="wfu_long_text" value="'.$def['value'].'" />';
-			if ( $def['variables'] != null ) foreach ( $def['variables'] as $variable )
-				$echo_str .= $dlp."\t\t".'<span class="wfu_variable wfu_variable_'.$attr.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
+			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
 		}
 		elseif ( $def['type'] == "integer" ) {
 			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="number" name="wfu_text_elements" class="wfu_short_text" min="1" value="'.$def['value'].'" />';
@@ -258,18 +264,15 @@ function wfu_shortcode_composer() {
 			else $plural = $parts[1];
 			$echo_str .= $dlp."\t\t".'<span class="wfu_ptext_span">Singular</span><input id="wfu_attribute_s_'.$attr.'" type="text" name="wfu_ptext_elements" value="'.$singular.'" />';
 			if ( $def['variables'] != null ) if ( count($def['variables']) > 0 ) $echo_str .= $dlp."\t\t".'<br /><span class="wfu_ptext_span">&nbsp;</span>';
-			if ( $def['variables'] != null ) foreach ( $def['variables'] as $variable )
-				$echo_str .= $dlp."\t\t".'<span class="wfu_variable wfu_variable_s_'.$attr.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
+			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_s_'.$attr);
 			$echo_str .= $dlp."\t\t".'<br /><span class="wfu_ptext_span">Plural</span><input id="wfu_attribute_p_'.$attr.'" type="text" name="wfu_ptext_elements" value="'.$plural.'" />';
 			if ( $def['variables'] != null ) if ( count($def['variables']) > 0 ) $echo_str .= $dlp."\t\t".'<br /><span class="wfu_ptext_span">&nbsp;</span>';
-			if ( $def['variables'] != null ) foreach ( $def['variables'] as $variable )
-				$echo_str .= $dlp."\t\t".'<span class="wfu_variable wfu_variable_p_'.$attr.'" title'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
+			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_p_'.$attr);
 		}
 		elseif ( $def['type'] == "mtext" ) {
 			$val = str_replace("%n%", "\n", $def['value']);
 			$echo_str .= $dlp."\t\t".'<textarea id="wfu_attribute_'.$attr.'" name="wfu_text_elements" rows="5">'.$val.'</textarea>';
-			if ( $def['variables'] != null ) foreach ( $def['variables'] as $variable )
-				if ( $variable != "%n%" ) $echo_str .= $dlp."\t\t".'<span class="wfu_variable wfu_variable_'.$attr.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
+			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
 		}
 		elseif ( $def['type'] == "rolelist" ) {
 			$roles = $wp_roles->get_names();
@@ -335,8 +338,7 @@ function wfu_shortcode_composer() {
 		}
 		else {
 			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="text" name="wfu_text_elements" value="'.$def['value'].'" />';
-			if ( $def['variables'] != null ) foreach ( $def['variables'] as $variable )
-				$echo_str .= $dlp."\t\t".'<span class="wfu_variable wfu_variable_'.$attr.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
+			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
 		}
 		$echo_str .= $dlp."\t".'</div></td>';
 		if ( $def['parent'] == "" ) {
@@ -365,6 +367,14 @@ function wfu_shortcode_composer() {
 //	$echo_str .= "\n\t".'</div>';
 
 	echo $echo_str;
+}
+
+function wfu_insert_variables($variables, $class) {
+	$ret = "";
+	foreach ( $variables as $variable )
+		if ( $variable == "%userdataXXX%" ) $ret .= $dlp."\t\t".'<select class="'.$class.'" name="wfu_userfield_select" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" onchange="wfu_insert_userfield_variable(this);"><option style="display:none;">%userdataXXX%</option></select>';
+		elseif ( $variable != "%n%" ) $ret .= $dlp."\t\t".'<span class="'.$class.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
+	return $ret;
 }
 
 function wfu_update_settings() {

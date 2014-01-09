@@ -97,6 +97,47 @@ function wfu_array_remove_nulls(&$arr) {
 			array_splice($arr, $key, 1);
 }
 
+function wfu_shortcode_string_to_array($shortcode) {
+	$arr = explode(" ", $shortcode);
+	$attrs = array();
+	foreach ( $arr as $attr ) {
+		if ( trim($attr) != "" ) {
+			$attr_arr = explode("=", $attr, 2);
+			$key = "";
+			if ( count($attr_arr) > 0 ) $key = $attr_arr[0];
+			$val = "";
+			if ( count($attr_arr) > 1 ) $val = $attr_arr[1];
+			if ( trim($key) != "" ) $attrs[trim($key)] = str_replace('"', '', $val);
+		}
+	}
+	$i=0;
+	$m=array();
+	$mm = preg_replace_callback('/"([^"]*)"/', function ($matches) use(&$i, &$m) {array_push($m, $matches[1]); return "attr".$i++;}, $shortcode);
+	return $attrs;
+}
+
+//********************* Plugin Options Functions ************************************************************************************************
+
+function wfu_encode_plugin_options($plugin_options) {
+	$encoded_options = 'version='.$plugin_options['version'].';';
+	$encoded_options .= 'shortcode='.wfu_plugin_encode_string($plugin_options['shortcode']);
+	return $encoded_options;
+}
+
+function wfu_decode_plugin_options($encoded_options) {
+	$decoded_array = explode(';', $encoded_options);
+	$plugin_options = array();
+	foreach ($decoded_array as $decoded_item) {
+		list($item_key, $item_value) = explode("=", $decoded_item, 2);
+		if ( $item_key == 'shortcode' )
+			$plugin_options[$item_key] = wfu_plugin_decode_string($item_value);
+		else
+			$plugin_options[$item_key] = $item_value;
+		
+	}
+	return $plugin_options;
+}
+
 //********************* Directory Functions ************************************************************************************************
 
 function wfu_upload_plugin_full_path( $params ) {

@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wordpress File Upload\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-20 00:43+0200\n"
-"PO-Revision-Date: 2013-12-20 00:44+0200\n"
+"POT-Creation-Date: 2014-01-10 00:16+0200\n"
+"PO-Revision-Date: 2014-01-10 00:16+0200\n"
 "Last-Translator: nickboss <info@iptanus.com>\n"
 "Language-Team: Iptanus Team <info@iptanus.com>\n"
 "Language: \n"
@@ -304,7 +304,7 @@ msgid "Insert variable %blogid% inside text. It will be replaced by the blog id 
 msgstr ""
 
 #: lib/wfu_constants.php:123
-msgid "Insert variable %userdataXXX% inside text. Replace XXX with the number of the user field (1, 2, etc...). It will be replaced by the value that the user entered in this field."
+msgid "Insert variable %userdataXXX% inside text. Select the user field from the drop-down list. It will be replaced by the value that the user entered in this field."
 msgstr ""
 
 #: lib/wfu_constants.php:124

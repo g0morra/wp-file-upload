@@ -65,8 +65,23 @@ function wfu_ajax_action_callback() {
 	$user = wp_get_current_user();
 	$arr = wfu_get_params_fields_from_index($_POST['params_index']);
 	//check referer using server sessions to avoid CSRF attacks
-	if ( $_SESSION["wfu_token_".$arr['shortcode_id']] != $_POST['session_token'] ) die();
-	if ( $user->user_login != $arr['user_login'] ) die();
+	if ( $_SESSION["wfu_token_".$arr['shortcode_id']] != $_POST['session_token'] ) {
+		echo "Session failed!<br/><br/>Session Data:<br/>";
+		print_r($_SESSION);
+		echo "<br/><br/>Post Data:<br/>";
+		print_r($_POST);
+		die();
+	}
+
+	if ( $user->user_login != $arr['user_login'] ) {
+		echo "User failed!<br/><br/>User Data:<br/>";
+		print_r($user);
+		echo "<br/><br/>Post Data:<br/>";
+		print_r($_POST);
+		echo "<br/><br/>Params Data:<br/>";
+		print_r($arr);
+		die();
+	}
 
 	$params_str = get_option('wfu_params_'.$arr['unique_id']);
 	$params = wfu_decode_array_from_string($params_str);
@@ -79,6 +94,17 @@ function wfu_ajax_action_callback() {
 	$safe_output = $wfu_process_file_array["general"]['safe_output'];
 	unset($wfu_process_file_array["general"]['safe_output']);
 	die("wfu_fileupload_success:".$safe_output.":".wfu_encode_array_to_string($wfu_process_file_array)); 
+}
+
+function wfu_ajax_action_save_shortcode() {
+	if ( !isset($_POST['shortcode']) ) die();
+
+	$plugin_options['version'] = '1.0';
+	$plugin_options['shortcode'] = wfu_plugin_decode_string($_POST['shortcode']);
+	$encoded_options = wfu_encode_plugin_options($plugin_options);
+	update_option( "wordpress_file_upload_options", $encoded_options );
+
+	die("save_shortcode_success"); 
 }
 
 ?>

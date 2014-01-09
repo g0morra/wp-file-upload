@@ -71,11 +71,36 @@ table.wfu_main_table tr.wfu_subcategory { background-color: #ddd; }
 
 table.wfu_main_table tr.wfu_subcategory > th { padding-top: 0; padding-bottom: 0; }
 
-span.wfu_variable
+select.wfu_variable
 {
+	padding: 0px;
+	margin: 0px;
+	height: auto;
 	font-size: smaller;
 	background-color: #ddd;
 	border: 1px solid #ccc;
+	color: rgb(51, 51, 51);
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	-khtml-border-radius: 5px;
+	border-radius: 5px;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	cursor: default;
+}
+
+span.wfu_variable
+{
+	padding: 1px;
+	margin: 0px;
+	font-size: smaller;
+	background-color: #ddd;
+	border: 1px solid #ccc;
+	color: rgb(51, 51, 51);
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	-khtml-border-radius: 5px;
@@ -482,3 +507,26 @@ div.wfu_color_container
 }
 input[type="text"].wp-color-picker { width: 75px; }
 input[type="button"].wp-picker-clear { width: 62px; }
+
+/* Shortcode Styles */
+span.wfu_save_label
+{
+	background-color: aliceblue;
+	color: limegreen;
+	border-radius: 6px;
+	padding: 1px 2px;
+	box-shadow: 1px 1px 1px;
+	font-size: smaller;
+	opacity: 0;
+}
+
+span.wfu_save_label_fail
+{
+	background-color: beige;
+	color: lightcoral;
+	border-radius: 6px;
+	padding: 1px 2px;
+	box-shadow: 1px 1px 1px;
+	font-size: smaller;
+	opacity: 0;
+}

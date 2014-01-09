@@ -342,7 +342,7 @@ function wfu_notify_WPFilebase(url) {
 }
 
 /* wfu_send_email_notification: function to send notification message as ajax request */
-function wfu_send_email_notification(sid, unique_id, params_index, session_token, notify_only_filename_list, notify_target_path_list, notify_attachment_list, debugmode) {
+function wfu_send_email_notification(sid, unique_id, params_index, session_token, notify_only_filename_list, notify_target_path_list, notify_attachment_list, debugmode, is_admin) {
 	var xhr = wfu_GetHttpRequestObject();
 	if (xhr == null) {
 		// error sending email
@@ -390,6 +390,7 @@ function wfu_send_email_notification(sid, unique_id, params_index, session_token
 	xhr.file_id = 0;
 	xhr.unique_id = unique_id;
 	xhr.debugmode = debugmode;
+	xhr.is_admin = is_admin;
 	xhr.params_index = params_index;
 	xhr.session_token = session_token;
 	xhr.finish_time = d.getTime() + parseInt(GlobalData.consts.max_time_limit) * 1000;
@@ -467,25 +468,25 @@ function wfu_uploadComplete(evt) {
 			Params[0]['message_type'] = "error";
 			Params[0]['header'] = this.error_message_header;
 			Params[0]['message'] = GlobalData.consts.message_timelimit;
-			Params[0]['admin_messages'] = GlobalData.consts.message_admin_timelimit;
+			Params[0]['admin_messages'] = this.is_admin == "true" ? GlobalData.consts.message_admin_timelimit : "";
 		}
-		else Params.general.admin_messages.other = GlobalData.consts.message_admin_timelimit;
+		else Params.general.admin_messages.other = this.is_admin == "true" ? GlobalData.consts.message_admin_timelimit : "";
 		//check if we have a failed upload probably due to exceeded upload time limit
 		if (Params.general.upload_finish_time > 0) {
 			var d = new Date();
 			if (d.getTime() < Params.general.upload_finish_time) {
 				if (Params.general.files_count > 0) {
 					Params[0]['message'] = Params.general.fail_message;
-					Params[0]['admin_messages'] = Params.general.fail_admin_message;
+					Params[0]['admin_messages'] = this.is_admin == "true" ? Params.general.fail_admin_message : "";
 				}
-				else Params.general.admin_messages.other = Params.general.fail_admin_message;
+				else Params.general.admin_messages.other = this.is_admin == "true" ? Params.general.fail_admin_message : "";
 			}
 		}
 		// note that upload_params is passed as object, so no need to pass a safe_output string
-		last = wfu_ProcessUploadComplete(sid, this.file_id, Params, this.unique_id, this.params_index, this.session_token, "", [this.debugmode, debug_data]);
+		last = wfu_ProcessUploadComplete(sid, this.file_id, Params, this.unique_id, this.params_index, this.session_token, "", [this.debugmode, debug_data, this.is_admin]);
 	}
 	else {
-		last = wfu_ProcessUploadComplete(sid, this.file_id, upload_params, this.unique_id, this.params_index, this.session_token, safe_params, [this.debugmode, debug_data]);
+		last = wfu_ProcessUploadComplete(sid, this.file_id, upload_params, this.unique_id, this.params_index, this.session_token, safe_params, [this.debugmode, debug_data, this.is_admin]);
 	}
 	if (last) {
 		wfu_unlock_upload(evt.target.shortcode_id);
@@ -633,7 +634,7 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 		}
 		if (G.notify_only_filename_list != "") {
 			G.admin_messages.notify = "";
-			wfu_send_email_notification(sid, unique_id, params_index, session_token, G.notify_only_filename_list, G.notify_target_path_list, G.notify_attachment_list, debug_data[0]);
+			wfu_send_email_notification(sid, unique_id, params_index, session_token, G.notify_only_filename_list, G.notify_target_path_list, G.notify_attachment_list, debug_data[0], debug_data[2]);
 			// in email notification we declare that this is not the last call, because we wait for a last answer from email sending result
 			G.last = false;
 			G.notify_only_filename_list = "";   //reset this variable so that repetitive email messages are not sent
@@ -672,11 +673,11 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 		else if (G.upload_state == 5 && !admin_message == "" && nonadmin_message == "") G.upload_state --;
 	}
 
-	if (typeof console != "undefined") {
-		console.log(Params);
-		var GG = G;
-		console.log(GG);
-	}
+//	if (typeof console != "undefined") {
+//		console.log(Params);
+//		var GG = G;
+//		console.log(GG);
+//	}
 
 	// section to update message box, executed only if message box is activated
 	if (message_table) {
@@ -867,7 +868,7 @@ function wfu_redirect_to_classic(sid, session_token, flag, adminerrorcode) {
 	// check if there are empty user data fields that are required
 	if (!wfu_check_required_userdata(sid)) return; 
 
-	wfu_redirect_to_classic_cont(sid, session_token, flag, adminerrorcode, []);
+	wfu_redirect_to_classic_cont(sid, session_token, flag, adminerrorcode, [""]);
 }
 
 //wfu_redirect_to_classic_cont: function thatinforms the page to process the file after reloading, informs the page if this is a redirection from HTML5 to classic functionality and submits the file
@@ -879,7 +880,7 @@ function wfu_redirect_to_classic_cont(sid, session_token, flag, adminerrorcode, 
 			Params.general.shortcode_id = sid;
 			Params.general.unique_id = "";
 			Params.general.files_count = wfu_filesselected(sid);
-			wfu_ProcessUploadComplete(sid, 0, Params, "no-ajax", "", session_token, "", ["false", ""]);
+			wfu_ProcessUploadComplete(sid, 0, Params, "no-ajax", "", session_token, "", ["false", "", "false"]);
 
 			if (flag == 1) {
 				var suffice = "";
@@ -994,12 +995,11 @@ function wfu_HTML5UploadFile(sid, JSONtext, session_token) {
 	var numfiles = wfu_filesselected(sid);
 	if (numfiles == 0) return;
 
-	console.log(numfiles);
 
 	// check if there are empty user data fields that are required
 	if (!wfu_check_required_userdata(sid)) return; 
 
-	wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, []);
+	wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, [""]);
 }
 
 function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
@@ -1037,6 +1037,7 @@ function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
 		xhr.params_index = JSONobj.params_index;
 		xhr.session_token = session_token;
 		xhr.debugmode = JSONobj.debugmode;
+		xhr.is_admin = JSONobj.is_admin;
 		xhr.finish_time = d.getTime() + parseInt(GlobalData.consts.max_time_limit) * 1000;
 		xhr.fail_colors = JSONobj.fail_colors;
 		xhr.error_message_header = GlobalData.consts.message_header.replace(/%username%/g, "no data");
@@ -1107,7 +1108,7 @@ function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
 	var Params = wfu_Initialize_Params();
 	Params.general.shortcode_id = sid;
 	Params.general.unique_id = rand_str;
-	wfu_ProcessUploadComplete(sid, 0, Params, rand_str, JSONobj.params_index, session_token, "", ["false", ""]);
+	wfu_ProcessUploadComplete(sid, 0, Params, rand_str, JSONobj.params_index, session_token, "", ["false", "", "false"]);
 
 	var inc = 0;
 	for (var i = 0; i < farr.length; i++) {

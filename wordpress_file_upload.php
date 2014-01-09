@@ -4,7 +4,7 @@ session_start();
 Plugin Name: Wordpress File Upload
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.1.2
+Version: 2.1.3
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -41,11 +41,12 @@ if ( is_admin() ) {
 		wp_enqueue_style('wordpress-file-upload-admin-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_adminstyle.css',false,'1.0','all');
 		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_script('wordpress_file_upload_admin_script', WPFILEUPLOAD_DIR.'js/wordpress_file_upload_adminfunctions.js', array( 'wp-color-picker' ), false, true);
-		wp_enqueue_script('wordpress_file_upload_admin_script', WPFILEUPLOAD_DIR.'js/getElementsByClassName-1.0.1.js');
+		wp_enqueue_script('wordpress_file_upload_classname_script', WPFILEUPLOAD_DIR.'js/getElementsByClassName-1.0.1.js');
+		wp_localize_script( 'wordpress_file_upload_admin_script', 'AdminParams', array("wfu_ajax_url" => site_url()."/wp-admin/admin-ajax.php") );
 	}
 }
 else {
-	wp_enqueue_style('wordpress-file-upload-reset', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_reset.css',false,'1.0','all');
+//	wp_enqueue_style('wordpress-file-upload-reset', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_reset.css',false,'1.0','all');
 	wp_enqueue_style('wordpress-file-upload-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style.css',false,'1.0','all');
 	wp_enqueue_style('wordpress-file-upload-style-safe', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style_safe.css',false,'1.0','all');
 	wp_enqueue_script('json_class', WPFILEUPLOAD_DIR.'js/json2.js');
@@ -56,6 +57,7 @@ add_action('wp_ajax_wfu_ajax_action', 'wfu_ajax_action_callback');
 add_action('wp_ajax_nopriv_wfu_ajax_action', 'wfu_ajax_action_callback');
 add_action('wp_ajax_wfu_ajax_action_send_email_notification', 'wfu_ajax_action_send_email_notification');
 add_action('wp_ajax_nopriv_wfu_ajax_action_send_email_notification', 'wfu_ajax_action_send_email_notification');
+add_action('wp_ajax_wfu_ajax_action_save_shortcode', 'wfu_ajax_action_save_shortcode');
 wfu_include_lib();
 //foreach ( glob( plugin_dir_path( __FILE__ )."lib/*.php" ) as $file )
 //	include_once $file;
@@ -110,14 +112,18 @@ function wordpress_file_upload_function($incomingfromhandler) {
 	$plugin_upload_user_role = wfu_get_user_role($user, $uploadroles);		
 	if ( !in_array($plugin_upload_user_role, $uploadroles) && $plugin_upload_user_role != 'administrator' && $params["uploadrole"] != 'all' ) return;
 
+	//activate debug mode only for admins
+	if ( $plugin_upload_user_role != 'administrator' ) $params["debugmode"] = "false";
+
 	$params["adminmessages"] = ( $params["adminmessages"] == "true" && $plugin_upload_user_role == 'administrator' );
 	// define variable to hold any additional admin errors coming before processing of files (e.g. due to redirection)
 	$params["adminerrors"] = "";
 
 	/* Define dynamic upload path from variables */
-	$search = array ('/%username%/', '/%blogid%/');	 
-	if ( is_user_logged_in() ) $replace = array ($user->user_login, $blog_id);
-	else $replace = array ("guests", $blog_id);
+	$search = array ('/%username%/', '/%blogid%/', '/%pageid%/', '/%pagetitle%/');	
+	if ( is_user_logged_in() ) $username = $user->user_login;
+	else $username = "guests";
+	$replace = array ($username, $blog_id, $post->ID, get_the_title($post->ID));
 	$params["uploadpath"] =  preg_replace($search, $replace, $params["uploadpath"]);
 
 	/* Determine if userdata fields have been defined */
@@ -171,6 +177,7 @@ function wordpress_file_upload_function($incomingfromhandler) {
 		$ajax_params['shortcode_id'] = $sid;
 		$ajax_params['params_index'] = $params_index;
 		$ajax_params['debugmode'] = $params["debugmode"];
+		$ajax_params['is_admin'] = ( $plugin_upload_user_role == 'administrator' ? "true" : "false" );
 		$ajax_params["fail_colors"] = $params["failmessagecolors"];
 
 		$ajax_params_str = wfu_encode_array_to_string($ajax_params);
@@ -270,7 +277,7 @@ function wordpress_file_upload_function($incomingfromhandler) {
 	unset($wfu_process_file_array["general"]['safe_output']);
 
 	$wfu_process_file_array_str = wfu_encode_array_to_string($wfu_process_file_array);
-	$ProcessUploadComplete_functiondef = 'function(){wfu_ProcessUploadComplete('.$sid.', 1, "'.$wfu_process_file_array_str.'", "no-ajax", "", "", "'.$safe_output.'", ["false", ""]);}';
+	$ProcessUploadComplete_functiondef = 'function(){wfu_ProcessUploadComplete('.$sid.', 1, "'.$wfu_process_file_array_str.'", "no-ajax", "", "", "'.$safe_output.'", ["false", "", "false"]);}';
 	$wordpress_file_upload_output .= '<script type="text/javascript">window.onload='.$ProcessUploadComplete_functiondef.'</script>';
 	
 

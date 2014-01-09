@@ -120,7 +120,7 @@ DEFINE("WFU_VARIABLE_TITLE_USEREMAIL", __("Insert variable %useremail% inside te
 DEFINE("WFU_VARIABLE_TITLE_FILENAME", __("Insert variable %filename% inside text. It will be replaced by the filename of the uploaded file.", "wordpress-file-upload"));
 DEFINE("WFU_VARIABLE_TITLE_FILEPATH", __("Insert variable %filepath% inside text. It will be replaced by the full filepath of the uploaded file.", "wordpress-file-upload"));
 DEFINE("WFU_VARIABLE_TITLE_BLOGID", __("Insert variable %blogid% inside text. It will be replaced by the blog id of the website.", "wordpress-file-upload"));
-DEFINE("WFU_VARIABLE_TITLE_USERDATAXXX", __("Insert variable %userdataXXX% inside text. Replace XXX with the number of the user field (1, 2, etc...). It will be replaced by the value that the user entered in this field.", "wordpress-file-upload"));
+DEFINE("WFU_VARIABLE_TITLE_USERDATAXXX", __("Insert variable %userdataXXX% inside text. Select the user field from the drop-down list. It will be replaced by the value that the user entered in this field.", "wordpress-file-upload"));
 DEFINE("WFU_VARIABLE_TITLE_N", __("Insert variable %n% inside text to denote a line change.", "wordpress-file-upload"));
 
 //define plugin other constants

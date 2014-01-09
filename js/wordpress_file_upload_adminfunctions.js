@@ -1,4 +1,7 @@
 var DraggedItem = null;
+var ShortcodeNextSave = 0;
+var ShortcodeTimeOut = null;
+var ShortcodeString = "";
 
 jQuery(document).ready(function($){
 	$('.wfu_color_field').wpColorPicker({
@@ -47,6 +50,7 @@ function wfu_admin_onoff_clicked(key) {
 		for (var i = 0; i < shadows_inv.length; i++) shadows_inv[i].style.display = "none";
 	}
 	wfu_generate_shortcode();
+	if (key == "userdata") wfu_update_userfield_variables();
 }
 
 function wfu_admin_radio_clicked(key) {
@@ -377,7 +381,8 @@ function wfu_generate_shortcode() {
 	var item;
 	var attribute = "";
 	var value = "";
-	var shortcode = "[wordpress_file_upload";
+	var shortcode_full = "[wordpress_file_upload";
+	var shortcode = "";
 	for (var i = 0; i < defaults.childNodes.length; i++) {
 		item = defaults.childNodes[i];
 		if (item.nodeType === 1) {
@@ -387,9 +392,12 @@ function wfu_generate_shortcode() {
 				shortcode += " " + attribute + "=\"" + value + "\"";
 		}
 	}
-	shortcode += "]";
+	shortcode_full += shortcode + "]";
 
-	document.getElementById("wfu_shortcode").value = shortcode;
+	document.getElementById("wfu_shortcode").value = shortcode_full;
+	ShortcodeString = shortcode.substr(1);
+
+	wfu_schedule_save_shortcode();
 }
 
 function wfu_update_text_value(e) {
@@ -503,6 +511,30 @@ function wfu_update_userfield_value(e) {
 		item.oldVal = val;
 		document.getElementById("wfu_attribute_value_userdatalabel").value = val;
 		wfu_generate_shortcode();
+		wfu_update_userfield_variables();
+	}
+}
+
+function wfu_update_userfield_variables() {
+	var userdata = document.getElementById("wfu_attribute_value_userdatalabel").value;
+	var container = document.getElementById("wfu_wrapper");
+	var shadows = document.getElementsByClassName("wfu_shadow_userdata", "div", container);
+	var selects = document.getElementsByName("wfu_userfield_select");
+	for (var i = 0; i < selects.length; i++) selects[i].style.display = "none";
+	if (shadows.length == 0) return;
+	if (shadows[0].style.display == "block") return;
+
+	var options_str = '<option style="display:none;">%userdataXXX%</option>';
+	var userfields = userdata.split("/");
+	var field = "";
+	for (var i = 1; i <= userfields.length; i++) {
+		field = userfields[i - 1];
+		if (field[0] == "*") field = field.substr(1);
+		options_str += '<option value="%userdata' + i + '%">' + i + ': ' + field + '</option>';
+	}
+	for (var i = 0; i < selects.length; i++) {
+		selects[i].innerHTML = options_str;
+		selects[i].style.display = "inline-block";
 	}
 }
 
@@ -513,6 +545,8 @@ function wfu_attach_element_handlers(item, handler) {
 }
 
 function wfu_Attach_Admin_Events() {
+	wfu_generate_shortcode();
+	wfu_update_userfield_variables();
 	wfu_Attach_Admin_DragDrop_Events();
 	var text_elements = document.getElementsByName("wfu_text_elements");
 	for (var i = 0; i < text_elements.length; i++) wfu_attach_element_handlers(text_elements[i], wfu_update_text_value);
@@ -533,4 +567,128 @@ function wfu_insert_variable(obj) {
 	var prevval = inp.value;
 	inp.value = prevval.substr(0, pos) + obj.innerHTML + prevval.substr(pos);
 	wfu_update_text_value({target:inp});
+}
+
+function wfu_insert_userfield_variable(obj) {
+	var attr = obj.className.replace("wfu_variable wfu_variable_", "");
+	var inp = document.getElementById("wfu_attribute_" + attr);
+	var pos = inp.selectionStart;
+	var prevval = inp.value;
+	inp.value = prevval.substr(0, pos) + obj.value + prevval.substr(pos);
+	obj.value = "%userdataXXX%";
+	wfu_update_text_value({target:inp});
+}
+
+//wfu_GetHttpRequestObject: function that returns XMLHttpRequest object for various browsers
+function wfu_GetHttpRequestObject() {
+	var xhr = null;
+	try {
+		xhr = new XMLHttpRequest(); 
+	}
+	catch(e) { 
+		try {
+			xhr = new ActiveXObject("Msxml2.XMLHTTP");
+		}
+		catch (e2) {
+			try {
+				xhr = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			catch (e) {}
+		}
+	}
+	if (xhr == null && window.createRequest) {
+		try {
+			xmlhttp = window.createRequest();
+		}
+		catch (e) {}
+	}
+	return xhr;
+}
+
+//wfu_plugin_encode_string: function that encodes a decoded string
+function wfu_plugin_encode_string(str) {
+	var i = 0;
+	var newstr = "";
+	var hex = "";
+	for (i = 0; i < str.length; i++) {
+		hex = str.charCodeAt(i).toString(16);
+		if (hex.length == 1) hex = "0" + hex; 
+		newstr += hex;
+	}
+	return newstr;
+}
+
+function wfu_schedule_save_shortcode() {
+	var d = new Date();
+	var dt = ShortcodeNextSave - d.getTime();
+	if (ShortcodeTimeOut != null) {
+		clearTimeout(ShortcodeTimeOut);
+		ShortcodeTimeOut = null;
+	}
+	if (dt <= 0) wfu_save_shortcode();
+	else ShortcodeTimeOut = setTimeout(function() {wfu_save_shortcode();}, dt);
+}
+
+function wfu_save_shortcode() {
+	var xhr = wfu_GetHttpRequestObject();
+	if (xhr == null) return;
+
+	//send request using AJAX
+	var url = AdminParams.wfu_ajax_url;
+	params = new Array(2);
+	params[0] = new Array(2);
+	params[0][0] = 'action';
+	params[0][1] = 'wfu_ajax_action_save_shortcode';
+	params[1] = new Array(2);
+	params[1][0] = 'shortcode';
+	params[1][1] = wfu_plugin_encode_string(ShortcodeString);
+
+	var parameters = '';  
+	for (var i = 0; i < params.length; i++) {
+		parameters += (i > 0 ? "&" : "") + params[i][0] + "=" + encodeURI(params[i][1]);
+	}
+
+	var d = new Date();
+	ShortcodeNextSave = d.getTime() + 5000;
+
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	xhr.setRequestHeader("Content-length", parameters.length);
+	xhr.setRequestHeader("Connection", "close");
+	xhr.onreadystatechange = function() {
+		if ( xhr.readyState == 4 ) {
+			if ( xhr.status == 200 ) {
+				if (xhr.responseText == "save_shortcode_success") {
+					document.getElementById("wfu_save_label").innerHTML = "saved";
+					document.getElementById("wfu_save_label").className = "wfu_save_label";
+					document.getElementById("wfu_save_label").style.opacity = 1;
+					wfu_fadeout_element(300);
+					ShortcodeNextSave = d.getTime() + 1000;
+					if (ShortcodeTimeOut != null) wfu_schedule_save_shortcode();
+				}
+				else {
+					document.getElementById("wfu_save_label").innerHTML = "not saved";
+					document.getElementById("wfu_save_label").className = "wfu_save_label_fail";
+					document.getElementById("wfu_save_label").style.opacity = 1;
+					wfu_fadeout_element(300);
+				}
+			}
+		}
+	};
+	xhr.send(parameters);
+}
+
+function wfu_adjust_opacity(opacity) {
+	document.getElementById("wfu_save_label").style.opacity = opacity;
+}
+
+function wfu_fadeout_element(interval) {
+	var reps = 20.0;
+	var op = 0.0;
+	for (var i = 0; i < reps; i++) {
+		op = 1.0 - i / reps;
+		setTimeout('wfu_adjust_opacity("' + op.toString() + '")', i * interval / reps);
+	}
+
+	setTimeout('wfu_adjust_opacity("0.0")', i * interval / reps);
 }

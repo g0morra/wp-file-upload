@@ -3,7 +3,7 @@ Contributors: nickboss
 Donate link: http://www.iptanus.com/support/wordpress-file-upload
 Tags: upload, upload file, upload files, multiple, multiple upload, multiple uploads, captcha, progress bar, form, ajax, directory, HTML5, filelist
 Requires at least: 2.9.2
-Tested up to: 3.7.1
+Tested up to: 3.8
 Stable tag: "trunk"
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -95,6 +95,15 @@ The plugin is designed not to expose website information by using sessions. Para
 5. A screenshot of the plugin with user fields.
 
 == Changelog ==
+
+= 2.1.3 =
+* variables %pagetitle% and %pageid% added in uploadpath.
+* bug fixes when working with IE8.
+* Shortcode Composer saves selected options
+* Easier handling of userdata variables in Shortcode Composer
+* correction of bug that allowed debugdata to be shown in non-admin users
+* reset.css removed from plugin as it was causing breaks in theme's css
+* correction of bug with WPFilebase Manager plugin
 
 = 2.1.2 =
 * Several bug fixes and code reconstruction.
@@ -235,6 +244,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.1.3 =
+Important upgrade to address some serious bugs.
 
 = 2.1.2 =
 Important upgrade to address some bugs.
@@ -481,6 +493,8 @@ For the time being, the following variables are supported:
 * **%blogid%:** Is replaced by the blog_id of the current site. Can be used inside attribute *uploadpath*.
 * **%userdataXXX%:** Is replaced by the additional message that the user has sent together with the file upload. XXX is the number of the field (starting from 0). The shortcode attribute userdata must have been set to "true". Can be used inside attributes *notifysubject*, *notifymessage*.
 * **%n%:** Denotes change of line (equivalent of \n). Can be used inside attributes *notifymessage* and *notifyheaders*. It exists because of problems of using \n inside the classic page editor of Wordpress.
+* **%pagetitle%:** Is replaced by the title of the current page. Can be used inside attribute *uploadpath*.
+* **%pageid%:** Is replaced by the id of the current page. Can be used inside attribute *uploadpath*.
 
 == Requirements ==
 

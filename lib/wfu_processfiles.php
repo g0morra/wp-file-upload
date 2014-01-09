@@ -367,7 +367,7 @@ function wfu_process_files($params, $method) {
 	   Execution will happen only if accumulated $params_output_array["general"]['update_wpfilebase'] is not empty */
 	if ( $params["filebaselink"] == "true" ) {
 		if ( $somefiles_Ok ) {		
-			$filebaseurl = WP_SITEURL;
+			$filebaseurl = site_url();
 			if ( substr($filebaseurl, -1, 1) == "/" ) $filebaseurl = substr($filebaseurl, 0, strlen($filebaseurl) - 1);
 			/* if the following variable is not empty, then WPFileBase Plugin update must be executed
 			   and any admin messages must be suppressed */
