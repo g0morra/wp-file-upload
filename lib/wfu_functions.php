@@ -98,7 +98,48 @@ function wfu_array_remove_nulls(&$arr) {
 }
 
 function wfu_shortcode_string_to_array($shortcode) {
-	$arr = explode(" ", $shortcode);
+	function _wfu_preg_replace_callback_alt($contents, $token) {
+		$in_block = false;
+		$prev_pos = 0;
+		$new_contents = '';
+		$ret['items'] = array();
+		$ret['tokens'] = array();
+		$ii = 0;
+		while ( ($pos = strpos($contents, '"', $prev_pos)) !== false ) {
+			if ( !$in_block ) {
+				$new_contents .= substr($contents, $prev_pos, $pos - $prev_pos + 1);
+				$in_block = true;
+			}
+			else {
+				$ret['items'][$ii] = substr($contents, $prev_pos, $pos - $prev_pos);
+				$ret['tokens'][$ii] = $token.$ii;
+				$new_contents .= $token.$ii.'"';
+				$ii ++;
+				$in_block = false;
+			}
+			$prev_pos = $pos + 1;
+		}
+		if ( $in_block ) {
+			$ret['items'][$ii] = substr($contents, $prev_pos);
+			$ret['tokens'][$ii] = $token.$ii;
+			$new_contents .= $token.$ii.'"';
+		}
+		else
+			$new_contents .= substr($contents, $prev_pos);
+		$ret['contents'] = $new_contents;
+		return $ret;
+	}
+
+	$i = 0;
+	$m1 = array();
+	$m2 = array();
+	//for some reason preg_replace_callback does not work in all cases, so it has been replaced by a similar custom inline routine
+//	$mm = preg_replace_callback('/"([^"]*)"/', function ($matches) use(&$i, &$m1, &$m2) {array_push($m1, $matches[1]); array_push($m2, "attr".$i); return "attr".$i++;}, $shortcode);
+	$ret = _wfu_preg_replace_callback_alt($shortcode, "attr");
+	$mm = $ret['contents'];
+	$m1 = $ret['items'];
+	$m2 = $ret['tokens'];
+	$arr = explode(" ", $mm);
 	$attrs = array();
 	foreach ( $arr as $attr ) {
 		if ( trim($attr) != "" ) {
@@ -110,17 +151,50 @@ function wfu_shortcode_string_to_array($shortcode) {
 			if ( trim($key) != "" ) $attrs[trim($key)] = str_replace('"', '', $val);
 		}
 	}
-	$i=0;
-	$m=array();
-	$mm = preg_replace_callback('/"([^"]*)"/', function ($matches) use(&$i, &$m) {array_push($m, $matches[1]); return "attr".$i++;}, $shortcode);
-	return $attrs;
+	$attrs2 = str_replace($m2, $m1, $attrs);
+	return $attrs2;
+}
+
+function wfu_array_sort($array, $on, $order=SORT_ASC) {
+    $new_array = array();
+    $sortable_array = array();
+
+    if (count($array) > 0) {
+        foreach ($array as $k => $v) {
+            if (is_array($v)) {
+                foreach ($v as $k2 => $v2) {
+                    if ($k2 == $on) {
+                        $sortable_array[$k] = $v2;
+                    }
+                }
+            } else {
+                $sortable_array[$k] = $v;
+            }
+        }
+
+        switch ($order) {
+            case SORT_ASC:
+                asort($sortable_array);
+            break;
+            case SORT_DESC:
+                arsort($sortable_array);
+            break;
+        }
+
+        foreach ($sortable_array as $k => $v) {
+            $new_array[$k] = $array[$k];
+        }
+    }
+
+    return $new_array;
 }
 
 //********************* Plugin Options Functions ************************************************************************************************
 
 function wfu_encode_plugin_options($plugin_options) {
 	$encoded_options = 'version='.$plugin_options['version'].';';
-	$encoded_options .= 'shortcode='.wfu_plugin_encode_string($plugin_options['shortcode']);
+	$encoded_options .= 'shortcode='.wfu_plugin_encode_string($plugin_options['shortcode']).';';
+    $encoded_options .= 'basedir='.wfu_plugin_encode_string($plugin_options['basedir']);
 	return $encoded_options;
 }
 
@@ -129,7 +203,7 @@ function wfu_decode_plugin_options($encoded_options) {
 	$plugin_options = array();
 	foreach ($decoded_array as $decoded_item) {
 		list($item_key, $item_value) = explode("=", $decoded_item, 2);
-		if ( $item_key == 'shortcode' )
+		if ( $item_key == 'shortcode' || $item_key == 'basedir' )
 			$plugin_options[$item_key] = wfu_plugin_decode_string($item_value);
 		else
 			$plugin_options[$item_key] = $item_value;
@@ -176,6 +250,34 @@ function wfu_upload_plugin_full_path( $params ) {
 function wfu_upload_plugin_directory( $path ) {
 	$dirparts = explode("/", $path);
 	return $dirparts[count($dirparts) - 1];
+}
+
+//function to extract sort information from path, which is stored as [[-sort]] inside the path
+function wfu_extract_sortdata_from_path($path) {
+	$pos1 = strpos($path, '[[');
+	$pos2 = strpos($path, ']]');
+	$ret['path'] = $path;
+	$ret['sort'] = "";
+	if ( $pos1 !== false && $pos2 !== false )
+		if ( $pos2 > $pos1 ) {
+			$ret['sort'] = substr($path, $pos1 + 2, $pos2 - $pos1 - 2);
+			$ret['path'] = str_replace('[['.$ret['sort'].']]', '', $path);
+		}
+	return $ret;
+}
+
+//extract sort information from path and return the flatten path
+function wfu_flatten_path($path) {
+	$ret = wfu_extract_sortdata_from_path($path);
+	return $ret['path'];
+}
+
+function wfu_delTree($dir) {
+	$files = array_diff(scandir($dir), array('.','..'));
+	foreach ($files as $file) {
+		is_dir("$dir/$file") ? wfu_delTree("$dir/$file") : unlink("$dir/$file");
+	}
+	return rmdir($dir);
 }
 
 //********************* User Functions *********************************************************************************************************
@@ -345,6 +447,75 @@ function wfu_send_notification_email($user, $only_filename_list, $target_path_li
 		$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $notifyheaders); 
 	}
 	return ( $notify_sent ? "" : WFU_WARNING_NOTIFY_NOTSENT_UNKNOWNERROR );
+}
+
+//********************* Media Functions **************************************************************************************************************
+
+// function wfu_process_media_insert contribution from Aaron Olin
+function wfu_process_media_insert($file_path){   
+	$file_no_ext = preg_replace("/ /", "_", pathinfo($file_path, PATHINFO_FILENAME) );
+	$ext = strtolower( pathinfo($file_path, PATHINFO_EXTENSION) );
+
+	switch($ext){
+		case 'pdf':
+			$filetype = 'application/pdf';
+		break;        
+		// images
+		case 'bmp':        
+			$filetype = 'image/bmp';
+		break;
+		case 'gif':
+			$filetype = 'image/gif';
+		break;
+		case ( preg_match('~\b(jpg|jpeg)\b~i', $ext) ) ? true : false :
+			$filetype = 'image/jpeg';
+		break;
+		case 'png':
+			$filetype = 'image/png';
+		break;
+		// office apps
+		case ( preg_match('~\b(doc|docx)\b~i', $ext) ) ? true : false :
+			$filetype = 'application/msword';		
+		break;
+		case ( preg_match('~\b(ppt|pptx)\b~i', $ext) ) ? true : false :
+			$filetype = 'application/vnd.ms-powerpoint';
+		break;
+		case ( preg_match('~\b(xls|xlsx)\b~i', $ext) ) ? true : false :
+			$filetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+		break;
+		// compression
+		case 'zip':
+			$filetype = 'application/zip';
+		break;
+		case 'rar':
+			$filetype = 'application/rar';
+		break;
+
+		default:
+			$filetype = 'application/msword';		
+		break;	}
+
+	$attachment = array(
+	    'guid' => $guid,
+	    'post_mime_type' => $filetype,
+	    'post_title' => $file_no_ext,
+	    'post_content' => '',
+	    'post_status' => 'inherit'
+	);
+
+
+	$attach_id = wp_insert_attachment( $attachment, $file_path); 
+	
+	// If file is an image, process the default thumbnails for previews
+	$image_types = array('gif','png','bmp','jpeg','jpg');	
+	if ( in_array($ext, $image_types) ) {
+		require_once(ABSPATH . 'wp-admin/includes/image.php');
+		require_once(ABSPATH . 'wp-admin/includes/media.php');
+		$attach_data = wp_generate_attachment_metadata( $attach_id, $file_path );
+		$update_attach = wp_update_attachment_metadata( $attach_id, $attach_data );
+	}
+
+	return $attach_id;	
 }
 
 ?>

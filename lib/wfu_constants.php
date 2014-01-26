@@ -49,6 +49,7 @@ DEFINE("WFU_HEIGHTS", "");
 DEFINE("WFU_PLACEMENTS", "title/filename+selectbutton+uploadbutton/subfolders"."/userdata"."/message");    
 DEFINE("WFU_USERDATA", "false");               
 DEFINE("WFU_USERDATALABEL", __('Your message', 'wordpress-file-upload'));   
+DEFINE("WFU_MEDIALINK", "false");
 
 //define plugin errors
 DEFINE("WFU_ERROR_ADMIN_FTPDIR_RESOLVE", __("Error. Could not resolve ftp target filedir. Check the domain in 'ftpinfo' attribute.", "wordpress-file-upload"));

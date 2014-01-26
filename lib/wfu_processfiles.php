@@ -357,7 +357,15 @@ function wfu_process_files($params, $method) {
 		/* suppress again any admin messages if user is not administrator or adminmessages is not activated */		
 		if ( $suppress_admin_messages ) $file_output['admin_messages'] = "";
 
+		/* set success status of the file, to be used for medialink */
+		$file_finished_successfully = ( $file_output['message_type'] == "success" || $file_output['message_type'] == "warning" );
+
 		$params_output_array[0] = $file_output;
+
+		/* add file to Media if this option is activated and the file has finished uploading successfully */
+		if ( $params["medialink"] == "true" && $file_finished_successfully ) {
+			wfu_process_media_insert($target_path);
+		}
 	}
 
 	$somefiles_Ok = ( ( $warning_count + $success_count ) > 0 );

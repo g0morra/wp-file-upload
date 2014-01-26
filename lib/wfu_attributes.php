@@ -727,6 +727,20 @@ function wfu_attribute_definitions() {
 			"dependencies"	=> null,
 			"variables"	=> null,
 			"help"		=> "If enabled then the WP Filebase Plugin will be informed about new file uploads."
+		),
+		array(
+			"name"		=> "Add Uploaded Files To Media",
+			"attribute"	=> "medialink",
+			"type"		=> "onoff",
+			"listitems"	=> null,
+			"value"		=> WFU_MEDIALINK,
+			"mode"		=> "free",
+			"category"	=> "interoperability",
+			"subcategory"	=> "Connection With Other Plugins or Functions",
+			"parent"	=> "",
+			"dependencies"	=> null,
+			"variables"	=> null,
+			"help"		=> "If enabled then the WP Filebase Plugin will be informed about new file uploads."
 		)
 	);
 

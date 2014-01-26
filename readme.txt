@@ -12,9 +12,11 @@ Simple yet powerful plugin to allow users to upload files to your website from a
 
 == Description ==
 
-With this plugin you or other users can upload files to your site from any page by using shortcodes.
+With this plugin you or other users can upload files to your site from any page, easily and securely.
 
 Simply put the shortcode [wordpress_file_upload] to the contents of any WordPress page and you will be able to upload files to any directory inside wp-contents of your WordPress site.
+
+The new version of the plugin includes a file browser to access the uploaded files from the Dashboard (only for admins currently).
 
 Please note that this plugin is the successor of **Inline Upload** plugin.
 
@@ -22,6 +24,7 @@ The characteristics of the plugin are:
 
 * It does not use flash and handles uploads using various technologies (HTML5, AJAX, classic HTML forms) depending on browser's capabilities, which detects automatically. As a result it can work in any browser, including mobiles phones (even old ones).
 * You can have more than one instances of the shortcode in the same page.
+* It includes a file browser.
 * It includes an overall upload progress bar.
 * It supports localization.
 * It integrates with WP-Filebase.
@@ -93,8 +96,16 @@ The plugin is designed not to expose website information by using sessions. Para
 3. A screenshot of the plugin showing the successful upload message.
 4. A screenshot of the plugin with different placement.
 5. A screenshot of the plugin with user fields.
+6. A screenshot of the shortcode composer.
+7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 2.2.1 =
+* added file browser in Dashboard for admins
+* added attribute medialink to allow uploaded files to be shown in Media
+* serious bug fixed that was breaking the plugin because of preg_replace_callback function
+* corrected error in first attempt to upload file when captcha is enabled
 
 = 2.1.3 =
 * variables %pagetitle% and %pageid% added in uploadpath.
@@ -244,6 +255,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.2.1 =
+Important upgrade to address some serious bugs and include some new features.
 
 = 2.1.3 =
 Important upgrade to address some serious bugs.
@@ -455,6 +469,7 @@ A detailed list of attributes, together with instructions is shown below:
 *Connection With Other Plugins*
 
 * **filebaselink:** This attribute defines if this plugin will be linked to wp-filebase plugin. Wp-filebase is another plugin with which you can upload files and then show them in your pages in a customizable way. If you set this attribute to "true", then you can upload files inside wp-filebase directories using wordpress_file_upload and then update the databases of wp-filebase, so that it is informed about the new uploads. The default value is "false". Please note that this attribute does not check to see if wp-filebase is installed and active, so be sure to have wp-filebase active if you want to use it.
+* **medialink:** This attribute defines that uploaded files will be added to Media of the Wordpress website when set to "true". Default value is "false". Credits for this functionality to Aaron Olin.
 
 You can use any of these attributes to customize the plugin. The way to use these attributes is the following:
 
