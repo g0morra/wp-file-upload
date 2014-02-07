@@ -101,6 +101,9 @@ The plugin is designed not to expose website information by using sessions. Para
 
 == Changelog ==
 
+= 2.2.2 =
+* serious bug fixed that was breaking operation of Shortcode Composer and File Browser when the Wordpress website is in a subdirectory
+
 = 2.2.1 =
 * added file browser in Dashboard for admins
 * added attribute medialink to allow uploaded files to be shown in Media
@@ -255,6 +258,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.2.2 =
+Important upgrade to address some serious bugs.
 
 = 2.2.1 =
 Important upgrade to address some serious bugs and include some new features.
