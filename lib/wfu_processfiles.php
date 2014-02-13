@@ -323,7 +323,7 @@ function wfu_process_files($params, $method) {
 			$file_output['color'] = $color_array[0];
 			$file_output['bgcolor'] = $color_array[1];
 			$file_output['borcolor'] = $color_array[2];
-			$file_output['header'] = preg_replace($search, $replace, WFU_SUCCESSMESSAGE);
+			$file_output['header'] = preg_replace($search, $replace, $params['successmessage']);
 			/* prepare details of successful file upload, visible only to administrator */
 			$file_output['admin_messages'] = wfu_join_strings("<br />", preg_replace($search, $replace, WFU_SUCCESSMESSAGE_DETAILS), $file_output['admin_messages']);
 		}
@@ -334,7 +334,7 @@ function wfu_process_files($params, $method) {
 			$file_output['color'] = $color_array[0];
 			$file_output['bgcolor'] = $color_array[1];
 			$file_output['borcolor'] = $color_array[2];
-			$file_output['header'] = preg_replace($search, $replace, WFU_WARNINGMESSAGE);
+			$file_output['header'] = preg_replace($search, $replace, $params['warningmessage']);
 			/* prepare and prepend details of successful file upload, visible only to administrator */
 			$file_output['admin_messages'] = wfu_join_strings("<br />", preg_replace($search, $replace, WFU_SUCCESSMESSAGE_DETAILS), $file_output['admin_messages']);
 		}
@@ -349,7 +349,7 @@ function wfu_process_files($params, $method) {
 			$only_filename = wfu_upload_plugin_clean( $fileprops['name'] );
 			$target_path = wfu_upload_plugin_full_path($params).$only_filename;
 			$replace = array ($user_login, ( $user_email == "" ? "no email" : $user_email ), $only_filename, $target_path);
-			$file_output['header'] = preg_replace($search, $replace, WFU_ERRORMESSAGE);
+			$file_output['header'] = preg_replace($search, $replace, $params['errormessage']);
 			/* prepare and prepend details of failed file upload, visible only to administrator */
 			$file_output['admin_messages'] = wfu_join_strings("<br />", preg_replace($search, $replace, WFU_FAILMESSAGE_DETAILS), $file_output['admin_messages']);
 		}

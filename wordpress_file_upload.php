@@ -4,7 +4,7 @@ session_start();
 Plugin Name: Wordpress File Upload
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.2.2
+Version: 2.2.3
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -29,15 +29,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /* do not load plugin if this is the login page */
-global $pagenow;
-if ( 'wp-login.php' == $pagenow ) return;
+$uri = $_SERVER['REQUEST_URI'];
+if ( strpos($uri, 'wp-login.php') !== false ) return;
 
 DEFINE("WPFILEUPLOAD_DIR", '/'.PLUGINDIR .'/'.dirname(plugin_basename (__FILE__)).'/');
 add_shortcode("wordpress_file_upload", "wordpress_file_upload_handler");
 load_plugin_textdomain('wordpress-file-upload', false, dirname(plugin_basename (__FILE__)).'/languages');
 /* do not load styles and scripts in admin pages */
 if ( is_admin() ) {
-	if ( $pagenow == "options-general.php" ) {
+	if ( strpos($uri, "options-general.php") !== false ) {
 		wp_enqueue_style('wordpress-file-upload-admin-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_adminstyle.css',false,'1.0','all');
 		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_script('wordpress_file_upload_admin_script', WPFILEUPLOAD_DIR.'js/wordpress_file_upload_adminfunctions.js', array( 'wp-color-picker' ), false, true);

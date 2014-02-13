@@ -101,6 +101,10 @@ The plugin is designed not to expose website information by using sessions. Para
 
 == Changelog ==
 
+= 2.2.3 =
+* correction of bug that was freezing the Shortcode Composer in some cases
+* correction of bug with successmessage attribute
+
 = 2.2.2 =
 * serious bug fixed that was breaking operation of Shortcode Composer and File Browser when the Wordpress website is in a subdirectory
 
@@ -258,6 +262,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.2.3 =
+Upgrade to address some minor bugs.
 
 = 2.2.2 =
 Important upgrade to address some serious bugs.
