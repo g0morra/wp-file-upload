@@ -51,11 +51,11 @@ function wfu_check_animation() {
 	animationstring = 'animation',
 	keyframeprefix = '',
 	domPrefixes = 'Webkit Moz O ms Khtml'.split(' '),
-	pfx  = '';
+	pfx = '';
 	
 	var elm = document.createElement('DIV');
 
-	if( elm.style.animationName ) { animation = true; }    
+	if( elm.style.animationName ) { animation = true; } 
 
 	if( animation === false ) {
 		for( var i = 0; i < domPrefixes.length; i++ ) {
@@ -88,10 +88,14 @@ function wfu_join_strings(delimeter) {
 function wfu_plugin_decode_string(str) {
 	var i = 0;
 	var newstr = "";
-	var hex = "";
-	for (i = 0; i < str.length; i += 2) {
-		hex = str.substr(i, 2);    //IE6 fix using substr instead of str[i]+str[i+1]
-		newstr += String.fromCharCode(parseInt(hex, 16));
+	var num, val;
+	while (i < str.length) {
+		num = parseInt(str.substr(i, 2), 16);
+		if (num < 128) val = num;
+		else if (num < 224) val = ((num & 31) << 6) + (parseInt(str.substr((i += 2), 2), 16) & 63);
+		else val = ((num & 15) << 12) + ((parseInt(str.substr((i += 2), 2), 16) & 63) << 6) + (parseInt(str.substr((i += 2), 2), 16) & 63);
+		newstr += String.fromCharCode(val);
+		i += 2;
 	}
 	return newstr;
 }
@@ -102,8 +106,11 @@ function wfu_plugin_encode_string(str) {
 	var newstr = "";
 	var hex = "";
 	for (i = 0; i < str.length; i++) {
-		hex = str.charCodeAt(i).toString(16);
-		if (hex.length == 1) hex = "0" + hex; 
+		num = str.charCodeAt(i);
+		if (num >= 2048) num = (((num & 16773120) | 917504) << 4) + (((num & 4032) | 8192) << 2) + ((num & 63) | 128);
+		else if (num >= 128) num = (((num & 65472) | 12288) << 2) + ((num & 63) | 128);
+		hex = num.toString(16);
+		if (hex.length == 1 || hex.length == 3 || hex.length == 5) hex = "0" + hex; 
 		newstr += hex;
 	}
 	return newstr;
@@ -379,7 +386,7 @@ function wfu_send_email_notification(sid, unique_id, params_index, session_token
 		params[7 + i][1] = document.getElementById('hiddeninput_' + sid + '_userdata_' + i).value;
 	}
 
-	var parameters = '';  
+	var parameters = '';
 	for (var i = 0; i < params.length; i++) {
 		parameters += (i > 0 ? "&" : "") + params[i][0] + "=" + encodeURI(params[i][1]);
 	}
@@ -1022,7 +1029,7 @@ function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
 		fd.append("session_token", session_token);
 		fd.append("unique_id", rand_str);
 		var userdata_count = wfu_get_userdata_count(sid); 
-		for (var ii = 0; ii < userdata_count; ii++)  
+		for (var ii = 0; ii < userdata_count; ii++)
 			fd.append("hiddeninput_" + sid + "_userdata_" + ii, document.getElementById('hiddeninput_' + sid + '_userdata_' + ii).value);
 
 		// define variables
@@ -1040,7 +1047,8 @@ function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
 		xhr.is_admin = JSONobj.is_admin;
 		xhr.finish_time = d.getTime() + parseInt(GlobalData.consts.max_time_limit) * 1000;
 		xhr.fail_colors = JSONobj.fail_colors;
-		xhr.error_message_header = GlobalData.consts.message_header.replace(/%username%/g, "no data");
+//		xhr.error_message_header = GlobalData.consts.message_header.replace(/%username%/g, "no data");
+		xhr.error_message_header = JSONobj.error_header.replace(/%username%/g, "no data");
 		xhr.error_message_header = xhr.error_message_header.replace(/%useremail%/g, "no data");
 		xhr.error_message_header = xhr.error_message_header.replace(/%filename%/g, file.name);
 		xhr.error_message_header = xhr.error_message_header.replace(/%filepath%/g, file.name);

@@ -3,7 +3,7 @@ Contributors: nickboss
 Donate link: http://www.iptanus.com/support/wordpress-file-upload
 Tags: upload, upload file, upload files, multiple, multiple upload, multiple uploads, captcha, progress bar, form, ajax, directory, HTML5, filelist
 Requires at least: 2.9.2
-Tested up to: 3.8
+Tested up to: 3.8.1
 Stable tag: "trunk"
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -26,7 +26,7 @@ The characteristics of the plugin are:
 * You can have more than one instances of the shortcode in the same page.
 * It includes a file browser.
 * It includes an overall upload progress bar.
-* It supports localization.
+* It supports multilingual characters and localization.
 * It integrates with WP-Filebase.
 * It is highly customizable with many options.
 * It produces notification messages and e-mails.
@@ -100,6 +100,12 @@ The plugin is designed not to expose website information by using sessions. Para
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 2.3.1 =
+* added option to restore default value for each attribute in Shortcode Composer
+* added support for multilingual characters
+* correction of bug in Shortcode Composer that was not allowing attributes with singular and plural form to be saved
+* correction of bug that was not changing errormessage attribute in some cases
 
 = 2.2.3 =
 * correction of bug that was freezing the Shortcode Composer in some cases
@@ -263,6 +269,9 @@ Initial version.
 
 == Upgrade Notice ==
 
+= 2.3.1 =
+Upgrade to add some features and address some minor bugs.
+
 = 2.2.3 =
 Upgrade to address some minor bugs.
 
@@ -405,6 +414,7 @@ A detailed list of attributes, together with instructions is shown below:
 * **redirectlink:** This attribute defines the url of the redirection page. Please use the prefix "http://" if the redirection page is in another domain, otherwise the server will assume that the url is relative to the server path.
 
 *Other Administrator Options*
+
 * **adminmessages:** This attribute offers the option to administrator users to receive additional information about upload errors. These messages will be visible only to administrators. Default value is "false".
 * **forceclassic:** This attribute defines if the plugin will use the old classic functionality to upload files (using forms) or ajax functionality (supported in HTML5). Default value is "false". Please note that if your browser does not support HTML ajax functionality, then the plugin will automatically switch to classic one.
 * **testmode:** This attribute defines if the plugin will be shown in test mode. Default value is "false". If it is set to "true", then the plugin will obtain a "dummy" functionality (it will not be able to upload files) and it will appear showing all of its objects (the selection of subfolders, progress bar, a test message), while the buttons will show a "Test Mode" message when pressed. This option can be used to configure the dimensions of the individual objects of the plugin more easily.

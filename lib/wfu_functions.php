@@ -25,6 +25,9 @@ function wfu_upload_plugin_wildcard_match($pattern, $str) {
 }
 
 function wfu_plugin_encode_string($string) {
+	$array = unpack('H*', $string);
+	return $array[1];
+
 	$array = unpack('C*', $string);
 	$new_string = "";	
 	for ($i = 1; $i <= count($array); $i ++) {
@@ -34,6 +37,8 @@ function wfu_plugin_encode_string($string) {
 }
 
 function wfu_plugin_decode_string($string) {
+	return pack('H*', $string);
+
 	$new_string = "";	
 	for ($i = 0; $i < strlen($string); $i += 2 ) {
 		$new_string .= sprintf("%c", hexdec(substr($string, $i ,2)));

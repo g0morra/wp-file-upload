@@ -30,6 +30,47 @@ div.wfu_help_container
 	border: none;
 }
 
+div.wfu_help_container img
+{
+	visibility: hidden;
+}
+
+table.wfu_main_table th:hover div.wfu_help_container img
+{
+	visibility: visible;
+}
+
+table.wfu_inner_table th:hover div.wfu_help_container img
+{
+	visibility: visible;
+}
+
+div.wfu_restore_container
+{
+	display: inline-block;
+	position: relative;
+	top: 4px;
+	padding: 0;
+	margin: 0;
+	background: none;
+	border: none;
+}
+
+div.wfu_restore_container img
+{
+	visibility: hidden;
+}
+
+table.wfu_main_table th:hover div.wfu_restore_container img
+{
+	visibility: visible;
+}
+
+table.wfu_inner_table th:hover div.wfu_restore_container img
+{
+	visibility: visible;
+}
+
 div.wfu_td_div
 {
 	display: block;

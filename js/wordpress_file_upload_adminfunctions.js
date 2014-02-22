@@ -291,7 +291,7 @@ function wfu_admin_recreate_placements_panel(placements_text) {
 		item = container.childNodes[i];
 		if (item.className == "wfu_component_box") {
 			itemname = item.id.replace("wfu_component_box_", "");
-			item.style.display = "none";
+			item.style.display = "inline-block";
 			item.className = "wfu_component_box wfu_inbase";
 			document.getElementById('wfu_component_box_container_' + itemname).appendChild(item);
 		}
@@ -336,23 +336,27 @@ function wfu_admin_recreate_placements_panel(placements_text) {
 	wfu_attach_separator_dragdrop_events();
 }
 
-function wfu_userdata_add_field(obj) {
-	var line = obj.parentNode;
-	var newline = line.cloneNode(true);
+function wfu_userdata_edit_field(line, label, required) {
 	var item;
-	for (var i = 0; i < newline.childNodes.length; i ++) {
-		item = newline.childNodes[i];
+	for (var i = 0; i < line.childNodes.length; i ++) {
+		item = line.childNodes[i];
 		if (item.tagName == "INPUT") {
 			if (item.type == "text") {
-				item.value = "";
+				item.value = label;
 				wfu_attach_element_handlers(item, wfu_update_userfield_value);
 			}
 			else if (item.type == "checkbox") {
-				item.checked = false;
+				item.checked = required;
 			}
 		}
 		else if (item.tagName == "DIV") item.className = "wfu_userdata_action";
 	}
+}
+
+function wfu_userdata_add_field(obj) {
+	var line = obj.parentNode;
+	var newline = line.cloneNode(true);
+	wfu_userdata_edit_field(newline, "", false);
 	line.parentNode.insertBefore(newline, line.nextSibling);
 }
 
@@ -454,10 +458,18 @@ function wfu_update_dimension_value(e) {
 	}
 }
 
-function wfu_update_ptext_value(attribute) {
+function wfu_update_ptext_value(e) {
+	e = e || window.event;
+	var item = e.target;
+	var attribute = item.id.replace("wfu_attribute_", "");
+	attribute = attribute.substr(2);
 	var singular = document.getElementById("wfu_attribute_s_" + attribute).value;
 	var plural = document.getElementById("wfu_attribute_p_" + attribute).value;
-	document.getElementById("wfu_attribute_value_" + attribute).value = singular + "/" + plural;
+	var val = singular + "/" + plural;
+	if (val !== item.oldVal) {
+		item.oldVal = val;
+		document.getElementById("wfu_attribute_value_" + attribute).value = val;
+	}
 	wfu_generate_shortcode();
 }
 
@@ -550,6 +562,8 @@ function wfu_Attach_Admin_Events() {
 	wfu_Attach_Admin_DragDrop_Events();
 	var text_elements = document.getElementsByName("wfu_text_elements");
 	for (var i = 0; i < text_elements.length; i++) wfu_attach_element_handlers(text_elements[i], wfu_update_text_value);
+	var ptext_elements = document.getElementsByName("wfu_ptext_elements");
+	for (var i = 0; i < ptext_elements.length; i++) wfu_attach_element_handlers(ptext_elements[i], wfu_update_ptext_value);
 	var triplecolor_elements = document.getElementsByName("wfu_triplecolor_elements");
 	for (var i = 0; i < triplecolor_elements.length; i++) wfu_attach_element_handlers(triplecolor_elements[i], wfu_update_triplecolor_value);
 	var dimension_elements = document.getElementsByName("wfu_dimension_elements_widths");
@@ -609,10 +623,14 @@ function wfu_GetHttpRequestObject() {
 function wfu_plugin_encode_string(str) {
 	var i = 0;
 	var newstr = "";
+	var num;
 	var hex = "";
 	for (i = 0; i < str.length; i++) {
-		hex = str.charCodeAt(i).toString(16);
-		if (hex.length == 1) hex = "0" + hex; 
+		num = str.charCodeAt(i);
+		if (num >= 2048) num = (((num & 16773120) | 917504) << 4) + (((num & 4032) | 8192) << 2) + ((num & 63) | 128);
+		else if (num >= 128) num = (((num & 65472) | 12288) << 2) + ((num & 63) | 128);
+		hex = num.toString(16);
+		if (hex.length == 1 || hex.length == 3 || hex.length == 5) hex = "0" + hex; 
 		newstr += hex;
 	}
 	return newstr;
@@ -643,7 +661,7 @@ function wfu_save_shortcode() {
 	params[1][0] = 'shortcode';
 	params[1][1] = wfu_plugin_encode_string(ShortcodeString);
 
-	var parameters = '';  
+	var parameters = '';
 	for (var i = 0; i < params.length; i++) {
 		parameters += (i > 0 ? "&" : "") + params[i][0] + "=" + encodeURI(params[i][1]);
 	}
@@ -691,4 +709,165 @@ function wfu_fadeout_element(interval) {
 	}
 
 	setTimeout('wfu_adjust_opacity("0.0")', i * interval / reps);
+}
+
+function wfu_apply_value(attribute, type, value) {
+	if (type == "onoff") {
+		document.getElementById("wfu_attribute_" + attribute).className = "wfu_onoff_container_" + (value != "true" ? "on" : "off");
+		wfu_admin_onoff_clicked(attribute);
+	}
+	else if (type == "text" || type == "ltext" || type == "integer" || type == "float" || type == "mtext" || type == "color" ) {
+		var item = document.getElementById("wfu_attribute_" + attribute);
+		if (item.tagName == "TEXTAREA") value = value.replace(/\%n\%/gm,"\n");
+		if (type == "color") {
+			var rgb = colourNameToHex(value);
+			if (!rgb) rgb = value;
+			jQuery('#wfu_attribute_' + attribute).wpColorPicker('color', rgb);
+		}
+		item.value = value;
+		wfu_update_text_value({target:item});
+	}
+	else if (type == "placements") {
+		wfu_admin_recreate_placements_panel(value);
+		document.getElementById("wfu_attribute_value_placements").value = value;
+		wfu_generate_shortcode();
+	}
+	else if (type == "radio") {
+		var radios = document.getElementsByName("wfu_radioattribute_" + attribute);
+		for (var i = 0; i < radios.length; i++)
+			radios[i].checked = (radios[i].value == value || ("*" + radios[i].value) == value);
+		wfu_admin_radio_clicked(attribute);
+	}
+	else if (type == "ptext" ) {
+		var parts = value.split("/");
+		var singular = parts.length < 1 ? "" : parts[0];
+		var plural = parts.length < 2 ? singular : parts[1];
+		var item1 = document.getElementById("wfu_attribute_s_" + attribute);
+		item1.value = singular;
+		var item2 = document.getElementById("wfu_attribute_p_" + attribute);
+		item2.value = plural;
+		wfu_update_ptext_value({target:item1});
+		wfu_update_ptext_value({target:item2});
+	}
+	else if (type == "rolelist" ) {
+		value = value.toLowerCase();
+		if (value == "all") document.getElementById("wfu_attribute_" + attribute + "_all").checked = true;
+		else {
+			document.getElementById("wfu_attribute_" + attribute + "_all").checked = false;
+			var roles = value.split(",");
+			for (var i = 0; i < roles.length; i++) roles[i] = roles[i].trim();
+			var item = document.getElementById("wfu_attribute_" + attribute);
+			for (var i = 0; i < item.options.length; i++)
+				item.options[i].selected = (roles.indexOf(item.options[i].value) > -1);
+		}
+		wfu_update_rolelist_value(attribute);
+	}
+	else if (type == "dimensions" ) {
+		var dims = value.split(",");
+		var details, nam, val, item;
+		var group = document.getElementsByName("wfu_dimension_elements_" + attribute);
+		for (var i = 0; i < group.length; i++) group[i].value = "";
+		for (var i = 0; i < dims.length; i++) {
+			details = dims[i].split(":", 2);
+			nam = details.length < 1 ? "" : details[0];
+			val = details.length < 2 ? nam : details[1];
+			item = document.getElementById("wfu_attribute_" + attribute + "_" + nam.trim());
+			if (item) item.value = val.trim();
+		}
+		item = group[0];
+		wfu_update_dimension_value({target:item});
+	}
+	else if (type == "userfields") {
+		var fields_arr = value.split("/");
+		var is_req;
+		var fields = Array();
+		for (var i = 0; i < fields_arr.length; i++) {
+			is_req = (fields_arr[i].substr(0, 1) == "*");
+			if (is_req) fields_arr[i] = fields_arr[i].substr(1);
+			if (fields_arr[i] != "") fields.push({name:fields_arr[i], required:is_req});
+		}
+		var container = document.getElementById("wfu_attribute_" + attribute);
+		var first = null;
+		var remove_array = Array();
+		for (var i = 0; i < container.childNodes.length; i++)
+			if (container.childNodes[i].nodeType === 1) {
+				if (first == null) first = container.childNodes[i];
+				else remove_array.push(container.childNodes[i]);
+			}
+		for (var i = 0; i < remove_array.length; i++) container.removeChild(remove_array[i]);
+		wfu_userdata_edit_field(first, "", false);
+		
+		var newline;
+		var prevline = first;
+		for (var i = 0; i < fields.length; i++) {
+			if (i == 0) wfu_userdata_edit_field(first, fields[i].name, fields[i].required);
+			else {
+				newline = prevline.cloneNode(true);
+				wfu_userdata_edit_field(newline, fields[i].name, fields[i].required);
+				container.insertBefore(newline, prevline.nextSibling);
+				prevline = newline;
+			}
+		}
+		var item;
+		for (var i = 0; i < first.childNodes.length; i++) {
+			item = first.childNodes[i];
+			if (item.tagName == "INPUT") break;
+		}
+		wfu_update_userfield_value({target:item});
+	}
+	else if (type == "color-triplet") {
+		var colors = value.split(",");
+		for (var i = 0; i < colors.length; i++) colors[i] = colors[i].trim();
+		if (colors.length == 2) colors = [colors[0], colors[1], "#000000"];
+		else if (colors.length == 1) colors = [colors[0], "#FFFFFF", "#000000"];
+		else if (colors.length < 3) colors = ["#000000", "#FFFFFF", "#000000"];
+		var rgb = colourNameToHex(colors[0]);
+		if (!rgb) rgb = colors[0];
+		jQuery('#wfu_attribute_' + attribute + "_color").wpColorPicker('color', rgb);
+		var item = document.getElementById("wfu_attribute_" + attribute + "_color");
+		item.value = colors[0];
+		rgb = colourNameToHex(colors[1]);
+		if (!rgb) rgb = colors[1];
+		jQuery('#wfu_attribute_' + attribute + "_bgcolor").wpColorPicker('color', rgb);
+		document.getElementById("wfu_attribute_" + attribute + "_bgcolor").value = colors[1];
+		rgb = colourNameToHex(colors[2]);
+		if (!rgb) rgb = colors[2];
+		jQuery('#wfu_attribute_' + attribute + "_borcolor").wpColorPicker('color', rgb);
+		document.getElementById("wfu_attribute_" + attribute + "_borcolor").value = colors[2];
+		wfu_update_triplecolor_value({target:item});
+	}
+}
+
+function colourNameToHex(colour)
+{
+	var colours = {"aliceblue":"#f0f8ff","antiquewhite":"#faebd7","aqua":"#00ffff","aquamarine":"#7fffd4","azure":"#f0ffff",
+		"beige":"#f5f5dc","bisque":"#ffe4c4","black":"#000000","blanchedalmond":"#ffebcd","blue":"#0000ff","blueviolet":"#8a2be2","brown":"#a52a2a","burlywood":"#deb887",
+		"cadetblue":"#5f9ea0","chartreuse":"#7fff00","chocolate":"#d2691e","coral":"#ff7f50","cornflowerblue":"#6495ed","cornsilk":"#fff8dc","crimson":"#dc143c","cyan":"#00ffff",
+		"darkblue":"#00008b","darkcyan":"#008b8b","darkgoldenrod":"#b8860b","darkgray":"#a9a9a9","darkgreen":"#006400","darkkhaki":"#bdb76b","darkmagenta":"#8b008b","darkolivegreen":"#556b2f",
+		"darkorange":"#ff8c00","darkorchid":"#9932cc","darkred":"#8b0000","darksalmon":"#e9967a","darkseagreen":"#8fbc8f","darkslateblue":"#483d8b","darkslategray":"#2f4f4f","darkturquoise":"#00ced1",
+		"darkviolet":"#9400d3","deeppink":"#ff1493","deepskyblue":"#00bfff","dimgray":"#696969","dodgerblue":"#1e90ff",
+		"firebrick":"#b22222","floralwhite":"#fffaf0","forestgreen":"#228b22","fuchsia":"#ff00ff",
+		"gainsboro":"#dcdcdc","ghostwhite":"#f8f8ff","gold":"#ffd700","goldenrod":"#daa520","gray":"#808080","green":"#008000","greenyellow":"#adff2f",
+		"honeydew":"#f0fff0","hotpink":"#ff69b4",
+		"indianred ":"#cd5c5c","indigo ":"#4b0082","ivory":"#fffff0","khaki":"#f0e68c",
+		"lavender":"#e6e6fa","lavenderblush":"#fff0f5","lawngreen":"#7cfc00","lemonchiffon":"#fffacd","lightblue":"#add8e6","lightcoral":"#f08080","lightcyan":"#e0ffff","lightgoldenrodyellow":"#fafad2",
+		"lightgrey":"#d3d3d3","lightgreen":"#90ee90","lightpink":"#ffb6c1","lightsalmon":"#ffa07a","lightseagreen":"#20b2aa","lightskyblue":"#87cefa","lightslategray":"#778899","lightsteelblue":"#b0c4de",
+		"lightyellow":"#ffffe0","lime":"#00ff00","limegreen":"#32cd32","linen":"#faf0e6",
+		"magenta":"#ff00ff","maroon":"#800000","mediumaquamarine":"#66cdaa","mediumblue":"#0000cd","mediumorchid":"#ba55d3","mediumpurple":"#9370d8","mediumseagreen":"#3cb371","mediumslateblue":"#7b68ee",
+		"mediumspringgreen":"#00fa9a","mediumturquoise":"#48d1cc","mediumvioletred":"#c71585","midnightblue":"#191970","mintcream":"#f5fffa","mistyrose":"#ffe4e1","moccasin":"#ffe4b5",
+		"navajowhite":"#ffdead","navy":"#000080",
+		"oldlace":"#fdf5e6","olive":"#808000","olivedrab":"#6b8e23","orange":"#ffa500","orangered":"#ff4500","orchid":"#da70d6",
+		"palegoldenrod":"#eee8aa","palegreen":"#98fb98","paleturquoise":"#afeeee","palevioletred":"#d87093","papayawhip":"#ffefd5","peachpuff":"#ffdab9","peru":"#cd853f","pink":"#ffc0cb","plum":"#dda0dd","powderblue":"#b0e0e6","purple":"#800080",
+		"red":"#ff0000","rosybrown":"#bc8f8f","royalblue":"#4169e1",
+		"saddlebrown":"#8b4513","salmon":"#fa8072","sandybrown":"#f4a460","seagreen":"#2e8b57","seashell":"#fff5ee","sienna":"#a0522d","silver":"#c0c0c0","skyblue":"#87ceeb","slateblue":"#6a5acd","slategray":"#708090","snow":"#fffafa","springgreen":"#00ff7f","steelblue":"#4682b4",
+		"tan":"#d2b48c","teal":"#008080","thistle":"#d8bfd8","tomato":"#ff6347","turquoise":"#40e0d0",
+		"violet":"#ee82ee",
+		"wheat":"#f5deb3","white":"#ffffff","whitesmoke":"#f5f5f5",
+		"yellow":"#ffff00","yellowgreen":"#9acd32"
+	};
+
+	if (typeof colours[colour.toLowerCase()] != 'undefined')
+	return colours[colour.toLowerCase()];
+
+	return false;
 }

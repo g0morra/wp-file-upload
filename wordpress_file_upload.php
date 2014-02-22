@@ -4,7 +4,7 @@ session_start();
 Plugin Name: Wordpress File Upload
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.2.3
+Version: 2.3.1
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -15,7 +15,7 @@ Copyright (C) 2010-2014 Nickolas Bossinas
 Contact me at http://www.iptanus.com
 
 This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by          
+it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
@@ -124,7 +124,7 @@ function wordpress_file_upload_function($incomingfromhandler) {
 	if ( is_user_logged_in() ) $username = $user->user_login;
 	else $username = "guests";
 	$replace = array ($username, $blog_id, $post->ID, get_the_title($post->ID));
-	$params["uploadpath"] =  preg_replace($search, $replace, $params["uploadpath"]);
+	$params["uploadpath"] = preg_replace($search, $replace, $params["uploadpath"]);
 
 	/* Determine if userdata fields have been defined */
 	$userdata_fields = array(); 
@@ -178,6 +178,7 @@ function wordpress_file_upload_function($incomingfromhandler) {
 		$ajax_params['params_index'] = $params_index;
 		$ajax_params['debugmode'] = $params["debugmode"];
 		$ajax_params['is_admin'] = ( $plugin_upload_user_role == 'administrator' ? "true" : "false" );
+		$ajax_params["error_header"] = $params["errormessage"];
 		$ajax_params["fail_colors"] = $params["failmessagecolors"];
 
 		$ajax_params_str = wfu_encode_array_to_string($ajax_params);
@@ -203,7 +204,7 @@ function wordpress_file_upload_function($incomingfromhandler) {
 
 	/* Compose the html code for the plugin */
 	$wordpress_file_upload_output = "";
-	$wordpress_file_upload_output .= '<div id="wordpress_file_upload_block_'.$sid.'" class="file_div_clean">';  
+	$wordpress_file_upload_output .= '<div id="wordpress_file_upload_block_'.$sid.'" class="file_div_clean">';
 	$itemplaces = explode("/", $params["placements"]);
 	foreach ( $itemplaces as $section ) {
 		$items_in_section = explode("+", trim($section));
@@ -236,10 +237,10 @@ function wordpress_file_upload_function($incomingfromhandler) {
 	$consts = wfu_set_javascript_constants();
 	$handler = 'function() { wfu_Initialize_Consts("'.$consts.'") }';
 	$wordpress_file_upload_output .= "\n\t".'<script type="text/javascript">if(window.addEventListener) { window.addEventListener("load", '.$handler.', false); } else if(window.attachEvent) { window.attachEvent("onload", '.$handler.'); } else { window["onload"] = '.$handler.'; }</script>';
-	$wordpress_file_upload_output .= '</div>';  
-//	$wordpress_file_upload_output .= '<div>';  
-//	$wordpress_file_upload_output .= wfu_test_admin();  
-//	$wordpress_file_upload_output .= '</div>';  
+	$wordpress_file_upload_output .= '</div>';
+//	$wordpress_file_upload_output .= '<div>';
+//	$wordpress_file_upload_output .= wfu_test_admin();
+//	$wordpress_file_upload_output .= '</div>';
 
 //	The plugin uses sessions in order to detect if the page was loaded due to file upload or
 //	because the user pressed the Refresh button (or F5) of the page.

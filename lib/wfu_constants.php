@@ -30,7 +30,7 @@ DEFINE("WFU_REDIRECTLINK", "");
 DEFINE("WFU_ADMINMESSAGES", "false");
 DEFINE("WFU_SUCCESSMESSAGE", __('File %filename% uploaded successfully', 'wordpress-file-upload'));
 DEFINE("WFU_WARNINGMESSAGE", __('File %filename% uploaded successfully but with warnings', 'wordpress-file-upload'));  
-DEFINE("WFU_ERRORMESSAGE", __('File %filename% not uploaded', 'wordpress-file-upload'));  
+DEFINE("WFU_ERRORMESSAGE", __('File %filename% not uploaded', 'wordpress-file-upload'));
 DEFINE("WFU_WAITMESSAGE", __('File %filename% is being uploaded', 'wordpress-file-upload'));  
 DEFINE("WFU_SUCCESSMESSAGECOLOR", "green");
 DEFINE("WFU_SUCCESSMESSAGECOLORS", "#006600,#EEFFEE,#006666");
@@ -161,6 +161,7 @@ DEFINE("WFU_HEADERMESSAGECOLORS_STATE11", "#666666,#EEEEEE,#333333");
 
 //define images
 DEFINE("WFU_IMAGE_ADMIN_HELP", $siteurl.WPFILEUPLOAD_DIR.'images/help_16.png');
+DEFINE("WFU_IMAGE_ADMIN_RESTOREDEFAULT", $siteurl.WPFILEUPLOAD_DIR.'images/restore_16.png');
 DEFINE("WFU_IMAGE_ADMIN_USERDATA_ADD", $siteurl.WPFILEUPLOAD_DIR.'images/add_12.png');
 DEFINE("WFU_IMAGE_ADMIN_USERDATA_REMOVE", $siteurl.WPFILEUPLOAD_DIR.'images/remove_12.png');
 DEFINE("WFU_IMAGE_SIMPLE_PROGBAR", $siteurl.WPFILEUPLOAD_DIR.'images/progbar.gif');

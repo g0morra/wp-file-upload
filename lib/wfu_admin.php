@@ -230,6 +230,7 @@ function wfu_shortcode_composer() {
 		$echo_str .= $dlp.'<tr class="form-field">';
 		$echo_str .= $dlp."\t".'<th scope="row"><div class="wfu_td_div">';
 		if ( $def['parent'] == "" ) $echo_str .= $dlp."\t\t".'<div class="wfu_shadow wfu_shadow_'.$governor['attribute'].$governor['inv'].'" style="display:'.( $governor['active'] ? 'none' : 'block' ).';"></div>';
+		$echo_str .= $dlp."\t\t".'<div class="wfu_restore_container" title="Double-click to restore defaults setting"><img src="'.WFU_IMAGE_ADMIN_RESTOREDEFAULT.'" ondblclick="wfu_apply_value(\''.$attr.'\', \''.$def['type'].'\', \''.$def['default'].'\');" ></div>';
 		$echo_str .= $dlp."\t\t".'<label for="wfu_attribute_'.$attr.'">'.$def['name'].'</label>';
 		$echo_str .= $dlp."\t\t".'<div class="wfu_help_container" title="'.$def['help'].'"><img src="'.WFU_IMAGE_ADMIN_HELP.'" ></div>';
 		$echo_str .= $dlp."\t".'</div></th>';
@@ -357,7 +358,7 @@ function wfu_shortcode_composer() {
 				if ( $field_raw != "" ) array_push($fields, array( "name" => $field_raw, "required" => $is_req ));
 			}
 			if ( count($fields) == 0 ) array_push($fields, array( "name" => "", "required" => false ));
-			$echo_str .= $dlp."\t\t".'<div class="wfu_userdata_container">';
+			$echo_str .= $dlp."\t\t".'<div id="wfu_attribute_'.$attr.'" class="wfu_userdata_container">';
 			foreach ( $fields as $field ) {
 				$echo_str .= $dlp."\t\t\t".'<div class="wfu_userdata_line">';
 				$echo_str .= $dlp."\t\t\t\t".'<input type="text" name="wfu_userfield_elements" value="'.$field['name'].'" />';
@@ -375,6 +376,9 @@ function wfu_shortcode_composer() {
 		elseif ( $def['type'] == "color-triplet" ) {
 			$triplet = explode(",", $def['value']);
 			foreach ( $triplet as $key => $item ) $triplet[$key] = trim($item);
+			if ( count($triplet) == 2 ) $triplet = array( $triplet[0], $triplet[1], "#000000");
+			elseif ( count($triplet) == 1 ) $triplet = array( $triplet[0], "#FFFFFF", "#000000");
+			elseif ( count($triplet) < 3 ) $triplet = array( "#000000", "#FFFFFF", "#000000");
 			$echo_str .= $dlp."\t\t".'<div class="wfu_color_container"><label style="display:inline-block; width:120px; margin-top:-16px;">Text Color</label><input id="wfu_attribute_'.$attr.'_color" type="text" class="wfu_color_field" name="wfu_triplecolor_elements" value="'.$triplet[0].'" /></div>';
 			$echo_str .= $dlp."\t\t".'<div class="wfu_color_container"><label style="display:inline-block; width:120px; margin-top:-16px;">Background Color</label><input id="wfu_attribute_'.$attr.'_bgcolor" type="text" class="wfu_color_field" name="wfu_triplecolor_elements" value="'.$triplet[1].'" /></div>';
 			$echo_str .= $dlp."\t\t".'<div class="wfu_color_container"><label style="display:inline-block; width:120px; margin-top:-16px;">Border Color</label><input id="wfu_attribute_'.$attr.'_borcolor" type="text" class="wfu_color_field" name="wfu_triplecolor_elements" value="'.$triplet[2].'" /></div>';
