@@ -159,6 +159,10 @@ function wfu_manage_settings($message = '') {
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=sync_db" class="button" title="Update database to reflect current status of files">Sync Database</a>';
 	$echo_str .= "\n\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">Settings</h3>';
 	$echo_str .= "\n\t\t".'<form enctype="multipart/form-data" name="editsettings" id="editsettings" method="post" action="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=edit_settings" class="validate">';
+	$nonce = wp_nonce_field('wfu_edit_admin_settings', '_wpnonce', false, false);
+	$nonce_ref = wp_referer_field(false);
+	$echo_str .= "\n\t\t\t".$nonce;
+	$echo_str .= "\n\t\t\t".$nonce_ref;
 	$echo_str .= "\n\t\t\t".'<input type="hidden" name="action" value="edit_settings">';
 	$echo_str .= "\n\t\t\t".'<table class="form-table">';
 	$echo_str .= "\n\t\t\t\t".'<tbody>';
@@ -194,6 +198,7 @@ function wfu_manage_settings($message = '') {
 
 function wfu_update_settings() {
 	if ( !current_user_can( 'manage_options' ) ) return;
+	if ( !check_admin_referer('wfu_edit_admin_settings') ) return;
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
 	$new_plugin_options = array();
 

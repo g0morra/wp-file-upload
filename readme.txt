@@ -110,6 +110,9 @@ Administrators can view and manage the uploaded files from the File Browser that
 
 == Changelog ==
 
+= 2.4.2 =
+* intermediate update to address some vulnerability issues
+
 = 2.4.1 =
 * added filters and actions before and after each file upload - check below Filters/Actions section for instructions how to use them
 * added storage of file info, including user data, in database
@@ -306,6 +309,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.4.2 =
+Important upgrade to address some vulnerability issues.
 
 = 2.4.1 =
 Upgrade to add many features and address some minor bugs.
