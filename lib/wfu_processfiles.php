@@ -73,6 +73,16 @@ function wfu_process_files($params, $method) {
 	else $files_count = 0;
 	$params_output_array["general"]['files_count'] = $files_count;
 
+	/* append userdata fields to upload path */
+	$search = array ( );	 
+	$replace = array ( );
+	foreach ( $userdata_fields as $userdata_key => $userdata_field ) { 
+		$ind = 1 + $userdata_key;
+		array_push($search, '/%userdata'.$ind.'%/');  
+		array_push($replace, $userdata_field["value"]);
+	}   
+	$params["uploadpath"] =  preg_replace($search, $replace, $params["uploadpath"]);
+
 	/* append subfolder name to upload path */
 	if ( $params["askforsubfolders"] == "true" && $params['subdir_selection_index'] >= 1 ) {
 		if ( substr($params["uploadpath"], -1, 1) == "/" ) $params["uploadpath"] .= $params['subfoldersarray'][$params['subdir_selection_index']];

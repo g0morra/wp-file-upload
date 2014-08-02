@@ -3,7 +3,7 @@ Contributors: nickboss
 Donate link: http://www.iptanus.com/support/wordpress-file-upload
 Tags: upload, upload file, upload files, multiple, multiple upload, multiple uploads, captcha, progress bar, form, ajax, directory, HTML5, filelist, gallery, image gallery, browser, file browser, gallery, image gallery, shortcode, logging, file logging
 Requires at least: 2.9.2
-Tested up to: 3.8.1
+Tested up to: 3.9.1
 Stable tag: "trunk"
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -109,6 +109,9 @@ Administrators can view and manage the uploaded files from the File Browser that
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 2.4.3 =
+* correction of bug to allow uploadpath to receive userdata as parameter
 
 = 2.4.2 =
 * intermediate update to address some vulnerability issues
@@ -309,6 +312,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.4.2 =
+Upgrade to address some functionality issues.
 
 = 2.4.2 =
 Important upgrade to address some vulnerability issues.
