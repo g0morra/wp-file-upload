@@ -110,6 +110,9 @@ Administrators can view and manage the uploaded files from the File Browser that
 
 == Changelog ==
 
+= 2.4.4 =
+* intermediate update to make the plugin more immune to hackers
+
 = 2.4.3 =
 * correction of bug to allow uploadpath to receive userdata as parameter
 
@@ -313,7 +316,10 @@ Initial version.
 
 == Upgrade Notice ==
 
-= 2.4.2 =
+= 2.4.4 =
+Important upgrade to address some vulnerability issues.
+
+= 2.4.3 =
 Upgrade to address some functionality issues.
 
 = 2.4.2 =

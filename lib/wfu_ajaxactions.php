@@ -67,19 +67,19 @@ function wfu_ajax_action_callback() {
 	//check referer using server sessions to avoid CSRF attacks
 	if ( $_SESSION["wfu_token_".$arr['shortcode_id']] != $_POST['session_token'] ) {
 		echo "Session failed!<br/><br/>Session Data:<br/>";
-		print_r($_SESSION);
+		print_r(wfu_sanitize($_SESSION));
 		echo "<br/><br/>Post Data:<br/>";
-		print_r($_POST);
+		print_r(wfu_sanitize($_POST));
 		die();
 	}
 
 	if ( $user->user_login != $arr['user_login'] ) {
 		echo "User failed!<br/><br/>User Data:<br/>";
-		print_r($user);
+		print_r(wfu_sanitize($user));
 		echo "<br/><br/>Post Data:<br/>";
-		print_r($_POST);
+		print_r(wfu_sanitize($_POST));
 		echo "<br/><br/>Params Data:<br/>";
-		print_r($arr);
+		print_r(wfu_sanitize($arr));
 		die();
 	}
 

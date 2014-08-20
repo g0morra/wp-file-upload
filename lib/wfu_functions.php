@@ -103,6 +103,24 @@ function wfu_array_remove_nulls(&$arr) {
 			array_splice($arr, $key, 1);
 }
 
+function wfu_safe_array($arr) {
+	return array_map("htmlspecialchars", $arr);
+}
+
+function wfu_sanitize($var) {
+	$typ = gettype($var);
+	if ( $typ == "boolean" || $typ == "integer" || $typ == "double" || $typ == "resource" || $typ == "NULL" )
+		return $var;
+	elseif ( $typ == "string" )
+		return htmlspecialchars($var);
+	elseif ( $typ == "array" || $typ == "object" ) {
+		foreach ( $var as &$item ) $item = wfu_sanitize($item);
+		return $var;
+	}
+	else
+		return $typ;
+}
+
 function wfu_shortcode_string_to_array($shortcode) {
 	function _wfu_preg_replace_callback_alt($contents, $token) {
 		$in_block = false;
