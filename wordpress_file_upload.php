@@ -4,7 +4,7 @@ session_start();
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.4.4
+Version: 2.4.5
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -226,6 +226,7 @@ function wordpress_file_upload_function($incomingfromhandler) {
 			if ( $item_in_section == "title" ) array_push($section_array, $title_item);
 			elseif ( $item_in_section == "filename" ) array_push($section_array, $textbox_item);
 			elseif ( $item_in_section == "selectbutton" ) array_push($section_array, $uploadform_item);
+			elseif ( $item_in_section == "confirmbox" && preg_match("/(^|,)\s*checkbox\s*(,|$)/", $params['security_active']) && $params["singlebutton"] != "true" ) array_push($section_array, $confirmbox_item);
 			elseif ( $item_in_section == "uploadbutton" && $params["singlebutton"] != "true" ) array_push($section_array, $submit_item);
 			elseif ( $item_in_section == "subfolders" ) array_push($section_array, $subfolders_item);
 			elseif ( $item_in_section == "progressbar" ) array_push($section_array, $progressbar_item);

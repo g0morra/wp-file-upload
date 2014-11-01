@@ -127,9 +127,9 @@ function wfu_shortcode_composer() {
 		$echo_str .= $dlp.'<tr class="form-field">';
 		$echo_str .= $dlp."\t".'<th scope="row"><div class="wfu_td_div">';
 		if ( $def['parent'] == "" ) $echo_str .= $dlp."\t\t".'<div class="wfu_shadow wfu_shadow_'.$governor['attribute'].$governor['inv'].'" style="display:'.( $governor['active'] ? 'none' : 'block' ).';"></div>';
-		$echo_str .= $dlp."\t\t".'<div class="wfu_restore_container" title="Double-click to restore defaults setting"><img src="'.WFU_IMAGE_ADMIN_RESTOREDEFAULT.'" ondblclick="wfu_apply_value(\''.$attr.'\', \''.$def['type'].'\', \''.$def['default'].'\');" ></div>';
+		$echo_str .= $dlp."\t\t".'<div class="wfu_restore_container" title="Double-click to restore defaults setting"><img src="'.WFU_IMAGE_ADMIN_RESTOREDEFAULT.'" ondblclick="wfu_apply_value(\''.$attr.'\', \''.$def['type'].'\', \''.$def['default'].'\');" /></div>';
 		$echo_str .= $dlp."\t\t".'<label for="wfu_attribute_'.$attr.'">'.$def['name'].'</label>';
-		$echo_str .= $dlp."\t\t".'<div class="wfu_help_container" title="'.$def['help'].'"><img src="'.WFU_IMAGE_ADMIN_HELP.'" ></div>';
+		$echo_str .= $dlp."\t\t".'<div class="wfu_help_container" title="'.$def['help'].'"><img src="'.WFU_IMAGE_ADMIN_HELP.'" /></div>';
 		$echo_str .= $dlp."\t".'</div></th>';
 		$echo_str .= $dlp."\t".'<td style="vertical-align:top;"><div class="wfu_td_div">';
 		if ( $def['parent'] == "" ) $echo_str .= $dlp."\t\t".'<div class="wfu_shadow wfu_shadow_'.$governor['attribute'].$governor['inv'].'" style="display:'.( $governor['active'] ? 'none' : 'block' ).';"></div>';
@@ -160,7 +160,7 @@ function wfu_shortcode_composer() {
 				foreach ( $items_in_section as $item_in_section ) {
 					if ( key_exists($item_in_section, $components_indexed) ) {
 						$components_used[$item_in_section] = true;
-						$echo_str .= $dlp."\t\t\t\t".'<div id="wfu_component_box_'.$item_in_section.'" class="wfu_component_box" draggable="true">'.str_replace("XXX", $components_indexed[$item_in_section]['name'], $centered_content).'</div>';
+						$echo_str .= $dlp."\t\t\t\t".'<div id="wfu_component_box_'.$item_in_section.'" class="wfu_component_box" draggable="true" title="'.$components_indexed[$item_in_section]['help'].'">'.str_replace("XXX", $components_indexed[$item_in_section]['name'], $centered_content).'</div>';
 						$echo_str .= $dlp."\t\t\t\t".'<div class="wfu_component_separator_ver"></div>';
 					}
 				}
@@ -176,7 +176,7 @@ function wfu_shortcode_composer() {
 				$echo_str .= $dlp."\t\t\t\t".'<div id="wfu_component_box_container_'.$component['id'].'" class="wfu_component_box_container">';
 				$echo_str .= $dlp."\t\t\t\t\t".'<div class="wfu_component_box_base">'.str_replace("XXX", $component['name'], $centered_content).'</div>';
 				if ( !$components_used[$component['id']] )
-					$echo_str .= $dlp."\t\t\t\t\t".'<div id="wfu_component_box_'.$component['id'].'" class="wfu_component_box wfu_inbase" draggable="true">'.str_replace("XXX", $component['name'], $centered_content).'</div>';
+					$echo_str .= $dlp."\t\t\t\t\t".'<div id="wfu_component_box_'.$component['id'].'" class="wfu_component_box wfu_inbase" draggable="true" title="'.$component['help'].'">'.str_replace("XXX", $component['name'], $centered_content).'</div>';
 				$echo_str .= $dlp."\t\t\t\t".'</div>'.( ($ii++) % 3 == 0 ? '<br />' : '' );
 			}
 			$echo_str .= $dlp."\t\t\t".'</div>';
@@ -296,6 +296,37 @@ function wfu_shortcode_composer() {
 			$echo_str .= $dlp."\t\t\t".'<input id="wfu_subfolders_newitemlevel_'.$attr.'" type="hidden" value="" />';
 			$echo_str .= $dlp."\t\t\t".'<input id="wfu_subfolders_newitemlevel2_'.$attr.'" type="hidden" value="" />';
 			$echo_str .= $dlp."\t\t".'</div>';
+		}
+		elseif ( $def['type'] == "mchecklist" ) {
+			$help_count = 0;
+			foreach ( $def['listitems'] as $key => $item ) {
+				$parts = explode("/", $item);
+				if ( count($parts) == 1 ) {
+					$items[$key]['id'] = $item;
+					$items[$key]['help'] = '';
+				}
+				else {
+					$items[$key]['id'] = $parts[0];
+					$items[$key]['help'] = $parts[1];
+					$help_count ++;
+				}
+			}
+			$def['value'] = strtolower($def['value']);
+			if ( $def['value'] == "all" ) $selected = array();
+			else $selected = explode(",", $def['value']);
+			foreach ( $selected as $key => $item ) $selected[$key] = trim($item);
+			$echo_str .= $dlp."\t\t".'<div id="wfu_attribute_'.$attr.'" class="wfu_mchecklist_container">';
+			$is_first = true;
+			foreach ( $items as $key => $item ) {
+				if ( !$is_first ) $echo_str .= "<br />";
+				$is_first = false;
+				$echo_str .= $dlp."\t\t\t".'<div class="wfu_mchecklist_item"><input id="wfu_attribute_'.$attr.'_'.$key.'" type="checkbox"'.( $def['value'] == "all" || in_array($item['id'], $selected) ? ' checked="checked"' : '' ).( $def['value'] == "all" ? ' disabled="disabled"' : '' ).' onchange="wfu_update_mchecklist_value(\''.$attr.'\');" /><label for="wfu_attribute_'.$attr.'_'.$key.'">'.$item['id'].'</label>';
+				if ( $item['help'] != '' ) $echo_str .= '<div class="wfu_help_container" title="'.$item['help'].'"><img src="'.WFU_IMAGE_ADMIN_HELP.'" /></div>';
+				$echo_str .= '</div>';
+			}
+			$echo_str .= $dlp."\t\t".'</div>';
+			$echo_str .= $dlp."\t\t".'<div id="wfu_attribute_'.$attr.'_optionhelp" class="wfu_help_container" title="" style="display:none; position:absolute;"><img src="'.WFU_IMAGE_ADMIN_HELP.'" style="visibility:visible;" /></div>';
+			$echo_str .= $dlp."\t\t".'<div class="wfu_mchecklist_checkall"><input id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_mchecklist_value(\''.$attr.'\');"'.( $def['value'] == "all" ? ' checked="checked"' : '' ).' /> Select all</div>';
 		}
 		elseif ( $def['type'] == "rolelist" ) {
 			$roles = $wp_roles->get_names();

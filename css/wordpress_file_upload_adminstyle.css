@@ -475,6 +475,48 @@ table.wfu_subfolder_tools td div.wfu_subfolders_browser_container td div div.wfu
 	margin-top: 2px;
 }
 
+div.wfu_mchecklist_container
+{
+	display: inline-block;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 4px;
+}
+
+div.wfu_mchecklist_item
+{
+	display: inline-block;
+}
+
+div.wfu_mchecklist_item label
+{
+	vertical-align: baseline;
+	margin-left: 4px;
+	cursor: default;
+}
+
+div.wfu_mchecklist_item input:disabled + label
+{
+	color: gray;
+}
+
+div.wfu_mchecklist_item div
+{
+	margin-left: 4px;
+}
+
+div.wfu_mchecklist_item:hover img
+{
+	visibility: visible;
+}
+
+div.wfu_mchecklist_checkall
+{
+	display: inline-block;
+	vertical-align: top;
+	margin: 0px 0px 0px 10px;
+}
+
 div.wfu_rolelist_checkall
 {
 	display: inline-block;

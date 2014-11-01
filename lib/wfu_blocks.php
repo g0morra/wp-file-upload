@@ -137,6 +137,7 @@ function wfu_prepare_uploadform_block($params, $widths, $heights, $clickaction, 
 	return $uploadform_item;
 }
 
+
 /* Prepare the submit button */
 function wfu_prepare_submit_block($params, $widths, $heights, $clickaction) {
 	$sid = $params["uploadid"];

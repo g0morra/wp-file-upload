@@ -895,7 +895,15 @@ function wfu_send_notification_email($user, $only_filename_list, $target_path_li
 		$user_login = $user->user_login;
 		$user_email = $user->user_email;
 	}
-	$notifyrecipients =  trim(preg_replace('/%useremail%/', $user_email, $params["notifyrecipients"]));
+	$search = array ('/%useremail%/');	 
+	$replace = array ($user_email);
+	foreach ( $userdata_fields as $userdata_key => $userdata_field ) { 
+		$ind = 1 + $userdata_key;
+		array_push($search, '/%userdata'.$ind.'%/');  
+		array_push($replace, $userdata_field["value"]);
+	}   
+//	$notifyrecipients =  trim(preg_replace('/%useremail%/', $user_email, $params["notifyrecipients"]));
+	$notifyrecipients =  preg_replace($search, $replace, $params["notifyrecipients"]);
 	$search = array ('/%n%/');	 
 	$replace = array ("\n");
 	$notifyheaders =  preg_replace($search, $replace, $params["notifyheaders"]);

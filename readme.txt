@@ -110,6 +110,9 @@ Administrators can view and manage the uploaded files from the File Browser that
 
 == Changelog ==
 
+= 2.4.5 =
+* correction of bug when using userfields inside notifyrecipients
+
 = 2.4.4 =
 * intermediate update to make the plugin more immune to hackers
 
@@ -315,6 +318,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.4.5 =
+Minor upgrade to address some bugs.
 
 = 2.4.4 =
 Important upgrade to address some vulnerability issues.

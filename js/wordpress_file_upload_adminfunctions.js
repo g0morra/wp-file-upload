@@ -1175,6 +1175,27 @@ function wfu_update_ptext_value(e) {
 	wfu_generate_shortcode();
 }
 
+function wfu_update_mchecklist_value(attribute) {
+	var value = "";
+	var mchecklist = document.getElementById("wfu_attribute_" + attribute);
+	var checkall = document.getElementById("wfu_attribute_" + attribute + "_all");
+	if (checkall.checked) {
+		jQuery("#wfu_attribute_" + attribute + " input").prop('disabled', true);
+		jQuery("#wfu_attribute_" + attribute + " input").prop('checked', true);
+		value = "all";
+	}
+	else {
+		jQuery("#wfu_attribute_" + attribute + " input").prop('disabled', false);
+		jQuery("#wfu_attribute_" + attribute + " input").each(function() {
+			if (jQuery(this).prop('checked'))
+				value += "," + jQuery(this).next().html();
+		});
+		value = value.substr(1);
+	}
+	document.getElementById("wfu_attribute_value_" + attribute).value = value;
+	wfu_generate_shortcode();
+}
+
 function wfu_update_rolelist_value(attribute) {
 	var value = "";
 	var rolelist = document.getElementById("wfu_attribute_" + attribute);
@@ -1479,6 +1500,19 @@ function wfu_apply_value(attribute, type, value) {
 		item2.value = plural;
 		wfu_update_ptext_value({target:item1});
 		wfu_update_ptext_value({target:item2});
+	}
+	else if (type == "mchecklist" ) {
+		value = value.toLowerCase();
+		if (value == "all") document.getElementById("wfu_attribute_" + attribute + "_all").checked = true;
+		else {
+			document.getElementById("wfu_attribute_" + attribute + "_all").checked = false;
+			var items = value.split(",");
+			for (var i = 0; i < items.length; i++) items[i] = items[i].trim();
+			jQuery("#wfu_attribute_" + attribute + " input").each(function() {
+				jQuery(this).prop('checked', (items.indexOf(jQuery(this).next().html()) > -1));
+			});
+		}
+		wfu_update_mchecklist_value(attribute);
 	}
 	else if (type == "rolelist" ) {
 		value = value.toLowerCase();
