@@ -571,7 +571,7 @@ function wfu_attribute_definitions() {
 			"subcategory"	=> "Email Notifications",
 			"parent"	=> "notify",
 			"dependencies"	=> null,
-			"variables"	=> array("%username%", "%useremail%", "%filename%", "%filepath%", "%userdataXXX%"),
+			"variables"	=> array("%username%", "%useremail%", "%filename%", "%filepath%", "%blogid%", "%pageid%", "%pagetitle%", "%userdataXXX%", "%dq%"),
 			"help"		=> "Defines the email subject. Can be dynamic by using variables. Please check Documentation on how to use variables in atributes."
 		),
 		array(
@@ -585,7 +585,7 @@ function wfu_attribute_definitions() {
 			"subcategory"	=> "Email Notifications",
 			"parent"	=> "notify",
 			"dependencies"	=> null,
-			"variables"	=> array("%username%", "%useremail%", "%filename%", "%filepath%", "%userdataXXX%", "%n%", "%dq%"),
+			"variables"	=> array("%username%", "%useremail%", "%filename%", "%filepath%", "%blogid%", "%pageid%", "%pagetitle%", "%userdataXXX%", "%n%", "%dq%"),
 			"help"		=> "Defines the email body. Can be dynamic by using variables. Please check Documentation on how to use variables in atributes."
 		),
 		array(

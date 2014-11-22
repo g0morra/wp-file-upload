@@ -4,7 +4,7 @@ session_start();
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.4.5
+Version: 2.4.6
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -36,27 +36,15 @@ $wfu_tb_userdata_version = "1.0";
 $uri = $_SERVER['REQUEST_URI'];
 if ( strpos($uri, 'wp-login.php') !== false ) return;
 
+DEFINE("WPFILEUPLOAD_PLUGINFILE", __FILE__);
 DEFINE("WPFILEUPLOAD_DIR", '/'.PLUGINDIR .'/'.dirname(plugin_basename (__FILE__)).'/');
 add_shortcode("wordpress_file_upload", "wordpress_file_upload_handler");
 load_plugin_textdomain('wordpress-file-upload', false, dirname(plugin_basename (__FILE__)).'/languages');
-/* do not load styles and scripts in admin pages */
-if ( is_admin() ) {
-	if ( strpos($uri, "options-general.php") !== false ) {
-		wp_enqueue_style('wordpress-file-upload-admin-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_adminstyle.css',false,'1.0','all');
-		wp_enqueue_style( 'wp-color-picker' );
-		wp_enqueue_script('wordpress_file_upload_admin_script', WPFILEUPLOAD_DIR.'js/wordpress_file_upload_adminfunctions.js', array( 'wp-color-picker' ), false, true);
-		wp_enqueue_script('wordpress_file_upload_classname_script', WPFILEUPLOAD_DIR.'js/getElementsByClassName-1.0.1.js');
-		$AdminParams = array("wfu_ajax_url" => site_url()."/wp-admin/admin-ajax.php");
-		wp_localize_script( 'wordpress_file_upload_admin_script', 'AdminParams', $AdminParams );
-	}
+/* load styles and scripts for front pages */
+if ( !is_admin() ) {
+	add_action( 'wp_enqueue_scripts', 'wfu_enqueue_frontpage_scripts' );
 }
-else {
-//	wp_enqueue_style('wordpress-file-upload-reset', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_reset.css',false,'1.0','all');
-	wp_enqueue_style('wordpress-file-upload-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style.css',false,'1.0','all');
-	wp_enqueue_style('wordpress-file-upload-style-safe', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style_safe.css',false,'1.0','all');
-	wp_enqueue_script('json_class', WPFILEUPLOAD_DIR.'js/json2.js');
-	wp_enqueue_script('wordpress_file_upload_script', WPFILEUPLOAD_DIR.'js/wordpress_file_upload_functions.js');
-}
+add_action('admin_init', 'wordpress_file_upload_admin_init');
 add_action('admin_menu', 'wordpress_file_upload_add_admin_pages');
 register_activation_hook(__FILE__,'wordpress_file_upload_install');
 add_action('plugins_loaded', 'wordpress_file_upload_update_db_check');
@@ -72,12 +60,23 @@ add_action('wp_ajax_wfu_ajax_action_read_subfolders', 'wfu_ajax_action_read_subf
 add_action('wp_ajax_wfu_ajax_action_download_file', 'wfu_ajax_action_download_file');
 wfu_include_lib();
 
+function wfu_enqueue_frontpage_scripts() {
+//	wp_enqueue_style('wordpress-file-upload-reset', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_reset.css',false,'1.0','all');
+	wp_enqueue_style('wordpress-file-upload-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style.css',false,'1.0','all');
+	wp_enqueue_style('wordpress-file-upload-style-safe', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style_safe.css',false,'1.0','all');
+	wp_enqueue_script('json_class', WPFILEUPLOAD_DIR.'js/json2.js');
+	wp_enqueue_script('wordpress_file_upload_script', WPFILEUPLOAD_DIR.'js/wordpress_file_upload_functions.js');
+}
+
 function wfu_include_lib() {
 	if ( $handle = opendir(plugin_dir_path( __FILE__ )."lib/") ) {
 		$blacklist = array('.', '..');
 		while ( false !== ($file = readdir($handle)) )
 			if ( !in_array($file, $blacklist) )
 				include_once plugin_dir_path( __FILE__ )."lib/".$file;
+		closedir($handle);
+	}
+	if ( $handle = opendir(plugin_dir_path( __FILE__ )) ) {
 		closedir($handle);
 	}
 }

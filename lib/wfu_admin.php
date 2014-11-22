@@ -1,7 +1,30 @@
 <?php
 
+function wordpress_file_upload_admin_init() {
+	$uri = $_SERVER['REQUEST_URI'];
+	wp_register_style( 'myPluginStylesheet', plugins_url('stylesheet.css', __FILE__) );
+	if ( is_admin() && strpos($uri, "options-general.php") !== false ) {
+		wp_register_style('wordpress-file-upload-admin-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_adminstyle.css',false,'1.0','all');
+		wp_register_script('wordpress_file_upload_admin_script', WPFILEUPLOAD_DIR.'js/wordpress_file_upload_adminfunctions.js', array( 'wp-color-picker' ), false, true);
+		wp_register_script('wordpress_file_upload_classname_script', WPFILEUPLOAD_DIR.'js/getElementsByClassName-1.0.1.js');
+	}
+}
+
 function wordpress_file_upload_add_admin_pages() {
-	add_options_page('Wordpress File Upload', 'Wordpress File Upload', 10, 'wordpress_file_upload', 'wordpress_file_upload_manage_dashboard');
+	$page_hook_suffix = add_options_page('Wordpress File Upload', 'Wordpress File Upload', 'manage_options', 'wordpress_file_upload', 'wordpress_file_upload_manage_dashboard');
+	add_action('admin_print_scripts-'.$page_hook_suffix, 'wfu_enqueue_admin_scripts');
+}
+
+function wfu_enqueue_admin_scripts() {
+	$uri = $_SERVER['REQUEST_URI'];
+	if ( is_admin() && strpos($uri, "options-general.php") !== false ) {
+		wp_enqueue_style('wordpress-file-upload-admin-style');
+		wp_enqueue_style( 'wp-color-picker' );
+		wp_enqueue_script('wordpress_file_upload_admin_script');
+		wp_enqueue_script('wordpress_file_upload_classname_script');
+		$AdminParams = array("wfu_ajax_url" => site_url()."/wp-admin/admin-ajax.php");
+		wp_localize_script( 'wordpress_file_upload_admin_script', 'AdminParams', $AdminParams );
+	}
 }
 
 function wordpress_file_upload_install() {
@@ -157,6 +180,40 @@ function wfu_manage_settings($message = '') {
 	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=shortcode_composer" class="button" title="Shortcode composer">Shortcode Composer</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=view_log" class="button" title="View log">View Log</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=sync_db" class="button" title="Update database to reflect current status of files">Sync Database</a>';
+	$echo_str .= "\n\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">Status</h3>';
+	$echo_str .= "\n\t\t".'<table class="form-table">';
+	$echo_str .= "\n\t\t\t".'<tbody>';
+	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Edition</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px; vertical-align:top;">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">Free</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t\t".'<td>';
+	$echo_str .= "\n\t\t\t\t\t\t".'<div style="display:inline-block; background-color:bisque; padding:0 0 0 4px; border-left:3px solid lightcoral;">';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<label style="cursor:default;">Consider </label><a href="'.WFU_PRO_VERSION_URL.'">Upgrading</a><label style="cursor:default;"> to the Professional Version. </label>';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<button onclick="if (this.innerText == \'See why >>\') {this.innerText = \'<< Close\'; document.getElementById(\'wfu_version_comparison\').style.display = \'block\';} else {this.innerText = \'See why >>\'; document.getElementById(\'wfu_version_comparison\').style.display = \'none\';}">See why >></button>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</div>';
+	$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_version_comparison" style="display:none; background-color:lightyellow; border:1px solid yellow; margin:10px 0; padding:10px;">';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<img src="'.WFU_IMAGE_VERSION_COMPARISON.'" width="65%" style="display:block; margin-bottom:6px;" />';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<a class="button-primary" href="'.WFU_PRO_VERSION_URL.'">Go for the PRO version</a>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</div>';
+	$echo_str .= "\n\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t".'</tr>';
+	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Version</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px; vertical-align:top;">';
+	$cur_version = wfu_get_plugin_version();
+	$echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">'.$cur_version.'</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t\t".'<td style="vertical-align:top;">';
+	$echo_str .= "\n\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t".'</tr>';
+	$echo_str .= "\n\t\t\t".'</tbody>';
+	$echo_str .= "\n\t\t".'</table>';
 	$echo_str .= "\n\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">Settings</h3>';
 	$echo_str .= "\n\t\t".'<form enctype="multipart/form-data" name="editsettings" id="editsettings" method="post" action="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=edit_settings" class="validate">';
 	$nonce = wp_nonce_field('wfu_edit_admin_settings', '_wpnonce', false, false);

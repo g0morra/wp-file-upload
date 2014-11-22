@@ -110,6 +110,13 @@ Administrators can view and manage the uploaded files from the File Browser that
 
 == Changelog ==
 
+= 2.4.6 =
+* variables %blogid%, %pageid% and %pagetitle% added in email notifications and subject and %dq% in subject
+* corrected bug that was breaking Shortcode Composer when using more than ten attributes
+* corrected bug that was rejecting file uploads when uploadpattern attribute contained blank spaces
+* several code corrections in order to eliminate PHP warning messages when DEBUG mode is on
+* several code corrections in order to eliminate warning messages in Javascript
+
 = 2.4.5 =
 * correction of bug when using userfields inside notifyrecipients
 
@@ -318,6 +325,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.4.6 =
+Important upgrade to address some bugs.
 
 = 2.4.5 =
 Minor upgrade to address some bugs.
@@ -598,10 +608,10 @@ For the time being, the following variables are supported:
 * **%useremail%:** Is replaced by the email of the current user. Can be used inside attributes *notifyrecipients*, *notifysubject* and *notifymessage*.
 * **%filename%:** Is replaced by the filename (not including path information) of the uploaded file. Can be used inside attributes *notifysubject*, *notifymessage*, *successmessage* and *redirectlink*.
 * **%filepath%:** Is replaced by the filepath (full path and filename) of the uploaded file. Can be used inside attributes *notifysubject*, *notifymessage* and *successmessage*.
-* **%blogid%:** Is replaced by the blog_id of the current site. Can be used inside attribute *uploadpath*.
+* **%blogid%:** Is replaced by the blog_id of the current site. Can be used inside attribute *uploadpath*, *notifysubject* and *notifymessage*.
 * **%userdataXXX%:** Is replaced by the additional message that the user has sent together with the file upload. XXX is the number of the field (starting from 0). The shortcode attribute userdata must have been set to "true". Can be used inside attributes *uploadpath*, *notifysubject*, *notifymessage* and *notifyrecipients*.
-* **%pagetitle%:** Is replaced by the title of the current page. Can be used inside attribute *uploadpath*.
-* **%pageid%:** Is replaced by the id of the current page. Can be used inside attribute *uploadpath*.
+* **%pagetitle%:** Is replaced by the title of the current page. Can be used inside attribute *uploadpath*, *notifysubject* and *notifymessage*.
+* **%pageid%:** Is replaced by the id of the current page. Can be used inside attribute *uploadpath*, *notifysubject* and *notifymessage*.
 
 In addition, some special variables, which are used to replace literals not allowed in shortcodes (such as double quotes or brackets), are also supported. They can be used in attributes that receive free text (like button labels, email notification body etc.). These special variables are:
 

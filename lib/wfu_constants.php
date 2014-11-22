@@ -149,6 +149,7 @@ DEFINE("WFU_UPLOAD_STATE11", __("please wait while redirecting...", "wordpress-f
 DEFINE("WFU_MAX_TIME_LIMIT", ini_get("max_input_time"));
 DEFINE("WFU_RESPONSE_URL", $siteurl.WPFILEUPLOAD_DIR."wfu_response.php");
 DEFINE("WFU_AJAX_URL", $siteurl."/wp-admin/admin-ajax.php");
+DEFINE("WFU_PRO_VERSION_URL", 'http://www.iptanus.com/product/wordpress-file-upload-pro/');
 
 //define colors
 DEFINE("WFU_TESTMESSAGECOLORS", "#666666,#EEEEEE,#333333");  
@@ -176,6 +177,7 @@ DEFINE("WFU_IMAGE_ADMIN_SUBFOLDER_OK", $siteurl.WPFILEUPLOAD_DIR.'images/ok_12.g
 DEFINE("WFU_IMAGE_ADMIN_SUBFOLDER_CANCEL", $siteurl.WPFILEUPLOAD_DIR.'images/cancel_12.gif');
 DEFINE("WFU_IMAGE_ADMIN_SUBFOLDER_LOADING", $siteurl.WPFILEUPLOAD_DIR.'images/refresh_16.gif');
 DEFINE("WFU_IMAGE_SIMPLE_PROGBAR", $siteurl.WPFILEUPLOAD_DIR.'images/progbar.gif');
+DEFINE("WFU_IMAGE_VERSION_COMPARISON", $siteurl.WPFILEUPLOAD_DIR.'images/Version Comparison.png');
 
 function wfu_set_javascript_constants() {
 	$consts = array(

@@ -26,6 +26,9 @@ function wfu_process_files($params, $method) {
 	$uploadedfile = 'uploadedfile_'.$sid;
 	$hiddeninput = 'hiddeninput_'.$sid;
 	$allowed_patterns = explode(",",$params["uploadpatterns"]);
+	foreach ($allowed_patterns as $key => $allowed_pattern) {
+		$allowed_patterns[$key] = trim($allowed_pattern);
+	}
 	$userdata_fields = $params["userdata_fields"]; 
 	foreach ( $userdata_fields as $userdata_key => $userdata_field ) 
 		$userdata_fields[$userdata_key]["value"] = ( isset($_POST[$hiddeninput.'_userdata_'.$userdata_key]) ? $_POST[$hiddeninput.'_userdata_'.$userdata_key] : "" );

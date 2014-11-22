@@ -368,8 +368,8 @@ function wfu_notify_WPFilebase(params_index, session_token) {
 
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	xhr.setRequestHeader("Content-length", parameters.length);
-	xhr.setRequestHeader("Connection", "close");
+//	xhr.setRequestHeader("Content-length", parameters.length);
+//	xhr.setRequestHeader("Connection", "close");
 	xhr.onreadystatechange = function() {}
 	xhr.send(parameters);
 }
@@ -435,8 +435,8 @@ function wfu_send_email_notification(sid, unique_id, params_index, session_token
 
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	xhr.setRequestHeader("Content-length", parameters.length);
-	xhr.setRequestHeader("Connection", "close");
+//	xhr.setRequestHeader("Content-length", parameters.length);
+//	xhr.setRequestHeader("Connection", "close");
 	xhr.addEventListener("load", wfu_uploadComplete, false);
 	xhr.addEventListener("error", wfu_uploadFailed, false);
 	xhr.addEventListener("abort", wfu_uploadCanceled, false);

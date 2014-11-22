@@ -136,8 +136,8 @@ function wfu_shortcode_string_to_array($shortcode) {
 			}
 			else {
 				$ret['items'][$ii] = substr($contents, $prev_pos, $pos - $prev_pos);
-				$ret['tokens'][$ii] = $token.$ii;
-				$new_contents .= $token.$ii.'"';
+				$ret['tokens'][$ii] = $token.sprintf('%03d', $ii);
+				$new_contents .= $token.sprintf('%03d', $ii).'"';
 				$ii ++;
 				$in_block = false;
 			}
@@ -145,8 +145,8 @@ function wfu_shortcode_string_to_array($shortcode) {
 		}
 		if ( $in_block ) {
 			$ret['items'][$ii] = substr($contents, $prev_pos);
-			$ret['tokens'][$ii] = $token.$ii;
-			$new_contents .= $token.$ii.'"';
+			$ret['tokens'][$ii] = $token.sprintf('%03d', $ii);
+			$new_contents .= $token.sprintf('%03d', $ii).'"';
 		}
 		else
 			$new_contents .= substr($contents, $prev_pos);
@@ -236,6 +236,12 @@ function wfu_decode_plugin_options($encoded_options) {
 	}
 	return $plugin_options;
 }
+
+function wfu_get_plugin_version() {
+	$plugin_data = get_plugin_data(WPFILEUPLOAD_PLUGINFILE);
+	return $plugin_data['Version'];
+}
+
 
 //********************* Directory Functions ************************************************************************************************
 

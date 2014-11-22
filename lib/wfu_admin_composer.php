@@ -72,6 +72,7 @@ function wfu_shortcode_composer() {
 					$governors[$dependency] = array( 'attribute' => $attr, 'active' => $subblock_active, 'inv' => '' );
 			}
 		//check if this attribute depends on other
+		if ( !array_key_exists($attr, $governors) ) $governors[$attr] = "";
 		if ( $governors[$attr] != "" ) $governor = $governors[$attr];
 		else $governor = array( 'attribute' => "independent", 'active' => true, 'inv' => '' );
 
@@ -143,7 +144,7 @@ function wfu_shortcode_composer() {
 		elseif ( $def['type'] == "text" ) {
 			$val = str_replace(array( "%n%", "%dq%", "%brl%", "%brr%" ), array( "\n", "&quot;", "[", "]" ), $def['value']);
 			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="text" name="wfu_text_elements" value="'.$val.'" />';
-			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
+			if ( $def['variables'] != null ) $echo_str .= $dlp.wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
 		}
 		elseif ( $def['type'] == "placements" ) {
 			$components_used = array();
@@ -185,7 +186,7 @@ function wfu_shortcode_composer() {
 		elseif ( $def['type'] == "ltext" ) {
 			$val = str_replace(array( "%n%", "%dq%", "%brl%", "%brr%" ), array( "\n", "&quot;", "[", "]" ), $def['value']);
 			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="text" name="wfu_text_elements" class="wfu_long_text" value="'.$val.'" />';
-			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
+			if ( $def['variables'] != null ) $echo_str .= $dlp.wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
 		}
 		elseif ( $def['type'] == "integer" ) {
 			$val = str_replace(array( "%n%", "%dq%", "%brl%", "%brr%" ), array( "\n", "&quot;", "[", "]" ), $def['value']);
@@ -210,15 +211,15 @@ function wfu_shortcode_composer() {
 			else $plural = $parts[1];
 			$echo_str .= $dlp."\t\t".'<span class="wfu_ptext_span">Singular</span><input id="wfu_attribute_s_'.$attr.'" type="text" name="wfu_ptext_elements" value="'.$singular.'" />';
 			if ( $def['variables'] != null ) if ( count($def['variables']) > 0 ) $echo_str .= $dlp."\t\t".'<br /><span class="wfu_ptext_span">&nbsp;</span>';
-			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_s_'.$attr);
+			if ( $def['variables'] != null ) $echo_str .= $dlp.wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_s_'.$attr);
 			$echo_str .= $dlp."\t\t".'<br /><span class="wfu_ptext_span">Plural</span><input id="wfu_attribute_p_'.$attr.'" type="text" name="wfu_ptext_elements" value="'.$plural.'" />';
 			if ( $def['variables'] != null ) if ( count($def['variables']) > 0 ) $echo_str .= $dlp."\t\t".'<br /><span class="wfu_ptext_span">&nbsp;</span>';
-			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_p_'.$attr);
+			if ( $def['variables'] != null ) $echo_str .= $dlp.wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_p_'.$attr, $dlp);
 		}
 		elseif ( $def['type'] == "mtext" ) {
 			$val = str_replace(array( "%n%", "%dq%", "%brl%", "%brr%" ), array( "\n", "&quot;", "[", "]" ), $def['value']);
 			$echo_str .= $dlp."\t\t".'<textarea id="wfu_attribute_'.$attr.'" name="wfu_text_elements" rows="5">'.$val.'</textarea>';
-			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
+			if ( $def['variables'] != null ) $echo_str .= $dlp.wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
 		}
 		elseif ( $def['type'] == "folderlist" ) {
 			$echo_str .= $dlp."\t\t".'<div id="wfu_subfolders_inner_shadow_'.$attr.'" class="wfu_subfolders_inner_shadow" style="display:none;"></div>';
@@ -344,8 +345,10 @@ function wfu_shortcode_composer() {
 			$vals_arr = explode(",", $def['value']);
 			$vals = array();
 			foreach ( $vals_arr as $val_raw ) {
-				list($val_id, $val) = explode(":", $val_raw);
-				$vals[trim($val_id)] = trim($val);
+				if ( trim($val_raw) != "" ) {
+					list($val_id, $val) = explode(":", $val_raw);
+					$vals[trim($val_id)] = trim($val);
+				}
 			}
 			$dims = array();
 			foreach ( $components as $comp ) {
@@ -356,6 +359,7 @@ function wfu_shortcode_composer() {
 				}
 			}
 			foreach ( $dims as $dim_id => $dim_name ) {
+				if ( !array_key_exists($dim_id, $vals) ) $vals[$dim_id] = "";
 				$echo_str .= $dlp."\t\t".'<span style="display:inline-block; width:130px;">'.$dim_name.'</span><input id="wfu_attribute_'.$attr.'_'.$dim_id.'" type="text" name="wfu_dimension_elements_'.$attr.'" class="wfu_short_text" value="'.$vals[$dim_id].'" /><br />';
 			}
 		}
@@ -396,7 +400,7 @@ function wfu_shortcode_composer() {
 		}
 		else {
 			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="text" name="wfu_text_elements" value="'.$def['value'].'" />';
-			if ( $def['variables'] != null ) $echo_str .= wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
+			if ( $def['variables'] != null ) $echo_str .= $dlp.wfu_insert_variables($def['variables'], 'wfu_variable wfu_variable_'.$attr);
 		}
 		$echo_str .= $dlp."\t".'</div></td>';
 		if ( $def['parent'] == "" ) {
@@ -433,8 +437,8 @@ function wfu_shortcode_composer() {
 function wfu_insert_variables($variables, $class) {
 	$ret = "";
 	foreach ( $variables as $variable )
-		if ( $variable == "%userdataXXX%" ) $ret .= $dlp."\t\t".'<select class="'.$class.'" name="wfu_userfield_select" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" onchange="wfu_insert_userfield_variable(this);"><option style="display:none;">%userdataXXX%</option></select>';
-		elseif ( $variable != "%n%" && $variable != "%dq%" && $variable != "%brl%" && $variable != "%brr%" ) $ret .= $dlp."\t\t".'<span class="'.$class.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
+		if ( $variable == "%userdataXXX%" ) $ret .= "\t\t".'<select class="'.$class.'" name="wfu_userfield_select" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" onchange="wfu_insert_userfield_variable(this);"><option style="display:none;">%userdataXXX%</option></select>';
+		elseif ( $variable != "%n%" && $variable != "%dq%" && $variable != "%brl%" && $variable != "%brr%" ) $ret .= "\t\t".'<span class="'.$class.'" title="'.constant("WFU_VARIABLE_TITLE_".strtoupper(str_replace("%", "", $variable))).'" ondblclick="wfu_insert_variable(this);">'.$variable.'</span>';
 	return $ret;
 }
 

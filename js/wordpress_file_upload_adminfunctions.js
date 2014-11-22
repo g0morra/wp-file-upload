@@ -1414,12 +1414,12 @@ function wfu_save_shortcode() {
 
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	xhr.setRequestHeader("Content-length", parameters.length);
-	xhr.setRequestHeader("Connection", "close");
+//	xhr.setRequestHeader("Content-length", parameters.length);
+//	xhr.setRequestHeader("Connection", "close");
 	xhr.onreadystatechange = function() {
 		if ( xhr.readyState == 4 ) {
 			if ( xhr.status == 200 ) {
-				if (xhr.responseText == "save_shortcode_success") {
+				if (xhr.responseText.substr(0, 22) == "save_shortcode_success") {
 					document.getElementById("wfu_save_label").innerHTML = "saved";
 					document.getElementById("wfu_save_label").className = "wfu_save_label";
 					document.getElementById("wfu_save_label").style.opacity = 1;
