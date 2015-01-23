@@ -14,6 +14,8 @@ function wfu_process_files($params, $method) {
 		$is_admin = current_user_can('manage_options');
 	}
 	$uniqueuploadid = ( isset($_POST['uniqueuploadid_'.$sid]) ? $_POST['uniqueuploadid_'.$sid] : "" );
+	// determine if this routine is only for checking the file
+	$only_check = ( isset($_POST['only_check']) ? ( $_POST['only_check'] == "1" ) : false );
 
 	$suppress_admin_messages = ( $params["adminmessages"] != "true" || !$is_admin );
 	$success_count = 0;
@@ -70,11 +72,24 @@ function wfu_process_files($params, $method) {
 	/* notify admin if this is a redirection caused because the browser of the user could not handle AJAX upload */
 	$params_output_array["general"]['admin_messages']['other'] = $params['adminerrors'];
 
-	if ( isset($_FILES[$uploadedfile]['error']) ) {
-			$files_count = 1;
+	if ( isset($_FILES[$uploadedfile]['error']) || $only_check ) {
+		$files_count = 1;
+		// in case of checking of file, then the $_FILES variable has not been set because no file has been uploaded,
+		// so we set it manually in order to allow the routine to continue
+		if ( $only_check ) {
+			$_FILES[$uploadedfile]['name'] = wfu_plugin_decode_string($_POST[$uploadedfile.'_name']);
+			$_FILES[$uploadedfile]['type'] = 'any';
+			$_FILES[$uploadedfile]['tmp_name'] = 'any';
+			$_FILES[$uploadedfile]['error'] = '';
+			$_FILES[$uploadedfile]['size'] = $_POST[$uploadedfile.'_size'];
+		}
 	}
 	else $files_count = 0;
 	$params_output_array["general"]['files_count'] = $files_count;
+	// index of uploaded file in case of ajax uploads (in ajax uploads only one file is uploaded in every ajax call)
+	// the index is used to store any file data in session variables, in case the file is uploaded in two or more passes
+	// (like the case were in the first pass it is only checked) 
+	$single_file_index = ( isset($_POST[$uploadedfile.'_index']) ? $_POST[$uploadedfile.'_index'] : -1 );
 
 	/* append userdata fields to upload path */
 	$search = array ( );	 
@@ -108,11 +123,19 @@ function wfu_process_files($params, $method) {
 		$file_output['message_type'] = "";
 		$file_output['admin_messages'] = "";
 
-		/* generate unique id for each file in order to use it in filter actions for identifying each separate file */
-		$file_unique_id = wfu_create_random_string(20);
+		// determine if file data have been saved to session variables, due to a previous pass of this file
+		$file_map = "filedata_".$unique_id."_".$single_file_index;
+	  // retrieve unique id of the file, used in filter actions for identifying each separate file
+		$file_unique_id = ( isset($_SESSION[$file_map]) ? $_SESSION[$file_map]['file_unique_id'] : '' );
+		$filedata_previously_defined = ( $file_unique_id != '' );
+		/* generate unique id for each file for use in filter actions if it has not been previously defined */
+		if ( !$filedata_previously_defined )
+			$file_unique_id = wfu_create_random_string(20);
 
 		/* Get uploaded file size in Mbytes */
 		$upload_file_size = filesize($fileprops['tmp_name']) / 1024 / 1024;
+		// correct file size in case of checking of file otherwise $upload_file_size will be zero and the routine will fail
+		if ( $only_check ) $upload_file_size = $fileprops['size'] / 1024 / 1024;
 
 		if ( $upload_file_size > 0 ) {
 
@@ -120,19 +143,34 @@ function wfu_process_files($params, $method) {
 			   any filename or userdata modifications or reject the upload of the file by setting error_message item
 			   of $ret_data array to a non-empty value */
 			$filter_error_message = '';
-			if ( $file_unique_id != '' ) {
+			if ( $file_unique_id != '' && !$filedata_previously_defined ) {
 				$target_path = wfu_upload_plugin_full_path($params).$fileprops['name'];
 				$changable_data['file_path'] = $target_path;
 				$changable_data['user_data'] = $userdata_fields;
 				$changable_data['error_message'] = $filter_error_message;
 				$additional_data['file_unique_id'] = $file_unique_id;
 				$additional_data['file_size'] = filesize($fileprops['tmp_name']);
+				// correct file size in case of checking of file
+				if ( $only_check ) $additional_data['file_size'] = $fileprops['size'];
 				$additional_data['user_id'] = $user->ID;
 				$additional_data['page_id'] = $params["pageid"];
 				$ret_data = apply_filters('wfu_before_file_check', $changable_data, $additional_data);
 				$fileprops['name'] = str_replace(wfu_upload_plugin_full_path($params), '', $ret_data['file_path']);
 				$userdata_fields = $ret_data['user_data'];
 				$filter_error_message = $ret_data['error_message'];
+				// if this is a file check, which means that a second pass of the file will follow, then we do not want to
+				// apply the filters again, so we store the changable data to session variables for this specific file
+				if ( $only_check ) {
+					$_SESSION[$file_map]['file_unique_id'] = $file_unique_id;
+					$_SESSION[$file_map]['filename'] = $fileprops['name'];
+					$_SESSION[$file_map]['userdata'] = $userdata_fields;
+				}
+			}
+			// if this is a second pass of the file, because a first pass with file checking was done before, then retrieve
+			// file data that may have previously changed because of application of filters
+			if ( $filedata_previously_defined ) {
+				$fileprops['name'] = $_SESSION[$file_map]['filename'];
+				$userdata_fields = $_SESSION[$file_map]['userdata'];
 			}
 			if ( $filter_error_message != '' ) {
 				$file_output['message_type'] = "error";
@@ -155,13 +193,14 @@ function wfu_process_files($params, $method) {
 					}
 				}
 
-				/* File name control */
-				foreach ($allowed_patterns as $allowed_pattern) {
-					if ( wfu_upload_plugin_wildcard_match( $allowed_pattern, $fileprops['name']) ) {
-						$allowed_file_ok = true;
-						break ;
+				/* File name control, reject files with .php extension for security reasons */
+				if ( strtolower(substr($fileprops['name'], -4)) != ".php" )
+					foreach ($allowed_patterns as $allowed_pattern) {
+						if ( wfu_upload_plugin_wildcard_match( $allowed_pattern, $fileprops['name']) ) {
+							$allowed_file_ok = true;
+							break ;
+						}
 					}
-				}
 
 				/* File size control */
 				if ( $upload_file_size <= $params["maxsize"] ) {
@@ -204,7 +243,10 @@ function wfu_process_files($params, $method) {
 //		if ( $upload_path_ok and $allowed_file_ok and $size_file_ok ) {
 		if ( $file_output['message_type'] != "error" ) {
 
-			if ( is_uploaded_file($fileprops['tmp_name']) ) {
+			if ( $only_check ) {
+				$file_copied = true;
+			}
+			elseif ( is_uploaded_file($fileprops['tmp_name']) ) {
 				$file_copied = false;
 				$message_processed = false;
 				$source_path = $fileprops['tmp_name'];
@@ -410,8 +452,8 @@ function wfu_process_files($params, $method) {
 		/* suppress again any admin messages if user is not administrator or adminmessages is not activated */		
 		if ( $suppress_admin_messages ) $file_output['admin_messages'] = "";
 
-		/* set success status of the file, to be used for medialink */
-		$file_finished_successfully = ( $file_output['message_type'] == "success" || $file_output['message_type'] == "warning" );
+		/* set success status of the file, to be used for medialink and post actions */
+		$file_finished_successfully = ( !$only_check && ( $file_output['message_type'] == "success" || $file_output['message_type'] == "warning" ) );
 
 		$params_output_array[0] = $file_output;
 
@@ -437,6 +479,9 @@ function wfu_process_files($params, $method) {
 			wfu_process_media_insert($target_path, $pageid);
 		}
 	}
+
+	// in case of file check set files_count to 0 in order to denote that the file was not really uploaded
+	if ( $only_check ) $params_output_array["general"]['files_count'] = 0;
 
 	$somefiles_Ok = ( ( $warning_count + $success_count ) > 0 );
 	$allfiles_Ok = ( $somefiles_Ok && ( $error_count == 0 ) );

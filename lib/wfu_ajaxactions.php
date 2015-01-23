@@ -43,7 +43,7 @@ function wfu_ajax_action_send_email_notification() {
 	// prepare user data 
 	$userdata_fields = $params["userdata_fields"]; 
 	foreach ( $userdata_fields as $userdata_key => $userdata_field ) 
-		$userdata_fields[$userdata_key]["value"] = ( isset($_POST['userdata_'.$userdata_key]) ? $_POST['userdata_'.$userdata_key] : "" );
+		$userdata_fields[$userdata_key]["value"] = ( isset($_POST['userdata_'.$userdata_key]) ? wfu_plugin_decode_string($_POST['userdata_'.$userdata_key]) : "" );
 
 	$send_error = wfu_send_notification_email($user, $_POST['only_filename_list'], $_POST['target_path_list'], $_POST['attachment_list'], $userdata_fields, $params);
 
@@ -64,7 +64,7 @@ function wfu_ajax_action_send_email_notification() {
 function wfu_ajax_action_callback() {
 	$user = wp_get_current_user();
 	$arr = wfu_get_params_fields_from_index($_POST['params_index']);
-	//check referer using server sessions to avoid CSRF attacks
+	//check referrer using server sessions to avoid CSRF attacks
 	if ( $_SESSION["wfu_token_".$arr['shortcode_id']] != $_POST['session_token'] ) {
 		echo "Session failed!<br/><br/>Session Data:<br/>";
 		print_r(wfu_sanitize($_SESSION));
@@ -81,6 +81,12 @@ function wfu_ajax_action_callback() {
 		echo "<br/><br/>Params Data:<br/>";
 		print_r(wfu_sanitize($arr));
 		die();
+	}
+	
+	//the first pass to this callback script is for closing the previous connection_aborted
+	if ( $_POST["force_connection_close"] === "1" ) {
+		header("Connection: Close");
+		die("success");
 	}
 
 	$params_str = get_option('wfu_params_'.$arr['unique_id']);

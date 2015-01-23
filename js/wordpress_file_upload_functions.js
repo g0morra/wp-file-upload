@@ -43,6 +43,8 @@ function wfu_Check_Browser_Capabilities() {
 	wfu_BrowserCaps.supportsDRAGDROP = (window.FileReader);
 	//check animation
 	wfu_BrowserCaps.supportsAnimation = wfu_check_animation();
+	//check if browser is Safari
+	wfu_BrowserCaps.isSafari = (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1);
 }
 
 //wfu_check_animation: function that checks if CSS3 animation is supported 
@@ -314,23 +316,42 @@ function wfu_loadStart(evt) {
 }
 
 //wfu_uploadProgress: function to update progress bar
-function wfu_uploadProgress(evt) {
-	var sid = this.xhr.shortcode_id;
+function wfu_uploadProgress(evt, sid, xhrid, debugmode) {
+	if (debugmode && typeof this.xhr == "undefined") {
+		console.log("total="+evt.total+", loaded="+evt.loaded);
+		console.log(this);
+	}
+	var this_xhr = GlobalData[sid].xhrs[xhrid];
 	var percentComplete = 0;
+	var delta = 0;
 	var simplebar = document.getElementById('progressbar_' + sid + '_animation');
 	if (evt.lengthComputable) {
-		if (this.xhr.size != evt.total && evt.total > 0) this.xhr.size = evt.total;
+		this_xhr.sizeloaded = evt.loaded;
+		if (this_xhr.size < evt.total && evt.total > 0) {
+			delta = evt.total - this_xhr.size;
+			this_xhr.size += delta;
+			for (var i = 0; i < GlobalData[sid].xhrs.length; i++)
+				if (GlobalData[sid].xhrs[i].file_id == this_xhr.file_id) {
+					GlobalData[sid].xhrs[i].totalsize += delta;
+			}
+		}
 		if (simplebar) {
 			var total = 0;
 			var totalloaded = 0;
-			for (var i = 0; i < GlobalData[sid].xhrs.length; i++) {
-				total += GlobalData[sid].xhrs[i].size;
+			var totals = [];
+			for (var i = 0; i < GlobalData[sid].xhrs.length; i++)
+				totals[GlobalData[sid].xhrs[i].file_id] = 0;
+			for (var i = 0; i < GlobalData[sid].xhrs.length; i++)
+				totals[GlobalData[sid].xhrs[i].file_id] = Math.max(GlobalData[sid].xhrs[i].totalsize, totals[GlobalData[sid].xhrs[i].file_id]);
+			for (var i = 0; i < totals.length; i++)
+				if (typeof totals[i] != "undefined") total += totals[i];
+			for (var i = 0; i < GlobalData[sid].xhrs.length; i++)
 				totalloaded += GlobalData[sid].xhrs[i].sizeloaded;
-			}
-			percentComplete = Math.round((totalloaded + evt.loaded - this.xhr.sizeloaded) * 100 / total);
+//			percentComplete = Math.round((totalloaded + evt.loaded - this_xhr.sizeloaded) * 100 / total);
+			percentComplete = Math.round(totalloaded * 100 / total);
 			simplebar.style.width = percentComplete.toString() + '%';
 		}
-		this.xhr.sizeloaded = evt.loaded;
+//		this_xhr.sizeloaded = evt.loaded;
 	}
 	else {
 		if (simplebar) simplebar.style.width = '0%';
@@ -409,7 +430,7 @@ function wfu_send_email_notification(sid, unique_id, params_index, session_token
 	for (var i = 0; i < userdata_count; i++) {
 		params[7 + i] = new Array(2);
 		params[7 + i][0] = 'userdata_' + i;
-		params[7 + i][1] = document.getElementById('hiddeninput_' + sid + '_userdata_' + i).value;
+		params[7 + i][1] = wfu_plugin_encode_string(document.getElementById('hiddeninput_' + sid + '_userdata_' + i).value);
 	}
 
 	var parameters = '';
@@ -462,33 +483,46 @@ function wfu_uploadComplete(evt) {
 	var last = false;
 	var upload_params = "";
 	var safe_params = "";
+	var file_status = "unknown";
 	var debug_data = "";
 	var success_txt = "wfu_fileupload_success:";
 	var result_data = evt.target.responseText;
+	//process response from server
 	if (evt.target.responseText != -1) {
 		var txt = evt.target.responseText;
 		var pos = txt.indexOf(success_txt);
 		if ( pos > -1 ) {
+			//extract parts of response text
 			if (this.debugmode == "true") debug_data = txt.substr(0, pos);
 			result_data = txt.substr(pos + success_txt.length);
 			pos = result_data.indexOf(":");
 			safe_params = result_data.substr(0, pos);
 			upload_params = result_data.substr(pos + 1);
 		}
+		//format debug data, if they exist
 		if (debug_data != "") {
 			var title = "";
 			if (this.requesttype == "fileupload") title = ' - File: ' + this.file_id;
 			else if (this.requesttype == "email") title = ' - Email Notification';
 			debug_data = wfu_format_debug_data(debug_data, title);
 		}
+		//extract file status from safe params if they exist
+		if (safe_params != "") {
+			var safe_parts = safe_params.split(";");
+			//for ajax uploads there should be only one file processed each time
+			if (parseInt(safe_parts[2]) == 1) {
+				var filedata = safe_parts[3].split(",");
+				file_status = wfu_plugin_decode_string(filedata[0]);
+			}
+		}
 	}
-
+	//if the response text does not contain upload data then fill the Params structure with the minimum required error info
 	if (upload_params == "" || safe_params == "") {
 		var error_colors = this.fail_colors.split(",");		
 		var Params = wfu_Initialize_Params();
 		Params.general.shortcode_id = sid;
 		Params.general.unique_id = this.unique_id;
-		Params.general.state = 7;
+		Params.general.state = 7;  //it indicates that no files were uploaded
 		Params.general.files_count = (this.requesttype == "fileupload") ? 1 : 0;
 		Params.general.upload_finish_time = this.finish_time;
 		Params.general.fail_message = GlobalData.consts.message_unknown;
@@ -499,6 +533,7 @@ function wfu_uploadComplete(evt) {
 			Params[0]['bgcolor'] = error_colors[1];
 			Params[0]['borcolor'] = error_colors[2];
 			Params[0]['message_type'] = "error";
+			file_status = "error";
 			Params[0]['header'] = this.error_message_header;
 			Params[0]['message'] = GlobalData.consts.message_timelimit;
 			Params[0]['admin_messages'] = this.is_admin == "true" ? GlobalData.consts.message_admin_timelimit : "";
@@ -515,7 +550,9 @@ function wfu_uploadComplete(evt) {
 				else Params.general.admin_messages.other = this.is_admin == "true" ? Params.general.fail_admin_message : "";
 			}
 		}
-		// note that upload_params is passed as object, so no need to pass a safe_output string
+	}
+	if (upload_params == "" || safe_params == "") {
+		// upload_params is passed as object, so no need to pass a safe_output string
 		last = wfu_ProcessUploadComplete(sid, this.file_id, Params, this.unique_id, this.params_index, this.session_token, "", [this.debugmode, debug_data, this.is_admin]);
 	}
 	else {
@@ -526,11 +563,13 @@ function wfu_uploadComplete(evt) {
 		wfu_hide_simple_progressbar(sid);
 		wfu_clear(evt.target.shortcode_id);
 	}
+	if (evt.target.return_status)
+		return file_status;
 }
 
-//wfu_ProcessUploadComplete: function to perform actions after successfull upload
+// wfu_ProcessUploadComplete: function to perform actions after successfull upload
 function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, params_index, session_token, safe_output, debug_data) {
-	//initial checks to process or not the data
+	// initial checks to process or not the data
 	if (!sid || sid < 0) return;
 	if (upload_params == null || upload_params == "") return;
 	if (unique_id == "") return;
@@ -539,6 +578,7 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 	var do_redirect = false;
 
 	if (typeof upload_params === "string") {
+		// if upload_params is a string, then it comes from a normal upload process and must be decoded
 		upload_params = wfu_plugin_decode_string(upload_params.replace(/^\s+|\s+$/g,""));
 		var Params = null;
 		try { Params = JSON.parse(upload_params); }
@@ -582,6 +622,7 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 	var message_table = document.getElementById('wfu_messageblock_' + sid);
 
 	// initialize UploadStates object, if not already initialized and if message box is activated
+	// UploadStates object contain information about formatting of messages depending on upload state
 	var UploadStates_Ok = true;
 	if (!UploadStates[sid] && message_table) {
 		var upload_states = document.getElementById('wfu_messageblock_header_' + sid + '_states').value;
@@ -1046,23 +1087,34 @@ function wfu_HTML5UploadFile(sid, JSONtext, session_token) {
 }
 
 function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
-	function sendfile(ind, file) {
+	//inner function sendfile sends file data to the server using ajax
+	function sendfile(ind, file, only_check, force_close_connection) {
+		//initialize return status, used in case of synchronous call
+		ret_status = true;
 		// initialise AJAX and FormData objects
 		var xhr = wfu_GetHttpRequestObject();
-		if (xhr == null) return;
+		var xhr_close_connection = wfu_GetHttpRequestObject();
+		if (xhr == null || xhr_close_connection == null) return;
 		var fd = null;
+		var fd_close_connection = null;
 		try {
 			var fd = new FormData();
+			var fd_close_connection = new FormData();
 		}
 		catch(e) {}
-		if (fd == null) return;
+		if (fd == null || fd_close_connection == null) return;
 
 		// define POST parameters
-		fd.append("uploadedfile_" + sid + suffice, file);
+		if (!only_check) fd.append("uploadedfile_" + sid + suffice, file);
+		fd.append("uploadedfile_" + sid + "_index", ind);
+		fd.append("uploadedfile_" + sid + "_name", wfu_plugin_encode_string(farr[ind].name));
+		fd.append("uploadedfile_" + sid + "_size", farr[ind].size);
 		fd.append("action", "wfu_ajax_action");
 		fd.append("uniqueuploadid_" + sid, unique_upload_id);
 		fd.append("params_index", JSONobj.params_index);
 		fd.append("subdir_sel_index", subdir_sel_index);
+		if (only_check) fd.append("only_check", "1");
+		else fd.append("only_check", "0");
 		fd.append("session_token", session_token);
 		fd.append("unique_id", rand_str);
 		var userdata_count = wfu_get_userdata_count(sid); 
@@ -1070,12 +1122,19 @@ function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
 			fd.append("hiddeninput_" + sid + "_userdata_" + ii, document.getElementById('hiddeninput_' + sid + '_userdata_' + ii).value);
 
 		// define variables
-		GlobalData[sid].xhrs.push(xhr);
+		var xhrid = GlobalData[sid].xhrs.push(xhr) - 1;
 		var d = new Date();
 		xhr.shortcode_id = sid;
 		xhr.requesttype = "fileupload";
 		xhr.file_id = ind + 1;
-		xhr.size = file.size;
+		if (only_check) {
+			xhr.size = 0;
+			xhr.totalsize = 0;
+		}
+		else {
+			xhr.size = file.size;
+			xhr.totalsize = farr[ind].size;
+		}
 		xhr.sizeloaded = 0;
 		xhr.unique_id = rand_str;
 		xhr.params_index = JSONobj.params_index;
@@ -1087,27 +1146,67 @@ function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
 //		xhr.error_message_header = GlobalData.consts.message_header.replace(/%username%/g, "no data");
 		xhr.error_message_header = JSONobj.error_header.replace(/%username%/g, "no data");
 		xhr.error_message_header = xhr.error_message_header.replace(/%useremail%/g, "no data");
-		xhr.error_message_header = xhr.error_message_header.replace(/%filename%/g, file.name);
-		xhr.error_message_header = xhr.error_message_header.replace(/%filepath%/g, file.name);
+		xhr.error_message_header = xhr.error_message_header.replace(/%filename%/g, farr[ind].name);
+		xhr.error_message_header = xhr.error_message_header.replace(/%filepath%/g, farr[ind].name);
 		xhr.error_message_failed = GlobalData.consts.message_failed;
 		xhr.error_message_cancelled = GlobalData.consts.message_cancelled;
 		xhr.error_adminmessage_unknown = GlobalData.consts.adminmessage_unknown.replace(/%username%/g, "no data");
 		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%useremail%/g, "no data");
-		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%filename%/g, file.name);
-		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%filepath%/g, file.name);
+		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%filename%/g, farr[ind].name);
+		xhr.error_adminmessage_unknown = xhr.error_adminmessage_unknown.replace(/%filepath%/g, farr[ind].name);
+		//when using Safari a synchronous call must be executed before upload to close previous connection,
+		//in order to address an issue of Safari with file caching
+		if (force_close_connection) {
+			fd_close_connection.append("action", "wfu_ajax_action");
+			fd_close_connection.append("params_index", JSONobj.params_index);
+			fd_close_connection.append("session_token", session_token);
+			fd_close_connection.append("force_connection_close", "1");
+			xhr_close_connection.open("POST", GlobalData.consts.ajax_url, false);
+			xhr_close_connection.send(fd_close_connection);
+			ret_status = (xhr_close_connection.responseText == "success");
+		}
+		if (ret_status) {
+			if (!only_check) {
+				xhr.upload.xhr = xhr;
+				xhr.upload.dummy = 1;
+				// event listeners
+				xhr.upload.addEventListener("loadstart", wfu_loadStart, false);
+				xhr.upload.addEventListener("progress", new Function("evt", "wfu_uploadProgress(evt, " + sid + ", " + xhrid + ", " + JSONobj.debugmode + ");"), false);
+				xhr.addEventListener("load", wfu_uploadComplete, false);
+				xhr.addEventListener("error", wfu_uploadFailed, false);
+				xhr.addEventListener("abort", wfu_uploadCanceled, false);
 
-		xhr.upload.xhr = xhr;
-
-		// event listeners
-		xhr.upload.addEventListener("loadstart", wfu_loadStart, false);
-		xhr.upload.addEventListener("progress", wfu_uploadProgress, false);
-		xhr.addEventListener("load", wfu_uploadComplete, false);
-		xhr.addEventListener("error", wfu_uploadFailed, false);
-		xhr.addEventListener("abort", wfu_uploadCanceled, false);
-
-		xhr.open("POST", GlobalData.consts.ajax_url);
-		xhr.send(fd);
+				xhr.open("POST", GlobalData.consts.ajax_url, true);
+				xhr.send(fd);
+			}
+			else {
+				xhr.addEventListener("load", function(evt) {
+					evt = {target:{responseText:evt.target.responseText, shortcode_id:sid, return_status:true}};
+					var file_status = wfu_uploadComplete.call(xhr, evt);
+					ret_status = (file_status == "success" || file_status == "warning");
+					if (ret_status) {
+						sendfile(ind, file, false, false);
+					}
+				}, false);
+				xhr.open("POST", GlobalData.consts.ajax_url, true);
+				xhr.send(fd);
+			}
+		}
+		else {
+			var evt = {target:{responseText:"", shortcode_id:sid}};
+			wfu_uploadComplete.call(xhr, evt);
+		}
 		inc ++;
+		return ret_status;
+	}
+	//inner function process_next_file prepares and dispatches files in a sequential manner,
+	//every function is executed from its previous using timeouts in order to allow rendering
+	//of graphics in between, such as progress bars
+	function process_next_file() {
+		sendfile(i, farr[i], true, false);
+		//continue to next file, if exists
+		i++;
+		if(i < farr.length) setTimeout(process_next_file, 100);
 	}
 	// get index of subdirectory if subdirectory dropdown list is activated
 	var subdir_sel_index = -1;
@@ -1158,9 +1257,10 @@ function wfu_HTML5UploadFile_cont(sid, JSONobj, session_token, other_params) {
 	wfu_ProcessUploadComplete(sid, 0, Params, rand_str, JSONobj.params_index, session_token, "", ["false", "", "false"]);
 
 	var inc = 0;
-	for (var i = 0; i < farr.length; i++) {
-			sendfile(i, farr[i]);
-	}
+	var ret_status = true;
+	var i = 0;
+	var fprops = [];
+	setTimeout(process_next_file, 100);
 }
 
 //wfu_get_userdata_count: get number of userdata fields

@@ -242,6 +242,58 @@ function wfu_get_plugin_version() {
 	return $plugin_data['Version'];
 }
 
+function wfu_get_latest_version() {
+	include( ABSPATH . WPINC . '/version.php' );
+	$plugin_name = plugin_basename( WPFILEUPLOAD_PLUGINFILE );
+	$plugins = array( $plugin_name => get_plugin_data(WPFILEUPLOAD_PLUGINFILE, false, false) );
+	$plugins[$plugin_name]['Version'] = '1.0.0';
+	$active = array( $plugin_name );
+	$to_send = (object) compact('plugins', 'active');
+	$options = array(
+		'timeout' 	=> 30,
+		'body' => array( 'plugins' => serialize( $to_send ) ),
+		'user-agent' => 'WordPress/' . $wp_version . '; ' . get_bloginfo( 'url' )
+	);
+	$url = 'http://api.wordpress.org/plugins/update-check/1.0/';
+	$raw_response = wp_remote_post( $url, $options );
+	if ( is_wp_error( $raw_response ) || 200 != wp_remote_retrieve_response_code( $raw_response ) ) return '';
+	$response = unserialize( wp_remote_retrieve_body( $raw_response ) );
+	if ( false === $response ) return '';
+	if ( !is_array($response) ) return '';
+	if ( count($response) < 1 ) return '';
+	if ( !isset($response[$plugin_name]->new_version) ) return '';
+	return $response[$plugin_name]->new_version;
+}
+
+function wfu_compare_versions($current, $latest) {
+	$ret['status'] = true;
+	$ret['custom'] = false;
+	$ret['result'] = 'equal';
+	$res = preg_match('/^([0-9]*)\.([0-9]*)\.([0-9]*)(.*)/', $current, $cur_data);
+	if ( !$res || count($cur_data) < 5 )
+		return array( 'status' => false, 'custom' => false, 'result' => 'current version invalid' );
+	if ( $cur_data[1] == '' || $cur_data[2] == '' || $cur_data[3] == '' )
+		return array( 'status' => false, 'custom' => false, 'result' => 'current version invalid' );
+	$custom = ( $cur_data[4] != '' );
+	$res = preg_match('/^([0-9]*)\.([0-9]*)\.([0-9]*)/', $latest, $lat_data);
+	if ( !$res || count($lat_data) < 4 )
+		return array( 'status' => false, 'custom' => $custom, 'result' => 'latest version invalid' );
+	if ( $lat_data[1] == '' || $lat_data[2] == '' || $lat_data[3] == '' )
+		return array( 'status' => false, 'custom' => $custom, 'result' => 'latest version invalid' );
+	if ( intval($cur_data[1]) < intval($lat_data[1]) )
+		return array( 'status' => true, 'custom' => $custom, 'result' => 'lower' );
+	elseif ( intval($cur_data[1]) > intval($lat_data[1]) )
+		return array( 'status' => false, 'custom' => $custom, 'result' => 'current version invalid' );
+	if ( intval($cur_data[2]) < intval($lat_data[2]) )
+		return array( 'status' => true, 'custom' => $custom, 'result' => 'lower' );
+	elseif ( intval($cur_data[2]) > intval($lat_data[2]) )
+		return array( 'status' => false, 'custom' => $custom, 'result' => 'current version invalid' );
+	if ( intval($cur_data[3]) < intval($lat_data[3]) )
+		return array( 'status' => true, 'custom' => $custom, 'result' => 'lower' );
+	elseif ( intval($cur_data[3]) > intval($lat_data[3]) )
+		return array( 'status' => false, 'custom' => $custom, 'result' => 'current version invalid' );
+	return array( 'status' => true, 'custom' => $custom, 'result' => 'equal' );	
+}
 
 //********************* Directory Functions ************************************************************************************************
 
@@ -920,8 +972,8 @@ function wfu_send_notification_email($user, $only_filename_list, $target_path_li
 		array_push($search, '/%userdata'.$ind.'%/');  
 		array_push($replace, $userdata_field["value"]);
 	}   
-	$notifysubject =  preg_replace($search, $replace, $params["notifysubject"]);
-	$notifymessage =  preg_replace($search, $replace, $params["notifymessage"]);
+	$notifysubject = preg_replace($search, $replace, $params["notifysubject"]);
+	$notifymessage = preg_replace($search, $replace, $params["notifymessage"]);
 	if ( $params["attachfile"] == "true" ) {
 		$attachments = explode(",", $attachment_list);
 		$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $notifyheaders, $attachments); 
