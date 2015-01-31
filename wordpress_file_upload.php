@@ -4,7 +4,7 @@ session_start();
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.5.0
+Version: 2.5.1
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */

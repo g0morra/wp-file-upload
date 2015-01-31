@@ -110,6 +110,10 @@ Administrators can view and manage the uploaded files from the File Browser that
 
 == Changelog ==
 
+= 2.5.1 =
+* fixed important bug in free version giving the same name to all uploaded files
+* fixed bug in free version not clearing completely the plugin cache from previous file upload
+
 = 2.5.0 =
 * major redesign of upload algorithm to address upload issues with Safari for Mac and Firefox
 * files are first checked by server before actually uploaded, in order to avoid uploading of large files that are invalid
@@ -332,6 +336,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.5.1 =
+Important upgrade to address some bugs.
 
 = 2.5.0 =
 Important upgrade to address some bugs.

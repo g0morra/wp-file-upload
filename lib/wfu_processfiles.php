@@ -27,6 +27,7 @@ function wfu_process_files($params, $method) {
 	$notify_attachment_list = "";
 	$uploadedfile = 'uploadedfile_'.$sid;
 	$hiddeninput = 'hiddeninput_'.$sid;
+	$unique_id = ( isset($_POST['unique_id']) ? $_POST['unique_id'] : "" );
 	$allowed_patterns = explode(",",$params["uploadpatterns"]);
 	foreach ($allowed_patterns as $key => $allowed_pattern) {
 		$allowed_patterns[$key] = trim($allowed_pattern);
@@ -36,7 +37,7 @@ function wfu_process_files($params, $method) {
 		$userdata_fields[$userdata_key]["value"] = ( isset($_POST[$hiddeninput.'_userdata_'.$userdata_key]) ? $_POST[$hiddeninput.'_userdata_'.$userdata_key] : "" );
 	$params_output_array["version"] = "full";
 	$params_output_array["general"]['shortcode_id'] = $sid;
-	$params_output_array["general"]['unique_id'] = ( isset($_POST['unique_id']) ? $_POST['unique_id'] : "" );
+	$params_output_array["general"]['unique_id'] = $unique_id;
 	$params_output_array["general"]['state'] = 0;
 	$params_output_array["general"]['files_count'] = 0;
 	$params_output_array["general"]['update_wpfilebase'] = "";

@@ -211,7 +211,6 @@ function wfu_manage_settings($message = '') {
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'<td style="vertical-align:top;">';
 	$lat_version = wfu_get_latest_version();
-	echo $lat_version;
 	$ret = wfu_compare_versions($cur_version, $lat_version);
 	if ( $ret['status'] && $ret['result'] == 'lower' ) {
 		$echo_str .= "\n\t\t\t\t\t\t".'<div style="display:inline-block; background-color:bisque; padding:0 0 0 4px; border-left:3px solid lightcoral;">';

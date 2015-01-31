@@ -1299,6 +1299,7 @@ function wfu_unlock_upload(sid) {
 }
 
 function wfu_clear(sid) {
+	document.getElementById("uploadform_" + sid).reset();
 	var textbox = document.getElementById('fileName_' + sid);
 	if (textbox) {
 		textbox.value = '';
