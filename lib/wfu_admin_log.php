@@ -10,11 +10,12 @@ function wfu_view_log() {
 	if ( !current_user_can( 'manage_options' ) ) return;
 
 	$echo_str = "\n".'<div class="wrap">';
+	$echo_str .= "\n\t".'<h2>Wordpress File Upload Control Panel</h2>';
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
-	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=manage_settings" class="button" title="go back">Go to Settings</a>';
+	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=manage_mainmenu" class="button" title="go back">Go to Main Menu</a>';
 	$echo_str .= "\n\t".'</div>';
-	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px;">History Log</h2>';
-	$echo_str .= "\n\t".'<div style="margin-top:10px;">';
+	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px; margin-top: 20px;">History Log</h2>';
+	$echo_str .= "\n\t".'<div>';
 	$echo_str .= "\n\t\t".'<table class="widefat">';
 	$echo_str .= "\n\t\t\t".'<thead>';
 	$echo_str .= "\n\t\t\t\t".'<tr>';

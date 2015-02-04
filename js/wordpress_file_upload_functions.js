@@ -671,6 +671,12 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 	else {
 		if (G.unique_id == "" || G.unique_id != unique_id || G.unique_id != Params.general.unique_id) return;
 		if (G.last) return;
+		if (Params.general.files_count == 0 && Params[0]) {
+			if (Params[0].message_type == "error") {
+				//notify that file has finished by setting files_count to 1
+				Params.general.files_count = 1;
+			}
+		}
 		var file_status = "";
 		for (var i = 0; i < Params.general.files_count; i++) {
 			// define new upload state based on the status of current file

@@ -110,6 +110,9 @@ Administrators can view and manage the uploaded files from the File Browser that
 
 == Changelog ==
 
+= 2.5.2 =
+* fixed important bug in free version not correctly showing message after failed upload
+
 = 2.5.1 =
 * fixed important bug in free version giving the same name to all uploaded files
 * fixed bug in free version not clearing completely the plugin cache from previous file upload
@@ -336,6 +339,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.5.2 =
+Important upgrade to address some bugs.
 
 = 2.5.1 =
 Important upgrade to address some bugs.

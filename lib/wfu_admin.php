@@ -88,7 +88,6 @@ function wordpress_file_upload_update_db_check() {
 
 // This is the callback function that generates dashboard page content
 function wordpress_file_upload_manage_dashboard() {
-	global $wpdb;
 	$_POST = stripslashes_deep($_POST);
 	$_GET = stripslashes_deep($_GET);
 	$action = (!empty($_POST['action']) ? $_POST['action'] : (!empty($_GET['action']) ? $_GET['action'] : ''));
@@ -152,30 +151,33 @@ function wordpress_file_upload_manage_dashboard() {
 	}
 	elseif ( $action == 'sync_db' ) {
 		$affected_items = wfu_sync_database();
-		$echo_str = wfu_manage_settings('Database updated. '.$affected_items.' items where affected.');
+		$echo_str = wfu_manage_mainmenu('Database updated. '.$affected_items.' items where affected.');
+	}
+	elseif ( $action == 'plugin_settings' ) {
+		$echo_str = wfu_manage_settings();	
 	}
 	else {
-		$echo_str = wfu_manage_settings();		
+		$echo_str = wfu_manage_mainmenu();		
 	}
 
 	echo $echo_str;
 }
 
-function wfu_manage_settings($message = '') {
+function wfu_manage_mainmenu($message = '') {
 	if ( !current_user_can( 'manage_options' ) ) return wfu_shortcode_composer();
 
-	global $wpdb;
 	$siteurl = site_url();
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
 	
-	$echo_str = '<div class="wfu_wrap">';
+	$echo_str = '<div class="wrap">';
 	$echo_str .= "\n\t".'<h2>Wordpress File Upload Control Panel</h2>';
 	if ( $message != '' ) {
 		$echo_str .= "\n\t".'<div class="updated">';
 		$echo_str .= "\n\t\t".'<p>'.$message.'</p>';
 		$echo_str .= "\n\t".'</div>';
 	}
-	$echo_str .= "\n\t".'<div style="margin-top:10px;">';
+	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
+	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=plugin_settings" class="button" title="Settings">Settings</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser" class="button" title="File browser">File Browser</a>';
 	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=shortcode_composer" class="button" title="Shortcode composer">Shortcode Composer</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=view_log" class="button" title="View log">View Log</a>';
@@ -228,7 +230,23 @@ function wfu_manage_settings($message = '') {
 	$echo_str .= "\n\t\t\t\t".'</tr>';
 	$echo_str .= "\n\t\t\t".'</tbody>';
 	$echo_str .= "\n\t\t".'</table>';
-	$echo_str .= "\n\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">Settings</h3>';
+	$echo_str .= "\n\t".'</div>';
+	$echo_str .= "\n".'</div>';
+	
+	echo $echo_str;
+}
+
+function wfu_manage_settings($message = '') {
+	if ( !current_user_can( 'manage_options' ) ) return wfu_shortcode_composer();
+
+	$siteurl = site_url();
+	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
+	
+	$echo_str = '<div class="wrap">';
+	$echo_str .= "\n\t".'<h2>Wordpress File Upload Control Panel</h2>';
+	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
+	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=manage_mainmenu" class="button" title="go back">Go to Main Menu</a>';
+	$echo_str .= "\n\t\t".'<h2 style="margin-bottom: 10px; margin-top: 20px;">Settings</h2>';
 	$echo_str .= "\n\t\t".'<form enctype="multipart/form-data" name="editsettings" id="editsettings" method="post" action="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=edit_settings" class="validate">';
 	$nonce = wp_nonce_field('wfu_edit_admin_settings', '_wpnonce', false, false);
 	$nonce_ref = wp_referer_field(false);

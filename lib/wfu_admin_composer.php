@@ -26,9 +26,12 @@ function wfu_shortcode_composer() {
 	$governors = array();
 
 	$echo_str = '<div id="wfu_wrapper" class="wrap">';
-	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=manage_settings" class="button" title="go back">Go to Settings</a>';
-	$echo_str .= "\n\t".'<h2>Wordpress File Upload Shortcode Composer</h2>';
-	$echo_str .= "\n\t".'<div style="margin-top:10px;">';
+	$echo_str .= "\n\t".'<h2>Wordpress File Upload Control Panel</h2>';
+	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
+	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=manage_mainmenu" class="button" title="go back">Go to Main Menu</a>';
+	$echo_str .= "\n\t".'</div>';
+	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px; margin-top: 20px;">Shortcode Composer</h2>';
+	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
 	$echo_str .= "\n\t\t".'<div class="wfu_shortcode_container">';
 	$echo_str .= "\n\t\t\t".'<span><strong>Generated Shortcode</strong></span>';
 	$echo_str .= "\n\t\t\t".'<span id="wfu_save_label" class="wfu_save_label">saved</span>';
