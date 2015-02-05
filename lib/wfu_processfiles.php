@@ -41,7 +41,7 @@ function wfu_process_files($params, $method) {
 	$params_output_array["general"]['state'] = 0;
 	$params_output_array["general"]['files_count'] = 0;
 	$params_output_array["general"]['update_wpfilebase'] = "";
-	$params_output_array["general"]['redirect_link'] = "";
+	$params_output_array["general"]['redirect_link'] = ( $params["redirect"] == "true" ? $params["redirectlink"] : "" );
 	$params_output_array["general"]['upload_finish_time'] = 0;
 	$params_output_array["general"]['message'] = "";
 	$params_output_array["general"]['message_type'] = "";
@@ -244,121 +244,121 @@ function wfu_process_files($params, $method) {
 //		if ( $upload_path_ok and $allowed_file_ok and $size_file_ok ) {
 		if ( $file_output['message_type'] != "error" ) {
 
-			if ( $only_check ) {
-				$file_copied = true;
-			}
-			elseif ( is_uploaded_file($fileprops['tmp_name']) ) {
-				$file_copied = false;
-				$message_processed = false;
-				$source_path = $fileprops['tmp_name'];
-				$only_filename = wfu_upload_plugin_clean( $fileprops['name'] );
-				$target_path = wfu_upload_plugin_full_path($params).$only_filename;
+			if ( is_uploaded_file($fileprops['tmp_name']) || $only_check ) {
+				if ( $only_check ) $file_copied = true;
+				else {
+					$file_copied = false;
+					$message_processed = false;
+					$source_path = $fileprops['tmp_name'];
+					$only_filename = wfu_upload_plugin_clean( $fileprops['name'] );
+					$target_path = wfu_upload_plugin_full_path($params).$only_filename;
 
-				$search = array ('/%filename%/', '/%filepath%/');	 
-				$replace = array ($only_filename, $target_path);
-				$success_message =  preg_replace($search, $replace, $params["successmessage"]);
+					$search = array ('/%filename%/', '/%filepath%/');	 
+					$replace = array ($only_filename, $target_path);
+					$success_message =  preg_replace($search, $replace, $params["successmessage"]);
 
-				if ($source_path) {
-					$file_exists = file_exists($target_path);
-					if ( !$file_exists || $params["dublicatespolicy"] == "" || $params["dublicatespolicy"] == "overwrite" ) {
-						//redirect echo in internal buffer to receive and process any unwanted warning messages from wfu_upload_file
-						ob_start();
-						ob_clean();
-						/* Apply wfu_before_file_upload filter right before the upload, in order to allow the user to change the file name.
-						   If additional data are required, such as user_id or userdata values, they can be retrieved by implementing the
-						   previous filter wfu_before_file_check, corresponding them to the unique file id */
-						if ( $file_unique_id != '' ) $target_path = apply_filters('wfu_before_file_upload', $target_path, $file_unique_id);
-						//move the uploaded file to its final destination
-						$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"]);
-						$file_copied = $wfu_upload_file_ret["uploaded"];
-						//process warning messages from wfu_upload_file
-						$echo_message = ob_get_contents();
-						//finish redirecting of echo to internal buffer
-						ob_end_clean();
-						if ( $echo_message != "" && !$file_copied ) {
-							$file_output['message_type'] = "error";
-							if ( stristr($echo_message, "warning") && stristr($echo_message, "permission denied") && stristr($echo_message, "unable to move") ) {
-								$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_DIR_PERMISSION);
-								$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], WFU_ERROR_ADMIN_DIR_PERMISSION);
+					if ($source_path) {
+						$file_exists = file_exists($target_path);
+						if ( !$file_exists || $params["dublicatespolicy"] == "" || $params["dublicatespolicy"] == "overwrite" ) {
+							//redirect echo in internal buffer to receive and process any unwanted warning messages from wfu_upload_file
+							ob_start();
+							ob_clean();
+							/* Apply wfu_before_file_upload filter right before the upload, in order to allow the user to change the file name.
+							   If additional data are required, such as user_id or userdata values, they can be retrieved by implementing the
+							   previous filter wfu_before_file_check, corresponding them to the unique file id */
+							if ( $file_unique_id != '' ) $target_path = apply_filters('wfu_before_file_upload', $target_path, $file_unique_id);
+							//move the uploaded file to its final destination
+							$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"]);
+							$file_copied = $wfu_upload_file_ret["uploaded"];
+							//process warning messages from wfu_upload_file
+							$echo_message = ob_get_contents();
+							//finish redirecting of echo to internal buffer
+							ob_end_clean();
+							if ( $echo_message != "" && !$file_copied ) {
+								$file_output['message_type'] = "error";
+								if ( stristr($echo_message, "warning") && stristr($echo_message, "permission denied") && stristr($echo_message, "unable to move") ) {
+									$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_DIR_PERMISSION);
+									$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], WFU_ERROR_ADMIN_DIR_PERMISSION);
+								}
+								else { 
+									$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_FILE_MOVE);
+									$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], strip_tags($echo_message));
+								}
+								$message_processed = true;
 							}
-							else { 
-								$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_FILE_MOVE);
-								$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], strip_tags($echo_message));
+							if ( $wfu_upload_file_ret["admin_message"] != "" ) {
+								$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], $wfu_upload_file_ret["admin_message"]);
 							}
-							$message_processed = true;
 						}
-						if ( $wfu_upload_file_ret["admin_message"] != "" ) {
-							$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], $wfu_upload_file_ret["admin_message"]);
-						}
-					}
-					else if ( $file_exists && $params["dublicatespolicy"] == "maintain both" ) {
-						$full_path = wfu_upload_plugin_full_path($params);
-						$name_part = $only_filename;
-						$ext_part = "";
-						$dot_pos = strrpos($name_part, ".");
-						if ( $dot_pos ) {
-							$ext_part = substr($name_part, $dot_pos);
-							$name_part = substr($name_part, 0, $dot_pos);
-						}
-						if ( $params["uniquepattern"] != "datetimestamp" ) {
-							$unique_ind = 1;
-							do {
-								$unique_ind += 1;
-								$only_filename = $name_part . "(" . $unique_ind . ")" . $ext_part;
-								$target_path = $full_path . $only_filename;
+						else if ( $file_exists && $params["dublicatespolicy"] == "maintain both" ) {
+							$full_path = wfu_upload_plugin_full_path($params);
+							$name_part = $only_filename;
+							$ext_part = "";
+							$dot_pos = strrpos($name_part, ".");
+							if ( $dot_pos ) {
+								$ext_part = substr($name_part, $dot_pos);
+								$name_part = substr($name_part, 0, $dot_pos);
 							}
-							while ( file_exists($target_path) );
+							if ( $params["uniquepattern"] != "datetimestamp" ) {
+								$unique_ind = 1;
+								do {
+									$unique_ind += 1;
+									$only_filename = $name_part . "(" . $unique_ind . ")" . $ext_part;
+									$target_path = $full_path . $only_filename;
+								}
+								while ( file_exists($target_path) );
+							}
+							else {
+								$current_datetime = gmdate("U") - 1;
+								do {
+									$current_datetime += 1;
+									$only_filename = $name_part . "-" . gmdate("YmdHis", $current_datetime) . $ext_part;
+									$target_path = $full_path . $only_filename;
+								}
+								while ( file_exists($target_path) );
+							}
+							//redirect echo in internal buffer to receive and process any unwanted warning messages from move_uploaded_file
+							ob_start();
+							ob_clean();
+							/* Apply wfu_before_file_upload filter right before the upload, in order to allow the user to change the file name.
+							   If additional data are required, such as user_id or userdata values, they can be retrieved by implementing the
+							   previous filter wfu_before_file_check, corresponding them to the unique file id */
+							if ( $file_unique_id != '' ) $target_path = apply_filters('wfu_before_file_upload', $target_path, $file_unique_id);
+							//move the uploaded file to its final destination
+							$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"]);
+							$file_copied = $wfu_upload_file_ret["uploaded"];
+							//process warning messages from move_uploaded_file
+							$echo_message = ob_get_contents();
+							//finish redirecting of echo to internal buffer
+							ob_end_clean();
+							if ( $echo_message != "" && !$file_copied ) {
+								$file_output['message_type'] = "error";
+								if ( stristr($echo_message, "warning") && stristr($echo_message, "permission denied") && stristr($echo_message, "unable to move") ) {
+									$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_DIR_PERMISSION);
+									$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], WFU_ERROR_ADMIN_DIR_PERMISSION);
+								}
+								else { 
+									$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_FILE_MOVE);
+									$file_output['admin_messages'] = wfu_join_strings("<br />n", $file_output['admin_messages'], strip_tags($echo_message));
+								}
+								$message_processed = true;
+							}
+							if ( $wfu_upload_file_ret["admin_message"] != "" ) {
+								$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], $wfu_upload_file_ret["admin_message"]);
+							}
 						}
 						else {
-							$current_datetime = gmdate("U") - 1;
-							do {
-								$current_datetime += 1;
-								$only_filename = $name_part . "-" . gmdate("YmdHis", $current_datetime) . $ext_part;
-								$target_path = $full_path . $only_filename;
-							}
-							while ( file_exists($target_path) );
-						}
-						//redirect echo in internal buffer to receive and process any unwanted warning messages from move_uploaded_file
-						ob_start();
-						ob_clean();
-						/* Apply wfu_before_file_upload filter right before the upload, in order to allow the user to change the file name.
-						   If additional data are required, such as user_id or userdata values, they can be retrieved by implementing the
-						   previous filter wfu_before_file_check, corresponding them to the unique file id */
-						if ( $file_unique_id != '' ) $target_path = apply_filters('wfu_before_file_upload', $target_path, $file_unique_id);
-						//move the uploaded file to its final destination
-						$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"]);
-						$file_copied = $wfu_upload_file_ret["uploaded"];
-						//process warning messages from move_uploaded_file
-						$echo_message = ob_get_contents();
-						//finish redirecting of echo to internal buffer
-						ob_end_clean();
-						if ( $echo_message != "" && !$file_copied ) {
 							$file_output['message_type'] = "error";
-							if ( stristr($echo_message, "warning") && stristr($echo_message, "permission denied") && stristr($echo_message, "unable to move") ) {
-								$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_DIR_PERMISSION);
-								$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], WFU_ERROR_ADMIN_DIR_PERMISSION);
-							}
-							else { 
-								$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_FILE_MOVE);
-								$file_output['admin_messages'] = wfu_join_strings("<br />n", $file_output['admin_messages'], strip_tags($echo_message));
-							}
+							$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_WARNING_FILE_EXISTS);
 							$message_processed = true;
+							$file_copied = false;
 						}
-						if ( $wfu_upload_file_ret["admin_message"] != "" ) {
-							$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], $wfu_upload_file_ret["admin_message"]);
-						}
-					}
-					else {
-						$file_output['message_type'] = "error";
-						$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_WARNING_FILE_EXISTS);
-						$message_processed = true;
-						$file_copied = false;
 					}
 				}
 
 				if ( $file_copied ) {
 					/* prepare email notification parameters if email notification is enabled */
-					if ( $params["notify"] == "true" ) {
+					if ( $params["notify"] == "true" && !$only_check ) {
 						$notify_only_filename_list .= ( $notify_only_filename_list == "" ? "" : ", " ).$only_filename;
 						$notify_target_path_list .= ( $notify_target_path_list == "" ? "" : ", " ).$target_path;
 						if ( $params["attachfile"] == "true" )

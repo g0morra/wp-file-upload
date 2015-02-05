@@ -706,7 +706,6 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 	// adjust upload parameters if this is the last combined call to this function
 	if (G.files_processed == G.files_count) {
 		G.last = true;
-
 		// prepare and execute actions related to WPFilebase, email notifications and redirection if this is the last call
 		if (G.update_wpfilebase != "") {
 			G.admin_messages.wpfilebase = "";

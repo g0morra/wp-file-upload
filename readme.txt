@@ -110,6 +110,11 @@ Administrators can view and manage the uploaded files from the File Browser that
 
 == Changelog ==
 
+= 2.5.3 =
+* fixed bug not allowing redirection to work
+* fixed bug that was including failed files in email notifications on certain occasions
+* default value for uploadrole changed to "all"
+
 = 2.5.2 =
 * fixed important bug in free version not correctly showing message after failed upload
 
@@ -340,6 +345,9 @@ Initial version.
 
 == Upgrade Notice ==
 
+= 2.5.3 =
+Important upgrade to address some bugs.
+
 = 2.5.2 =
 Important upgrade to address some bugs.
 
@@ -490,7 +498,7 @@ A detailed list of attributes, together with instructions is shown below:
 
 *Filters*
 
-* **uploadrole:** This is the roles that are allowed to upload files. Default role is "administrator". If you use other roles, like "editor", then only users of this role and also of role "administrator" will be able to upload files. You can set multiple roles, separated by comma, e.g. "editor, author". If you set uploadrole to "all" then all users, even guests, will be able to upload files.
+* **uploadrole:** This is the roles that are allowed to upload files. Default role is "all". If you use other roles, like "editor", then only users of this role and also of role "administrator" will be able to upload files. You can set multiple roles, separated by comma, e.g. "editor, author". If you set uploadrole to "all" then all users, even guests, will be able to upload files.
 * **uploadpatterns:** This is the filter of the uploaded files. Default value is "*.*", meaning that all files can be uploaded. Use this attribute to restrict the types of files that can be uploaded. For instance, in order to upload only pdf files put "\*.pdf". You can use more that one filters, separated by comma, for instance "\*.pdf,\*.doc".
 * **maxsize:** This is the maximum size in MBytes of the uploaded files. Use this attribute to restrict the upload of files larger that this value. Default value is "10", meaning that you cannot upload files larger than 10MBytes.
 
