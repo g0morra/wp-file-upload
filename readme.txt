@@ -110,6 +110,12 @@ Administrators can view and manage the uploaded files from the File Browser that
 
 == Changelog ==
 
+= 2.5.4 =
+* mitigated issue with "Session failed" errors appearing randomly in websites
+* fixed bug not applying %filename% variable inside redirect link
+* fixed bug not applying new filename, which has been modified with wfu_before_file_upload filter, in email notifications and redirects
+* fixed bug where when 2 big files were uploaded at the same time and one failed due to failed chunk, then the progress bar would not go to 100% and the file would not be shown as cancelled
+
 = 2.5.3 =
 * fixed bug not allowing redirection to work
 * fixed bug that was including failed files in email notifications on certain occasions
@@ -344,6 +350,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.5.4 =
+Important upgrade to address some bugs.
 
 = 2.5.3 =
 Important upgrade to address some bugs.

@@ -267,6 +267,8 @@ function wfu_process_files($params, $method) {
 							   If additional data are required, such as user_id or userdata values, they can be retrieved by implementing the
 							   previous filter wfu_before_file_check, corresponding them to the unique file id */
 							if ( $file_unique_id != '' ) $target_path = apply_filters('wfu_before_file_upload', $target_path, $file_unique_id);
+							//recalculate $only_filename in case it changed with wfu_before_file_upload filter
+							$only_filename = basename($target_path);
 							//move the uploaded file to its final destination
 							$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"]);
 							$file_copied = $wfu_upload_file_ret["uploaded"];
@@ -324,6 +326,8 @@ function wfu_process_files($params, $method) {
 							   If additional data are required, such as user_id or userdata values, they can be retrieved by implementing the
 							   previous filter wfu_before_file_check, corresponding them to the unique file id */
 							if ( $file_unique_id != '' ) $target_path = apply_filters('wfu_before_file_upload', $target_path, $file_unique_id);
+							//recalculate $only_filename in case it changed with wfu_before_file_upload filter
+							$only_filename = basename($target_path);
 							//move the uploaded file to its final destination
 							$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"]);
 							$file_copied = $wfu_upload_file_ret["uploaded"];

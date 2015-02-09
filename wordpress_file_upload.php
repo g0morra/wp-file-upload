@@ -4,7 +4,7 @@ session_start();
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.5.3
+Version: 2.5.4
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -104,7 +104,8 @@ function wordpress_file_upload_function($incomingfromhandler) {
 	// store current page id in params array
 	$params["pageid"] = $post->ID;
 
-	$_SESSION['wfu_token_'.$sid] = uniqid(mt_rand(), TRUE);
+	if ( !isset($_SESSION['wfu_token_'.$sid]) || $_SESSION['wfu_token_'.$sid] == "" )
+		$_SESSION['wfu_token_'.$sid] = uniqid(mt_rand(), TRUE);
 
 	$user = wp_get_current_user();
 	$widths = wfu_decode_dimensions($params["widths"]);

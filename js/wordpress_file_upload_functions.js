@@ -690,7 +690,7 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 		G.files_processed += Params.general.files_count;
 		G.message = wfu_join_strings("<br />", G.message, Params.general.message);
 		if (G.update_wpfilebase == "") G.update_wpfilebase = Params.general.update_wpfilebase;
-		if (G.redirect_link == "") G.redirect_link = Params.general.redirect_link;
+		G.redirect_link = Params.general.redirect_link;
 		G.notify_only_filename_list = wfu_join_strings(", ", G.notify_only_filename_list, Params.general.notify_only_filename_list);
 		G.notify_target_path_list = wfu_join_strings(", ", G.notify_target_path_list, Params.general.notify_target_path_list);
 		G.notify_attachment_list = wfu_join_strings(",", G.notify_attachment_list, Params.general.notify_attachment_list);
