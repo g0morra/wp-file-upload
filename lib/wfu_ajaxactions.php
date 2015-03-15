@@ -84,7 +84,7 @@ function wfu_ajax_action_callback() {
 	}
 	
 	//the first pass to this callback script is for closing the previous connection_aborted
-	if ( $_POST["force_connection_close"] === "1" ) {
+	if ( isset($_POST["force_connection_close"]) && $_POST["force_connection_close"] === "1" ) {
 		header("Connection: Close");
 		die("success");
 	}

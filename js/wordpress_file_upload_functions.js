@@ -553,10 +553,10 @@ function wfu_uploadComplete(evt) {
 	}
 	if (upload_params == "" || safe_params == "") {
 		// upload_params is passed as object, so no need to pass a safe_output string
-		last = wfu_ProcessUploadComplete(sid, this.file_id, Params, this.unique_id, this.params_index, this.session_token, "", [this.debugmode, debug_data, this.is_admin]);
+		last = wfu_ProcessUploadComplete(sid, this.file_id, Params, this.unique_id, this.params_index, this.session_token, "", [this.debugmode, debug_data, this.is_admin], this.requesttype);
 	}
 	else {
-		last = wfu_ProcessUploadComplete(sid, this.file_id, upload_params, this.unique_id, this.params_index, this.session_token, safe_params, [this.debugmode, debug_data, this.is_admin]);
+		last = wfu_ProcessUploadComplete(sid, this.file_id, upload_params, this.unique_id, this.params_index, this.session_token, safe_params, [this.debugmode, debug_data, this.is_admin], this.requesttype);
 	}
 	if (last) {
 		wfu_unlock_upload(evt.target.shortcode_id);
@@ -568,7 +568,7 @@ function wfu_uploadComplete(evt) {
 }
 
 // wfu_ProcessUploadComplete: function to perform actions after successfull upload
-function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, params_index, session_token, safe_output, debug_data) {
+function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, params_index, session_token, safe_output, debug_data, request_type) {
 	// initial checks to process or not the data
 	if (!sid || sid < 0) return;
 	if (upload_params == null || upload_params == "") return;
@@ -690,7 +690,7 @@ function wfu_ProcessUploadComplete(sid, file_id, upload_params, unique_id, param
 		G.files_processed += Params.general.files_count;
 		G.message = wfu_join_strings("<br />", G.message, Params.general.message);
 		if (G.update_wpfilebase == "") G.update_wpfilebase = Params.general.update_wpfilebase;
-		G.redirect_link = Params.general.redirect_link;
+		if (!request_type || (request_type && request_type != "email")) G.redirect_link = Params.general.redirect_link;
 		G.notify_only_filename_list = wfu_join_strings(", ", G.notify_only_filename_list, Params.general.notify_only_filename_list);
 		G.notify_target_path_list = wfu_join_strings(", ", G.notify_target_path_list, Params.general.notify_target_path_list);
 		G.notify_attachment_list = wfu_join_strings(",", G.notify_attachment_list, Params.general.notify_attachment_list);
@@ -1084,6 +1084,10 @@ function wfu_HTML5UploadFile(sid, JSONtext, session_token) {
 	//check if a subfolder has been selected (in case askforsubfolders is on)
 	if (!wfu_selectsubdir_check(sid)) return;
 
+	//calculate number of passes from number of files
+	var numpasses = numfiles;
+	//reconsider numpasses and include also the check passes
+	numpasses += numpasses;
 
 	// check if there are empty user data fields that are required
 	if (!wfu_check_required_userdata(sid)) return; 

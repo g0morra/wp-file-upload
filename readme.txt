@@ -110,6 +110,10 @@ Administrators can view and manage the uploaded files from the File Browser that
 
 == Changelog ==
 
+= 2.5.5 =
+* fixed serious bug not uploading files when captcha is enabled
+* fixed bug not redirecting files when email notification is enabled
+
 = 2.5.4 =
 * mitigated issue with "Session failed" errors appearing randomly in websites
 * fixed bug not applying %filename% variable inside redirect link
@@ -350,6 +354,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.5.5 =
+Important upgrade to address some bugs.
 
 = 2.5.4 =
 Important upgrade to address some bugs.

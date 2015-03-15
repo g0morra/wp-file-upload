@@ -295,6 +295,11 @@ function wfu_compare_versions($current, $latest) {
 	return array( 'status' => true, 'custom' => $custom, 'result' => 'equal' );	
 }
 
+function wfu_debug_log($message) {
+	$logpath = WP_CONTENT_DIR.'/debug_log.txt';
+	file_put_contents($logpath, $message, FILE_APPEND);
+}
+
 //********************* Directory Functions ************************************************************************************************
 
 function wfu_upload_plugin_full_path( $params ) {
