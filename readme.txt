@@ -3,7 +3,7 @@ Contributors: nickboss
 Donate link: http://www.iptanus.com/support/wordpress-file-upload
 Tags: upload, upload file, upload files, multiple, multiple upload, multiple uploads, captcha, progress bar, form, ajax, directory, HTML5, filelist, gallery, image gallery, browser, file browser, gallery, image gallery, shortcode, logging, file logging
 Requires at least: 2.9.2
-Tested up to: 4.1.0
+Tested up to: 4.1.1
 Stable tag: "trunk"
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -35,8 +35,8 @@ The characteristics of the plugin are:
 * You can create additional fields that the user must fill in along with the uploaded file.
 * It supports redirection to another url after successful upload.
 * It supports filters and actions before and after file upload, so that programmers can extend the plugin and make it cooperate with other plugins.
+* It contains a visual editor for customizing the plugin easily and without any knowledge of shortcodes or programming
 * It supports logging of upload events or management of files, which can be viewed by admins through the Dashboard.
-* You can create you shortcode very easily by using the included Shortcode Composer in the plugin's settings inside Dashboard.
 * It includes a file browser in the Dashboard, from where admins can view the uploaded file and manage them.
 
 Please note that old desktop browsers or mobile browsers may not support all of the above functionalities. In order to get full functionality use the latest versions browsers, supporting HTML5, AJAX and CSS3.
@@ -47,10 +47,12 @@ Please visit the **Other Notes** section for customization options of this plugi
 
 == Installation ==
 
-1. First copy wordpress_file_upload directory inside wp-contents/plugins directory of your wordpress site.
-1. Activate the plugin from Plugins menu of your Dashboard.
+1. First install the plugin using Wordpress auto-installer or download the .zip file from wordpress.org and install it from the Plugins section of your Dashboard or copy wordpress_file_upload directory inside wp-contents/plugins directory of your wordpress site.
+1. Activate the plugin from Plugins section of your Dashboard.
 1. In order to use the plugin simply put the shortcode [wordpress_file_upload] in the contents of any page.
-1. If you want more options, go to plugin Settings inside Dashboard, open Shortcode Composer and select the options you want. The composer generates the shortcode automatically. Copy and paste it to the page of your choice.
+1. Open the page on your browser and you will see the upload form.
+1. You can change the upload directory or any other settings easily by pressing the small edit button found at the left-top corner of the upload form. A new window (or tab) with pop up with plugin options. If you do not see the new window, adjust your browser settings to allow pop-up windows.
+1. Full documentation about the plugin options can be found at https://wordpress.org/plugins/wp-file-upload/other_notes/ or at http://www.iptanus.com/wordpress-plugins/wordpress-file-upload/ (including the Pro version)
 
 == Frequently Asked Questions ==
 
@@ -98,6 +100,10 @@ The plugin is designed not to expose website information by using sessions. Para
 
 Administrators can view and manage the uploaded files from the File Browser that exists inside the plugin's Settings inside Dashboard, or use an FTP client. Other users can view their uploaded files by combining this plugin with WP-Filebase plugin. If you want to show the uploaded files as an image gallery please consider the [Professional](http://www.iptanus.com/support/wordpress-file-upload/ "Wordpress File Upload support page") version of the plugin.
 
+= What happens if connection is lost during a file upload? =
+
+In the free version the upload will fail. However in the Pro version the upload will resume and will continue until the file is fully uploaded. This is especially useful when uploading very large files.
+
 == Screenshots ==
 
 1. A screenshot of the plugin in its most simple form.
@@ -109,6 +115,27 @@ Administrators can view and manage the uploaded files from the File Browser that
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 2.6.0 =
+* full redesign of the upload algorithm to become more robust
+* added improved server-side handling of large files
+* plugin shortcodes can be edited using the Shortcode Composer
+* added visual editor button on the plugin to enable administrators to change the plugin settings easily
+* corrected bug causing sometimes database overloads
+* slight improvements of subfolder option
+* improvements to avoid code breaking in ajax calls when there are php warnings or echo from Wordpress environment or other plugins
+* improvements and bug fixes in uploader when classic (no AJAX) upload is selected
+* eliminated php warnings in shortcode composer
+* corrected bug that was not correctly downloading files from the plugin's File Browser
+* added better security when downloading files from the plugin's File Browser
+* fixed bug not correctly showing the user that uploaded a file in the plugin's File Browser
+* use of curl to perform server http requests was replaced by native php because some web servers do not have CURL installed
+* corrected bug in shortcode composer where userdata fields were not shown in variables drop down
+* added feature that prevents page closing if an upload is on progress
+* added forcefilename attribute to avoid filename sanitization
+* added ftppassivemode attribute for enabling FTP passive mode when FTP method is used for uploading
+* added ftpfilepermissions attribute for defining the permissions of the uploaded file, when using FTP method
+* javascript and css files are minified for faster loading
 
 = 2.5.5 =
 * fixed serious bug not uploading files when captcha is enabled
@@ -355,6 +382,9 @@ Initial version.
 
 == Upgrade Notice ==
 
+= 2.6.0 =
+Important upgrade to add new features and address some bugs.
+
 = 2.5.5 =
 Important upgrade to address some bugs.
 
@@ -521,9 +551,12 @@ A detailed list of attributes, together with instructions is shown below:
 *Upload Path and Files*
 
 * **createpath:** If this attribute is set to "true", the upload directory, defined by uploadpath, will be created in case it does not exist. Default value is "false".
+* **forcefilename:** The plugin by default will modify the filename if it contains invalid or non-english characters. By setting this attribute to "true" the plugin will not change the filename. Default value is "false".
 * **accessmethod:** This attributes defines the method to create directories and upload files. Default value is "normal". If it is set to "ftp", then the plugin will attempt to create directories and upload files using ftp access. In order to do this, the attribute *ftpinfo* must also be filled with valid ftp access information. Use this attribute when you cannot upload files, access uploaded files or cannot copy or delete uploaded files because of SAFE MODE restrictions, or because the owner of the file is the domain administrator.
 * **ftpinfo:** This attribute defines the ftp access information. It has the syntax *username:password@domain*. If username, password or domain contains the characters (:) or (@), then replace them with (\\:) and (\\@) in order to avoid misreading of the attribute.
 * **useftpdomain:** This attribute is used when the ftp domain used to upload files is in different domain than Wordpress installation. If it is set to "true" (and also uploadmethod is "ftp"), then the domain that will be used to upload files will be the one defined in ftpinfo attribute. Default value is "false".
+* **ftppassivemode:** If this attribute is set to "true", FTP passive mode will be used instead of active mode. It is used if files fail to upload when using FTP method. Default value is "false".
+* **ftpfilepermissions:** Force the uploaded files to have specific permissions. This is a 4-digit octal number, e.g. 0777. If left empty, then the ftp server will define the permissions.. Default value is "".
 * **showtargetfolder:** This attribute defines if a message with the upload directory will be shown. Default value is "false".
 * **askforsubfolders:** This attribute defines if the user can select a subfolder to upload the file. Default value is "false". If set to "true", then the user is able to select a subfolder of the path, defined by the attribute *uploadpath*, to upload a file through a drop down list. This attributed is used together with attribute *subfoldertree*, which defines the subfolders.
 * **subfoldertree:** This attribute defines the structure of the subfolders that the user can select to upload a file. Default value is "". The format of this attribute is as follows: the subfolders are separated by commas (,), e.g. "subfolder1, subfolder2". It is possible to use nested subfolders (a folder inside another folder). To do this place stars (*) before the name of the subfolder. The number of stars determines nesting level, e.g. "subfolder1, *nested1, *nested2, **nested3". Please note that the first subfolder must be the name of the folder defined by attribute *uploadpath* (only the last part) without any stars, while all the next subfolders must have at least one star. The user has also the capability to use a different name (from the actual subfolder name) to be shown in the drop down list for every subfolder, by separating the actual and shown name using the slash (/) symbol, e.g. "subfolder1, *subfolder2/shownname2, *subfolder3/shownname3".

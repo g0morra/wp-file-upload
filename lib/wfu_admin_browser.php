@@ -3,7 +3,9 @@
 function wfu_browse_files($basedir) {
 	$siteurl = site_url();
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
-
+	$user = wp_get_current_user();
+	//store session variables for use from the downloader
+	
 	if ( !current_user_can( 'manage_options' ) ) return;
 	//first decode basedir
 	$basedir = wfu_plugin_decode_string($basedir);
@@ -23,7 +25,7 @@ function wfu_browse_files($basedir) {
 	//set basedit to default value if empty
 	if ( $basedir == "" ) {
 		$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
-		$basedir = $plugin_options['basedir'];
+		$basedir = ( isset($plugin_options['basedir']) ? $plugin_options['basedir'] : "" );
 		$temp_params = array( 'uploadpath' => $basedir, 'accessmethod' => 'normal', 'ftpinfo' => '', 'useftpdomain' => 'false' );
 		$basedir = wfu_upload_plugin_full_path($temp_params);
 	}
@@ -105,7 +107,7 @@ function wfu_browse_files($basedir) {
 					$filerec = wfu_get_file_rec($filepath, true);
 					//find user who uploaded the file
 					$username = '';
-					if ( $filerec != null ) $username = wfu_get_username_by_id($filerec->userid);
+					if ( $filerec != null ) $username = wfu_get_username_by_id($filerec->uploaduserid);
 					array_push($filelist, array( 'name' => $file, 'fullpath' => $filepath, 'size' => $stat['size'], 'mdate' => $stat['mtime'], 'user' => $username, 'filedata' => $filerec ));
 				}
 			}
@@ -180,9 +182,10 @@ function wfu_browse_files($basedir) {
 		$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="javascript:wfu_download_file(\''.wfu_plugin_encode_string(WFU_AJAX_URL).'\', \''.wfu_plugin_encode_string($file['fullpath']).'\', '.( $file['filedata'] != null ? $file['filedata']->idlog : '0' ).');" title="Download this file">Download</a>';
+		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="javascript:wfu_download_file(\''.wfu_plugin_encode_string($file['fullpath']).'\', '.$ii.', \''.wp_create_nonce('wfu_download_file_invoker').'\');" title="Download this file">Download</a>';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
 		$echo_str .= "\n\t\t\t\t\t\t".'</div>';
+		$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_file_download_container_'.$ii.'" style="display: block;"></div>';
 		$echo_str .= "\n\t\t\t\t\t".'</td>';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="10%" style="padding: 5px 5px 5px 10px; text-align:right;">'.$file['size'].'</td>';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="20%" style="padding: 5px 5px 5px 10px; text-align:left;">'.date("d/m/Y H:i:s", $file['mdate']).'</td>';
@@ -220,6 +223,18 @@ function wfu_current_user_allowed_action($action, $filepath) {
 		return null;
 	}
 	return $user;
+}
+
+function wfu_current_user_allowed_action_remote($action, $filepath, $userid) {
+	//first get file data from database, if exist
+	$filerec = wfu_get_file_rec($filepath, false);
+
+	if ( 0 == $userid ) return null;
+	else $is_admin = user_can($userid, 'manage_options');
+	if ( !$is_admin ) {
+		return null;
+	}
+	return true;
 }
 
 function wfu_rename_file_prompt($file, $type, $error) {

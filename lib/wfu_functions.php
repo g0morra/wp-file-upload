@@ -10,10 +10,11 @@ function wfu_upload_plugin_clean($label) {
 	$search = array ('@[eeeeEE]@i','@[aaaAA]@i','@[iiII]@i','@[uuuUU]@i','@[ooOO]@i',
 	'@[c]@i','@[^a-zA-Z0-9._]@');	 
 	$replace = array ('e','a','i','u','o','c','-');
-	$label =  preg_replace($search, $replace, $label);
-	$label = strtolower($label); // Convert in lower case
+	$clean =  preg_replace($search, $replace, $label);
+	$clean = strtolower($clean); // Convert in lower case
 //	$label =  preg_replace('/[\\/\?%\*:\|\"<>]/', '-', $label);
-	return $label;
+
+	return $clean;
 }
 
 function wfu_upload_plugin_wildcard_to_preg($pattern) {
@@ -215,6 +216,20 @@ function wfu_array_sort($array, $on, $order=SORT_ASC) {
 
 //********************* Plugin Options Functions *******************************************************************************************
 
+function wfu_get_server_environment() {
+	$php_env = '';
+	if ( PHP_INT_SIZE == 4 ) $php_env = '32bit';
+	elseif ( PHP_INT_SIZE == 8 ) $php_env = '64bit';
+	else {
+		$int = "9223372036854775807";
+		$int = intval($int);
+		if ($int == 9223372036854775807) $php_env = '64bit';
+		elseif ($int == 2147483647) $php_env = '32bit';
+	}
+
+	return $php_env;
+}
+
 function wfu_encode_plugin_options($plugin_options) {
 	$encoded_options = 'version='.$plugin_options['version'].';';
 	$encoded_options .= 'shortcode='.wfu_plugin_encode_string($plugin_options['shortcode']).';';
@@ -227,12 +242,13 @@ function wfu_decode_plugin_options($encoded_options) {
 	$decoded_array = explode(';', $encoded_options);
 	$plugin_options = array();
 	foreach ($decoded_array as $decoded_item) {
-		list($item_key, $item_value) = explode("=", $decoded_item, 2);
-		if ( $item_key == 'shortcode' || $item_key == 'basedir' )
-			$plugin_options[$item_key] = wfu_plugin_decode_string($item_value);
-		else
-			$plugin_options[$item_key] = $item_value;
-		
+		if ( trim($decoded_item) != "" ) {
+			list($item_key, $item_value) = explode("=", $decoded_item, 2);
+			if ( $item_key == 'shortcode' || $item_key == 'basedir' )
+				$plugin_options[$item_key] = wfu_plugin_decode_string($item_value);
+			else
+				$plugin_options[$item_key] = $item_value;
+		}
 	}
 	return $plugin_options;
 }
@@ -295,12 +311,12 @@ function wfu_compare_versions($current, $latest) {
 	return array( 'status' => true, 'custom' => $custom, 'result' => 'equal' );	
 }
 
-function wfu_debug_log($message) {
-	$logpath = WP_CONTENT_DIR.'/debug_log.txt';
-	file_put_contents($logpath, $message, FILE_APPEND);
-}
+//********************* File / Directory Functions ************************************************************************************************
 
-//********************* Directory Functions ************************************************************************************************
+function wfu_basename($path) {
+	if ( !$path || $path == "" ) return "";
+	return preg_replace('/.*(\\\\|\\/)/', '', $path);
+}
 
 function wfu_upload_plugin_full_path( $params ) {
 	$path = $params["uploadpath"];
@@ -433,6 +449,106 @@ function wfu_parse_folderlist($subfoldertree) {
 	}
 
 	return $ret;
+}
+
+function wfu_filesize($filepath) {
+	$fp = fopen($filepath, 'r');
+	$pos = 0;
+	if ($fp) {
+		$size = 1073741824;
+		fseek($fp, 0, SEEK_SET);
+		while ($size > 1) {
+			fseek($fp, $size, SEEK_CUR);
+			if (fgetc($fp) === false) {
+				fseek($fp, -$size, SEEK_CUR);
+				$size = (int)($size / 2);
+			}
+			else {
+				fseek($fp, -1, SEEK_CUR);
+				$pos += $size;
+			}
+		}
+		while (fgetc($fp) !== false)  $pos++;
+		fclose($fp);
+	}
+
+    return $pos;
+}
+
+function wfu_filesize2($filepath) {
+    $fp = fopen($filepath, 'r');
+    $return = false;
+    if (is_resource($fp)) {
+      if (PHP_INT_SIZE < 8) {
+        // 32bit
+        if (0 === fseek($fp, 0, SEEK_END)) {
+          $return = 0.0;
+          $step = 0x7FFFFFFF;
+          while ($step > 0) {
+            if (0 === fseek($fp, - $step, SEEK_CUR)) {
+              $return += floatval($step);
+            } else {
+              $step >>= 1;
+            }
+          }
+        }
+      } elseif (0 === fseek($fp, 0, SEEK_END)) {
+        // 64bit
+        $return = ftell($fp);
+      }
+      fclose($fp);
+    }
+    return $return;
+}
+
+function wfu_fseek($fp, $pos, $first = 1) {
+	// set to 0 pos initially, one-time
+	if ( $first ) fseek($fp, 0, SEEK_SET);
+
+	// get pos float value
+	$pos = floatval($pos);
+
+	// within limits, use normal fseek
+	if ( $pos <= PHP_INT_MAX )
+		fseek($fp, $pos, SEEK_CUR);
+	// out of limits, use recursive fseek
+	else {
+		fseek($fp, PHP_INT_MAX, SEEK_CUR);
+		$pos -= PHP_INT_MAX;
+		wfu_fseek($fp, $pos, 0);
+	}
+}
+
+function wfu_fseek2($fp, $pos) {
+	$pos = floatval($pos);
+	if ( $pos <= PHP_INT_MAX ) {
+		return fseek($fp, $pos, SEEK_SET);
+	}
+	else {
+		$fsize = wfu_filesize2($filepath);
+		$opp = $fsize - $pos;
+		if ( 0 === ($ans = fseek($fp, 0, SEEK_END)) ) {
+			$maxstep = 0x7FFFFFFF;
+			$step = $opp;
+			if ( $step > $maxstep ) $step = $maxstep;
+			while ($step > 0) {
+				if ( 0 === ($ans = fseek($fp, - $step, SEEK_CUR)) ) {
+					$opp -= floatval($step);
+				}
+				else {
+					$maxstep >>= 1;
+				}
+				$step = $opp;
+				if ( $step > $maxstep ) $step = $maxstep;
+			}
+		}
+	}
+	return $ans;
+}
+
+function wfu_debug_log($message) {
+	$logpath = WP_CONTENT_DIR.'/debug_log.txt';
+	file_put_contents($logpath, $message, FILE_APPEND);
 }
 
 //********************* User Functions *****************************************************************************************************
@@ -754,7 +870,7 @@ function wfu_get_file_rec($filepath, $include_userdata) {
 	$relativepath = str_replace(ABSPATH, '', $filepath);
 	if ( substr($relativepath, 0, 1) != '/' ) $relativepath = '/'.$relativepath;
 	//if file hash is enabled, then search file based on its path and hash, otherwise find file based on its path and size
-	if ( $plugin_options['hashfiles'] == '1' ) {
+	if ( isset($plugin_options['hashfiles']) && $plugin_options['hashfiles'] == '1' ) {
 		$filehash = md5_file($filepath);
 		$filerec = $wpdb->get_row('SELECT * FROM '.$table_name1.' WHERE filepath = \''.$relativepath.'\' AND filehash = \''.$filehash.'\' AND date_to = 0 ORDER BY date_from DESC');
 	}
@@ -936,7 +1052,7 @@ function wfu_add_div() {
 		for ( $k = 1; $k <= $item_lines_count; $k++ ) {
 			if ( $items[$i]["line".$k] != "" ) $div .= "\n\t\t\t\t\t\t\t".$items[$i]["line".$k];
 		}
-		$div .= "\n\t\t\t\t\t\t\t".'<div class="file_space_clean" />';  
+		$div .= "\n\t\t\t\t\t\t\t".'<div class="file_space_clean"></div>';  
 		$div .= "\n\t\t\t\t\t\t".'</div>';  
 		$div .= "\n\t\t\t\t\t".'</td>';  
 	}
@@ -993,11 +1109,11 @@ function wfu_send_notification_email($user, $only_filename_list, $target_path_li
 
 // function wfu_process_media_insert contribution from Aaron Olin
 function wfu_process_media_insert($file_path, $page_id){   
-	$filetype = wp_check_filetype( basename( $file_path ), null );
+	$filetype = wp_check_filetype( wfu_basename( $file_path ), null );
 
 	$attachment = array(
 		'post_mime_type' => $filetype['type'],
-		'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $file_path ) ),
+		'post_title'     => preg_replace( '/\.[^.]+$/', '', wfu_basename( $file_path ) ),
 		'post_content'   => '',
 		'post_status'    => 'inherit'
 	);
@@ -1010,6 +1126,20 @@ function wfu_process_media_insert($file_path, $page_id){
 	$update_attach = wp_update_attachment_metadata( $attach_id, $attach_data );
 
 	return $attach_id;	
+}
+
+//********************* POST/GET Requests Functions ****************************************************************************************************
+
+function wfu_post_request($url, $params) {
+	$context_params = array(
+		'http' => array(
+			'method'  => 'POST',
+			'header'  => 'Content-type: application/x-www-form-urlencoded',
+			'content' => http_build_query($params)
+		)
+	);
+	$context = stream_context_create($context_params);
+	return file_get_contents($url, false, $context);
 }
 
 ?>

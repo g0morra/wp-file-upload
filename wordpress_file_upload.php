@@ -4,7 +4,7 @@ session_start();
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.5.5
+Version: 2.6.0
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -56,8 +56,13 @@ add_action('wp_ajax_nopriv_wfu_ajax_action_send_email_notification', 'wfu_ajax_a
 add_action('wp_ajax_wfu_ajax_action_notify_wpfilebase', 'wfu_ajax_action_notify_wpfilebase');
 add_action('wp_ajax_nopriv_wfu_ajax_action_notify_wpfilebase', 'wfu_ajax_action_notify_wpfilebase');
 add_action('wp_ajax_wfu_ajax_action_save_shortcode', 'wfu_ajax_action_save_shortcode');
+add_action('wp_ajax_wfu_ajax_action_check_page_contents', 'wfu_ajax_action_check_page_contents');
 add_action('wp_ajax_wfu_ajax_action_read_subfolders', 'wfu_ajax_action_read_subfolders');
-add_action('wp_ajax_wfu_ajax_action_download_file', 'wfu_ajax_action_download_file');
+add_action('wp_ajax_wfu_ajax_action_download_file_invoker', 'wfu_ajax_action_download_file_invoker');
+add_action('wp_ajax_nopriv_wfu_ajax_action_download_file_invoker', 'wfu_ajax_action_download_file_invoker');
+add_action('wp_ajax_wfu_ajax_action_download_file_monitor', 'wfu_ajax_action_download_file_monitor');
+add_action('wp_ajax_nopriv_wfu_ajax_action_download_file_monitor', 'wfu_ajax_action_download_file_monitor');
+add_action('wp_ajax_wfu_ajax_action_edit_shortcode', 'wfu_ajax_action_edit_shortcode');
 wfu_include_lib();
 
 function wfu_enqueue_frontpage_scripts() {
@@ -106,6 +111,8 @@ function wordpress_file_upload_function($incomingfromhandler) {
 
 	if ( !isset($_SESSION['wfu_token_'.$sid]) || $_SESSION['wfu_token_'.$sid] == "" )
 		$_SESSION['wfu_token_'.$sid] = uniqid(mt_rand(), TRUE);
+	//store the server environment (32 or 64bit) for use when checking file size limits
+	$params["php_env"] = wfu_get_server_environment();
 
 	$user = wp_get_current_user();
 	$widths = wfu_decode_dimensions($params["widths"]);
@@ -216,7 +223,17 @@ function wordpress_file_upload_function($incomingfromhandler) {
 
 	/* Compose the html code for the plugin */
 	$wordpress_file_upload_output = "";
-	$wordpress_file_upload_output .= '<div id="wordpress_file_upload_block_'.$sid.'" class="file_div_clean">';
+	$wordpress_file_upload_output .= '<div id="wordpress_file_upload_block_'.$sid.'" class="file_div_clean wfu_container">';
+	//add visual editor overlay if the current user is administrator
+	if ( current_user_can( 'manage_options' ) ) {
+		$wordpress_file_upload_output .= "\n\t".'<div id="wordpress_file_upload_editor_'.$sid.'" class="wfu_overlay_editor">';
+		$wordpress_file_upload_output .= "\n\t\t".'<button class="wfu_overlay_editor_button" title="'.WFU_PAGE_PLUGINEDITOR_BUTTONTITLE.'" onclick="wfu_invoke_shortcode_editor('.$sid.', '.$post->ID.', \''.hash('md5', $post->post_content).'\');"><img src="'.WFU_IMAGE_OVERLAY_EDITOR.'" width="20px" height="20px" /></button>';
+		$wordpress_file_upload_output .= "\n\t".'</div>';
+		$wordpress_file_upload_output .= "\n\t".'<div id="wordpress_file_upload_overlay_'.$sid.'" class="wfu_overlay_container">';
+		$wordpress_file_upload_output .= "\n\t\t".'<table class="wfu_overlay_table"><tbody><tr><td><img src="'.WFU_IMAGE_OVERLAY_LOADING.'" /><label>'.WFU_PAGE_PLUGINEDITOR_LOADING.'</label></td></tr></tbody></table>';
+		$wordpress_file_upload_output .= "\n\t\t".'<div class="wfu_overlay_container_inner"></div>';
+		$wordpress_file_upload_output .= "\n\t".'</div>';
+	}
 	$itemplaces = explode("/", $params["placements"]);
 	foreach ( $itemplaces as $section ) {
 		$items_in_section = explode("+", trim($section));
@@ -247,9 +264,9 @@ function wordpress_file_upload_function($incomingfromhandler) {
 		$wordpress_file_upload_output .= call_user_func_array("wfu_add_div", $section_array);
 	}
 
-	/* Pass constants to javascript */
+	/* Pass constants to javascript and set page unload hook */
 	$consts = wfu_set_javascript_constants();
-	$handler = 'function() { wfu_Initialize_Consts("'.$consts.'") }';
+	$handler = 'function() { wfu_Initialize_Consts("'.$consts.'"); wfu_install_unload_hook(); }';
 	$wordpress_file_upload_output .= "\n\t".'<script type="text/javascript">if(window.addEventListener) { window.addEventListener("load", '.$handler.', false); } else if(window.attachEvent) { window.attachEvent("onload", '.$handler.'); } else { window["onload"] = '.$handler.'; }</script>';
 	$wordpress_file_upload_output .= '</div>';
 //	$wordpress_file_upload_output .= '<div>';
@@ -259,7 +276,7 @@ function wordpress_file_upload_function($incomingfromhandler) {
 //	The plugin uses sessions in order to detect if the page was loaded due to file upload or
 //	because the user pressed the Refresh button (or F5) of the page.
 //	In the second case we do not want to perform any file upload, so we abort the rest of the script.
-	if ( $_SESSION['wfu_check_refresh_'.$sid] != "form button pressed" ) {
+	if ( !isset($_SESSION['wfu_check_refresh_'.$sid]) || $_SESSION['wfu_check_refresh_'.$sid] != "form button pressed" ) {
 		$_SESSION['wfu_check_refresh_'.$sid] = 'do not process';
 		$wordpress_file_upload_output .= wfu_post_plugin_actions($params);
 		return $wordpress_file_upload_output."\n";

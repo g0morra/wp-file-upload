@@ -183,6 +183,20 @@ function wfu_attribute_definitions() {
 			"help"		=> "If activated then the plugin will attempt to create the upload path, if it does not exist."
 		),
 		array(
+			"name"		=> "Do Not Change Filename",
+			"attribute"	=> "forcefilename",
+			"type"		=> "onoff",
+			"listitems"	=> null,
+			"value"		=> WFU_FORCEFILENAME,
+			"mode"		=> "free",
+			"category"	=> "general",
+			"subcategory"	=> "Upload Path and Files",
+			"parent"	=> "",
+			"dependencies"	=> null,
+			"variables"	=> null,
+			"help"		=> "The plugin by default will modify the filename if it contains invalid or non-english characters. By enabling this attribute the plugin will not change the filename."
+		),
+		array(
 			"name"		=> "Folder Access Method",
 			"attribute"	=> "accessmethod",
 			"type"		=> "radio",
@@ -223,6 +237,34 @@ function wfu_attribute_definitions() {
 			"dependencies"	=> null,
 			"variables"	=> null,
 			"help"		=> "If FTP access method is selected, then sometimes the FTP domain is different than the domain of your Wordpress installation. In this case, enable this attribute if upload of files is not successful."
+		),
+		array(
+			"name"		=> "FTP Passive Mode",
+			"attribute"	=> "ftppassivemode",
+			"type"		=> "onoff",
+			"listitems"	=> null,
+			"value"		=> WFU_FTPPASSIVEMODE,
+			"mode"		=> "free",
+			"category"	=> "general",
+			"subcategory"	=> "Upload Path and Files",
+			"parent"	=> "accessmethod",
+			"dependencies"	=> null,
+			"variables"	=> null,
+			"help"		=> "If files fail to upload to the ftp domain then switching to passive FTP mode may solve the problem."
+		),
+		array(
+			"name"		=> "Permissions of Uploaded File",
+			"attribute"	=> "ftpfilepermissions",
+			"type"		=> "text",
+			"listitems"	=> null,
+			"value"		=> WFU_FTPFILEPERMISSIONS,
+			"mode"		=> "free",
+			"category"	=> "general",
+			"subcategory"	=> "Upload Path and Files",
+			"parent"	=> "accessmethod",
+			"dependencies"	=> null,
+			"variables"	=> null,
+			"help"		=> "Force the uploaded files to have specific permissions. This is a 4-digit octal number, e.g. 0777. If left empty, then the ftp server will define the permissions."
 		),
 		array(
 			"name"		=> "Show Upload Folder Path",

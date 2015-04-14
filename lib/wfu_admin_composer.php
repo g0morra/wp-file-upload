@@ -1,17 +1,37 @@
 <?php
 
-function wfu_shortcode_composer() {
+function wfu_shortcode_composer($data = '') {
 	global $wpdb;
 	global $wp_roles;
 	$siteurl = site_url();
  
 	$components = wfu_component_definitions();
-
 	$cats = wfu_category_definitions();
 	$defs = wfu_attribute_definitions();
-
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
-	$shortcode_attrs = wfu_shortcode_string_to_array($plugin_options['shortcode']);
+	
+	if ( $data == "" ) {
+		$shortcode = $plugin_options['shortcode'];
+		$shortcode_full = '[wordpress_file_upload '.$shortcode.']';
+		$postid = "";
+		$postname = "";
+		$posttype = "";
+		$posthash = "";
+		$shortcode_position = -1;
+		$autosave = true;
+	}
+	else {
+		$shortcode = trim(substr($data['shortcode'], strlen('[wordpress_file_upload'), -1));
+		$shortcode_full = $data['shortcode'];
+		$postid = $data['post_id'];
+		$postname = get_the_title($postid);
+		$posttype = get_post_type($postid);
+		$posthash = $data['post_hash'];
+		$shortcode_position = $data['position'];
+		$autosave = false;
+	}
+	
+	$shortcode_attrs = wfu_shortcode_string_to_array($shortcode);
 	foreach ( $defs as $key => $def ) {
 		$defs[$key]['default'] = $def['value'];
 		if ( array_key_exists($def['attribute'], $shortcode_attrs) ) {
@@ -27,10 +47,26 @@ function wfu_shortcode_composer() {
 
 	$echo_str = '<div id="wfu_wrapper" class="wrap">';
 	$echo_str .= "\n\t".'<h2>Wordpress File Upload Control Panel</h2>';
+	$echo_str .= "\n\t".'<div id="wfu_page_obsolete_message" class="error" style="display:none;">';
+	$echo_str .= "\n\t\t".'<p>'.WFU_DASHBOARD_PAGE_OBSOLETE.'</p>';
+	$echo_str .= "\n\t".'</div>';
+	$echo_str .= "\n\t".'<div id="wfu_update_rejected_message" class="error" style="display:none;">';
+	$echo_str .= "\n\t\t".'<p>'.WFU_DASHBOARD_UPDATE_SHORTCODE_REJECTED.'</p>';
+	$echo_str .= "\n\t".'</div>';
+	$echo_str .= "\n\t".'<div id="wfu_update_failed_message" class="error" style="display:none;">';
+	$echo_str .= "\n\t\t".'<p>'.WFU_DASHBOARD_UPDATE_SHORTCODE_FAILED.'</p>';
+	$echo_str .= "\n\t".'</div>';
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=manage_mainmenu" class="button" title="go back">Go to Main Menu</a>';
 	$echo_str .= "\n\t".'</div>';
-	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px; margin-top: 20px;">Shortcode Composer</h2>';
+	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px; margin-top: 20px;">Shortcode Composer for '.( $data == "" ? 'Test' : $posttype.' "'.$postname.'" ('.$postid.') Position '.$data['position'] ).'</h2>';
+	$echo_str .= "\n\t".'<div style="margin-top:10px; display:inline-block;">';
+	if ( $data != "") $echo_str .= "\n\t\t".'<input id="wfu_update_shortcode" type="button" value="Update" class="button-primary" disabled="disabled" onclick="wfu_save_shortcode()" /><span id="wfu_update_shortcode_wait" class="spinner" style="float:right; display:none;"></span>';
+	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_original_enc" type="hidden" value="'.wfu_plugin_encode_string($shortcode_full).'" />';
+	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_postid" type="hidden" value="'.$postid.'" />';
+	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_posthash" type="hidden" value="'.$posthash.'" />';
+	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_position" type="hidden" value="'.$shortcode_position.'" />';
+	$echo_str .= "\n\t".'</div>';
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
 	$echo_str .= "\n\t\t".'<div class="wfu_shortcode_container">';
 	$echo_str .= "\n\t\t\t".'<span><strong>Generated Shortcode</strong></span>';
@@ -226,9 +262,8 @@ function wfu_shortcode_composer() {
 		}
 		elseif ( $def['type'] == "folderlist" ) {
 			$echo_str .= $dlp."\t\t".'<div id="wfu_subfolders_inner_shadow_'.$attr.'" class="wfu_subfolders_inner_shadow" style="display:none;"></div>';
-			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" class="wfu_select_folders" size="7" onchange="wfu_subfolders_changed(\''.$attr.'\');">';
-//			$def['value'] = 'admin,*&guests,*users,**user1/User1, **user2/User 2, ***user5, ***user6, *user3, **user4';
 			$subfolders = wfu_parse_folderlist($def['value']);
+			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" class="wfu_select_folders'.( count($subfolders['path']) == 0 ? ' wfu_select_folders_empty' : '' ).'" size="7" onchange="wfu_subfolders_changed(\''.$attr.'\');">';
 			foreach ($subfolders['path'] as $ind => $subfolder) {
 				if ( substr($subfolder, -1) == '/' ) $subfolder = substr($subfolder, 0, -1);
 				$subfolder_raw = explode('/', $subfolder);
@@ -237,7 +272,7 @@ function wfu_shortcode_composer() {
 				$subvalue = str_repeat("*", intval($subfolders['level'][$ind])).( $subfolders['default'][$ind] ? '&' : '' ).( $subfolder == "" ? '{root}' : $subfolder ).'/'.$subfolders['label'][$ind];
 				$echo_str .= $dlp."\t\t\t".'<option class="'.( $subfolders['default'][$ind] ? 'wfu_select_folders_option_default' : '' ).'" value="'.wfu_plugin_encode_string($subvalue).'">'.$text.'</option>';
 			}
-			$echo_str .= $dlp."\t\t\t".'<option value=""></option>';
+			$echo_str .= $dlp."\t\t\t".'<option value="">'.( count($subfolders['path']) == 0 ? 'press here' : '' ).'</option>';
 			$echo_str .= $dlp."\t\t".'</select>';
 			$echo_str .= $dlp."\t\t".'<div id="wfu_subfolder_nav_'.$attr.'" class="wfu_subfolder_nav_container">';
 			$echo_str .= $dlp."\t\t\t".'<table class="wfu_subfolder_nav"><tbody>';
@@ -427,7 +462,7 @@ function wfu_shortcode_composer() {
 	$echo_str .= "\n\t".'</div>';
 	$echo_str .= "\n\t".'<div id="wfu_global_dialog_container" class="wfu_global_dialog_container">';
 	$echo_str .= "\n\t".'</div>';
-	$handler = 'function() { wfu_Attach_Admin_Events(); }';
+	$handler = 'function() { wfu_Attach_Admin_Events('.( $data == "" ? 'true' : 'false' ).'); }';
 	$echo_str .= "\n\t".'<script type="text/javascript">if(window.addEventListener) { window.addEventListener("load", '.$handler.', false); } else if(window.attachEvent) { window.attachEvent("onload", '.$handler.'); } else { window["onload"] = '.$handler.'; }</script>';
 	$echo_str .= "\n".'</div>';
 //	$echo_str .= "\n\t".'<div style="margin-top:10px;">';

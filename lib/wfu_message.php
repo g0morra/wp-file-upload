@@ -122,7 +122,7 @@ function wfu_prepare_message_block_skeleton($sid, $styles, $test) {
 	/* Construct the header block HTML text */
 	$i = 1;
 	$messageblock["msgblock"]["line".$i++] = '<table id="'.$messageblock_main.'" class="file_messageblock_table"'.$styles.'><tbody>';
-	$messageblock["msgblock"]["line".$i++] = "\t".'<tr id="'.$messageblock_header.'" class="file_messageblock_header_tr"'.( $test ? '' : 'style="display:none;"' ).'>';
+	$messageblock["msgblock"]["line".$i++] = "\t".'<tr id="'.$messageblock_header.'" class="file_messageblock_header_tr"'.( $test ? '' : ' style="display:none;"' ).'>';
 	$messageblock["msgblock"]["line".$i++] = "\t\t".'<td colspan="2" id="'.$messageblock_header.'_container" class="file_messageblock_header_td">';
 	/* Inside this td element the appropriate upload state HTML block is going to be inserted using Javascript 
 	   If the plugin is in test mode, then State9 HTML block is inserted now */
@@ -138,7 +138,7 @@ function wfu_prepare_message_block_skeleton($sid, $styles, $test) {
 	}
 	$messageblock["msgblock"]["line".$i++] = "\t\t".'</td>';
 	/* Add a drop down arrow to the header */
-	$messageblock["msgblock"]["line".$i++] = "\t\t".'<td id="'.$messageblock_arrow.'" class="file_messageblock_arrow_td"'.( $test ? '' : 'style="display:none;"' ).' onclick="wfu_headerdetails_toggle('.$sid.');">';
+	$messageblock["msgblock"]["line".$i++] = "\t\t".'<td id="'.$messageblock_arrow.'" class="file_messageblock_arrow_td"'.( $test ? '' : ' style="display:none;"' ).' onclick="wfu_headerdetails_toggle('.$sid.');">';
 	$messageblock["msgblock"]["line".$i++] = "\t\t\t".'<input id="'.$messageblock_header.'_state" type="hidden" value="none" />';
 	$messageblock["msgblock"]["line".$i++] = "\t\t\t".'<div id="'.$messageblock_arrow.'_up" class="file_messageblock_header_arrow_up" style="display:none;"></div>';
 	$messageblock["msgblock"]["line".$i++] = "\t\t\t".'<div id="'.$messageblock_arrow.'_down" class="file_messageblock_header_arrow_down"></div>';
@@ -147,10 +147,10 @@ function wfu_prepare_message_block_skeleton($sid, $styles, $test) {
 	/* Construct the subheader block HTML text if exists */
 	$messageblock["msgblock"]["line".$i++] = "\t".'<tr id="'.$messageblock_subheader.'" class="file_messageblock_subheader_tr" style="display:none;">';
 	$messageblock["msgblock"]["line".$i++] = "\t\t".'<td colspan="3" id="'.$messageblock_subheader.'_td" class="file_messageblock_subheader_td">';
-	$messageblock["msgblock"]["line".$i++] = "\t\t\t".'<div id="'.$messageblock_subheader.'_message" class="file_messageblock_subheader_message"'.( $test ? '' : 'style="display:none;"' ).'>';
+	$messageblock["msgblock"]["line".$i++] = "\t\t\t".'<div id="'.$messageblock_subheader.'_message" class="file_messageblock_subheader_message"'.( $test ? '' : ' style="display:none;"' ).'>';
 	$messageblock["msgblock"]["line".$i++] = "\t\t\t\t".'<label id="'.$messageblock_subheader.'_messagelabel" class="file_messageblock_subheader_messagelabel">'.( $test ? WFU_TESTMESSAGE_MESSAGE : '' ).'</label>';
 	$messageblock["msgblock"]["line".$i++] = "\t\t\t".'</div>';
-	$messageblock["msgblock"]["line".$i++] = "\t\t\t".'<div id="'.$messageblock_subheader.'_adminmessage" class="file_messageblock_subheader_adminmessage"'.( $test ? '' : 'style="display:none;"' ).'>';
+	$messageblock["msgblock"]["line".$i++] = "\t\t\t".'<div id="'.$messageblock_subheader.'_adminmessage" class="file_messageblock_subheader_adminmessage"'.( $test ? '' : ' style="display:none;"' ).'>';
 	$messageblock["msgblock"]["line".$i++] = "\t\t\t\t".'<label id="'.$messageblock_subheader.'_adminmessagelabel" class="file_messageblock_subheader_adminmessagelabel">'.( $test ? WFU_TESTMESSAGE_ADMINMESSAGE : '' ).'</label>';
 	$messageblock["msgblock"]["line".$i++] = "\t\t\t".'</div>';
 	$messageblock["msgblock"]["line".$i++] = "\t\t".'</td>';

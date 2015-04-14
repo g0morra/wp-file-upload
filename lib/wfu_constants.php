@@ -11,11 +11,14 @@ DEFINE("WFU_SINGLEBUTTON", "false");
 DEFINE("WFU_UPLOADROLE", "all");
 DEFINE("WFU_UPLOADPATH", 'uploads');
 DEFINE("WFU_CREATEPATH", "false");
+DEFINE("WFU_FORCEFILENAME", "false");
 DEFINE("WFU_UPLOADPATTERNS", "*.*");
 DEFINE("WFU_MAXSIZE", "50");
 DEFINE("WFU_ACCESSMETHOD", "normal");
 DEFINE("WFU_FTPINFO", "");
 DEFINE("WFU_USEFTPDOMAIN", "false");
+DEFINE("WFU_FTPPASSIVEMODE", "false");
+DEFINE("WFU_FTPFILEPERMISSIONS", "");
 DEFINE("WFU_DUBLICATESPOLICY", "overwrite");
 DEFINE("WFU_UNIQUEPATTERN", "index");
 DEFINE("WFU_FILEBASELINK", "false");
@@ -66,6 +69,7 @@ DEFINE("WFU_ERROR_DIR_NOTEMP", __("Upload failed! Missing a temporary folder.", 
 DEFINE("WFU_ERROR_DIR_PERMISSION", __("Upload failed! Permission denied to write to target folder.", "wordpress-file-upload"));
 DEFINE("WFU_ERROR_FILE_ALLOW", __("File not allowed.", "wordpress-file-upload"));
 DEFINE("WFU_ERROR_FILE_PLUGIN_SIZE", __("The uploaded file exceeds the file size limit.", "wordpress-file-upload"));
+DEFINE("WFU_ERROR_FILE_PLUGIN_2GBSIZE", __("The uploaded file exceeds 2GB and is not supported by this server.", "wordpress-file-upload"));
 DEFINE("WFU_ERROR_FILE_PHP_SIZE", __("Upload failed! The uploaded file exceeds the file size limit of the server. Please contact the administrator.", "wordpress-file-upload"));
 DEFINE("WFU_ERROR_FILE_PHP_TIME", __("Upload failed! The duration of the upload exceeded the time limit of the server. Please contact the administrator.", "wordpress-file-upload"));
 DEFINE("WFU_ERROR_FILE_HTML_SIZE", __("Upload failed! The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form.", "wordpress-file-upload"));
@@ -91,6 +95,8 @@ DEFINE("WFU_ERROR_REDIRECTION_ERRORCODE1", __("Redirection to classic form funct
 DEFINE("WFU_ERROR_REDIRECTION_ERRORCODE2", __("Redirection to classic form functionality occurred because HTML5 is not supported.", "wordpress-file-upload"));
 DEFINE("WFU_ERROR_REDIRECTION_ERRORCODE3", __("Redirection to classic form functionality occurred due to JSON parse error.", "wordpress-file-upload"));
 DEFINE("WFU_ERROR_USERDATA_EMPTY", __("cannot be empty!", "wordpress-file-upload"));
+DEFINE("WFU_ERROR_SAME_PLUGINID", __("There are more than one instances of the plugin in this page with the same id. Please change it.", "wordpress-file-upload"));
+DEFINE("WFU_ERROR_PAGE_OBSOLETE", __("Cannot edit the shortcode because the page has been modified. Please reload the page.", "wordpress-file-upload"));
 
 //define plugin warnings
 DEFINE("WFU_WARNING_FILE_EXISTS", __("Upload skipped! File already exists.", "wordpress-file-upload"));
@@ -108,6 +114,7 @@ DEFINE("WFU_SUBDIR_SELECTDIR", __("select dir...", "wordpress-file-upload"));
 DEFINE("WFU_SUCCESSMESSAGE_DETAILS", __('Upload path: %filepath%', 'wordpress-file-upload'));
 DEFINE("WFU_FAILMESSAGE_DETAILS", __('Failed upload path: %filepath%', 'wordpress-file-upload'));
 DEFINE("WFU_USERDATA_REQUIREDLABEL", __(' (required)', 'wordpress-file-upload'));
+DEFINE("WFU_PAGEEXIT_PROMPT", __('Files are being uploaded. Are you sure you want to exit the page?', 'wordpress-file-upload'));
 
 //define plugin test messages
 DEFINE("WFU_TESTMESSAGE_MESSAGE", __('This is a test message', 'wordpress-file-upload'));
@@ -118,6 +125,12 @@ DEFINE("WFU_TESTMESSAGE_FILE1_ADMINMESSAGE", __('File testfile 1 administrator m
 DEFINE("WFU_TESTMESSAGE_FILE2_HEADER", __('File testfile 2 under test', 'wordpress-file-upload'));
 DEFINE("WFU_TESTMESSAGE_FILE2_MESSAGE", __('File testfile 2 message', 'wordpress-file-upload'));
 DEFINE("WFU_TESTMESSAGE_FILE2_ADMINMESSAGE", __('File testfile 2 administrator message', 'wordpress-file-upload'));
+
+//define admin area messages
+DEFINE("WFU_DASHBOARD_EDIT_SHORTCODE_REJECTED", __("Failed to edit the shortcode because the contents of the page changed. Try again to edit the shortcode.", "wordpress-file-upload"));
+DEFINE("WFU_DASHBOARD_PAGE_OBSOLETE", __("The page containing the shortcode has been modified and it is no longer valid. Please go back to reload the shortcode.", "wordpress-file-upload"));
+DEFINE("WFU_DASHBOARD_UPDATE_SHORTCODE_REJECTED", __("Failed to update the shortcode because the contents of the page changed. Go back to reload the shortcode.", "wordpress-file-upload"));
+DEFINE("WFU_DASHBOARD_UPDATE_SHORTCODE_FAILED", __("Failed to update the shortcode. Please try again. If the problem persists, go back and reload the shortcode.", "wordpress-file-upload"));
 
 //define tool tip constants
 DEFINE("WFU_VARIABLE_TITLE_USERID", __("Insert variable %userid% inside text. It will be replaced by the id of the current user.", "wordpress-file-upload"));
@@ -146,9 +159,12 @@ DEFINE("WFU_UPLOAD_STATE8", __("There are no files to upload!", "wordpress-file-
 DEFINE("WFU_UPLOAD_STATE9", __("Test upload message", "wordpress-file-upload"));
 DEFINE("WFU_UPLOAD_STATE10", __("JSON parse warning!", "wordpress-file-upload"));
 DEFINE("WFU_UPLOAD_STATE11", __("please wait while redirecting...", "wordpress-file-upload"));
+DEFINE("WFU_PAGE_PLUGINEDITOR_BUTTONTITLE", __("Open visual shortcode editor in new window", "wordpress-file-upload"));
+DEFINE("WFU_PAGE_PLUGINEDITOR_LOADING", __("loading visual editor", "wordpress-file-upload"));
 DEFINE("WFU_MAX_TIME_LIMIT", ini_get("max_input_time"));
 DEFINE("WFU_RESPONSE_URL", $siteurl.WPFILEUPLOAD_DIR."wfu_response.php");
 DEFINE("WFU_AJAX_URL", $siteurl."/wp-admin/admin-ajax.php");
+DEFINE("WFU_DOWNLOADER_URL", $siteurl.WPFILEUPLOAD_DIR."wfu_file_downloader.php");
 DEFINE("WFU_PRO_VERSION_URL", 'http://www.iptanus.com/product/wordpress-file-upload-pro/');
 
 //define colors
@@ -177,6 +193,8 @@ DEFINE("WFU_IMAGE_ADMIN_SUBFOLDER_OK", $siteurl.WPFILEUPLOAD_DIR.'images/ok_12.g
 DEFINE("WFU_IMAGE_ADMIN_SUBFOLDER_CANCEL", $siteurl.WPFILEUPLOAD_DIR.'images/cancel_12.gif');
 DEFINE("WFU_IMAGE_ADMIN_SUBFOLDER_LOADING", $siteurl.WPFILEUPLOAD_DIR.'images/refresh_16.gif');
 DEFINE("WFU_IMAGE_SIMPLE_PROGBAR", $siteurl.WPFILEUPLOAD_DIR.'images/progbar.gif');
+DEFINE("WFU_IMAGE_OVERLAY_EDITOR", $siteurl.WPFILEUPLOAD_DIR.'images/pencil.svg');
+DEFINE("WFU_IMAGE_OVERLAY_LOADING", $siteurl.WPFILEUPLOAD_DIR.'images/loading_icon.gif');
 DEFINE("WFU_IMAGE_VERSION_COMPARISON", $siteurl.WPFILEUPLOAD_DIR.'images/Version Comparison.png');
 
 function wfu_set_javascript_constants() {
@@ -196,11 +214,13 @@ function wfu_set_javascript_constants() {
 		"jsonparse_adminmessage" => WFU_ERROR_JSONPARSE_ADMINMESSAGE,
 		"jsonparse_headermessage" => WFU_ERROR_JSONPARSE_HEADERMESSAGE,
 		"jsonparse_headeradminmessage" => WFU_ERROR_JSONPARSE_HEADERADMINMESSAGE,
+		"same_pluginid" => WFU_ERROR_SAME_PLUGINID,
 		"default_colors" => WFU_DEFAULTMESSAGECOLORS,
 		"fail_colors" => WFU_FAILMESSAGECOLORS,
 		"max_time_limit" => WFU_MAX_TIME_LIMIT,
 		"response_url" => WFU_RESPONSE_URL,
-		"ajax_url" => WFU_AJAX_URL
+		"ajax_url" => WFU_AJAX_URL,
+		"wfu_pageexit_prompt" => WFU_PAGEEXIT_PROMPT
 	);
 	$consts_txt = "";
 	foreach ( $consts as $key => $val )

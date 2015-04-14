@@ -79,8 +79,8 @@ function wordpress_file_upload_install() {
 function wordpress_file_upload_update_db_check() {
 	global $wfu_tb_log_version;
 	global $wfu_tb_userdata_version;
-	update_option("wordpress_file_upload_table_log_version", "0");
-	update_option("wordpress_file_upload_table_userdata_version", "0");
+//	update_option("wordpress_file_upload_table_log_version", "0");
+//	update_option("wordpress_file_upload_table_userdata_version", "0");
 	if ( get_option('wordpress_file_upload_table_log_version') != $wfu_tb_log_version || get_option('wordpress_file_upload_table_userdata_version') != $wfu_tb_userdata_version ) {
 		wordpress_file_upload_install();
 	}
@@ -93,6 +93,8 @@ function wordpress_file_upload_manage_dashboard() {
 	$action = (!empty($_POST['action']) ? $_POST['action'] : (!empty($_GET['action']) ? $_GET['action'] : ''));
 	$dir = (!empty($_POST['dir']) ? $_POST['dir'] : (!empty($_GET['dir']) ? $_GET['dir'] : ''));
 	$file = (!empty($_POST['file']) ? $_POST['file'] : (!empty($_GET['file']) ? $_GET['file'] : ''));
+	$data_enc = (!empty($_POST['data']) ? $_POST['data'] : (!empty($_GET['data']) ? $_GET['data'] : ''));
+	$echo_str = "";
 
 	if ( $action == 'edit_settings' ) {
 		wfu_update_settings();
@@ -156,6 +158,11 @@ function wordpress_file_upload_manage_dashboard() {
 	elseif ( $action == 'plugin_settings' ) {
 		$echo_str = wfu_manage_settings();	
 	}
+	elseif ( $action == 'edit_shortcode' && $data_enc != "" ) {
+		$data = wfu_decode_array_from_string($data_enc);
+		if ( wfu_check_edit_shortcode($data) ) wfu_shortcode_composer($data);
+		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_EDIT_SHORTCODE_REJECTED);
+	}
 	else {
 		$echo_str = wfu_manage_mainmenu();		
 	}
@@ -164,7 +171,10 @@ function wordpress_file_upload_manage_dashboard() {
 }
 
 function wfu_manage_mainmenu($message = '') {
-	if ( !current_user_can( 'manage_options' ) ) return wfu_shortcode_composer();
+	if ( !current_user_can( 'manage_options' ) ) return;
+	
+//	$str = str_replace(array("\r\n", "\r", "\n"), "<br/>", (print_r($alldata, true)));
+//	echo str_replace(array("\t", " "), "&nbsp;", $str);
 
 	$siteurl = site_url();
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
@@ -179,12 +189,13 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=plugin_settings" class="button" title="Settings">Settings</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser" class="button" title="File browser">File Browser</a>';
-	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=shortcode_composer" class="button" title="Shortcode composer">Shortcode Composer</a>';
+	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=shortcode_composer" class="button" title="Shortcode composer">Shortcode Composer</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=view_log" class="button" title="View log">View Log</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=sync_db" class="button" title="Update database to reflect current status of files">Sync Database</a>';
 	$echo_str .= "\n\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">Status</h3>';
 	$echo_str .= "\n\t\t".'<table class="form-table">';
 	$echo_str .= "\n\t\t\t".'<tbody>';
+	//plugin edition
 	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Edition</label>';
@@ -203,6 +214,7 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t\t\t\t\t".'</div>';
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t".'</tr>';
+	//plugin version
 	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Version</label>';
@@ -228,12 +240,138 @@ function wfu_manage_mainmenu($message = '') {
 	}
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t".'</tr>';
+	//server environment
+	$php_env = wfu_get_server_environment();
+	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Server Environment</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px; vertical-align:top;">';
+	if ( $php_env == '64bit' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">64bit</label></td><td style="vertical-align:top;"><label style="font-weight:normal; font-style:italic; cursor:default;">(Your server supports files up to 1 Exabyte, practically unlimited)</label>';
+	if ( $php_env == '32bit' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">32bit</label></td><td style="vertical-align:top;"><label style="font-weight:normal; font-style:italic; cursor:default;">(Your server does not support files larger than 2GB)</label>';
+	if ( $php_env == '' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">Unknown</label></td><td style="vertical-align:top;"><label style="font-weight:normal; font-style:italic; cursor:default;">(The maximum file size supported by the server cannot be determined)</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t".'</tr>';
 	$echo_str .= "\n\t\t\t".'</tbody>';
 	$echo_str .= "\n\t\t".'</table>';
+
+	$echo_str .= wfu_manage_instances();
+
 	$echo_str .= "\n\t".'</div>';
 	$echo_str .= "\n".'</div>';
 	
 	echo $echo_str;
+}
+
+function wfu_manage_instances() {
+	$siteurl = site_url();
+	$args = array( 'post_type' => array( "post", "page" ), 'post_status' => "publish,private,draft", 'posts_per_page' => -1 );
+	$posts = get_posts($args);
+	$wfu_shortcodes = array();
+	foreach ( $posts as $post ) {
+		$ret = wfu_get_content_shortcodes($post, 'wordpress_file_upload');
+		if ( $ret !== false ) $wfu_shortcodes = array_merge($wfu_shortcodes, $ret);
+	}
+
+	$echo_str = "\n\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">Plugin Instances</h3>';
+	$echo_str .= "\n\t\t".'<table class="widefat">';
+	$echo_str .= "\n\t\t\t".'<thead>';
+	$echo_str .= "\n\t\t\t\t".'<tr>';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="5%" style="text-align:center;">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label>#</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="10%" style="text-align:center;">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label>ID</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="10%" style="text-align:center;">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label>Type</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="30%" style="text-align:center;">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label>Title</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="45%" style="text-align:center;">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label>Shortcode</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t".'</tr>';
+	$echo_str .= "\n\t\t\t".'</thead>';
+	$echo_str .= "\n\t\t\t".'<tbody>';
+	$i = 1;
+	foreach ( $wfu_shortcodes as $key => $data ) {
+		$id = $data['post_id'];
+		$data_enc = wfu_encode_array_to_string($data);
+		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_shortcode_actions\')){document.getElementsByName(\'wfu_shortcode_actions\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_shortcode_actions_'.$i.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_shortcode_actions\')){document.getElementsByName(\'wfu_shortcode_actions\').item(i).style.visibility=\'hidden\';}">';
+		$echo_str .= "\n\t\t\t\t\t".'<td style="padding: 5px 5px 5px 10px; text-align:center;">';
+		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=edit_shortcode&data='.$data_enc.'" title="Plugin #'.$i.'">Plugin '.$i.'</a>';
+		$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_shortcode_actions_'.$i.'" name="wfu_shortcode_actions" style="visibility:hidden;">';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
+		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=edit_shortcode&data='.$data_enc.'" title="Edit this shortcode">Edit</a>';
+		$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
+		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=delete_shortcode&data='.$data_enc.'" title="Delete this shortcode">Delete</a>';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
+		$echo_str .= "\n\t\t\t\t\t\t".'</div>';
+		$echo_str .= "\n\t\t\t\t\t".'</td>';
+		$echo_str .= "\n\t\t\t\t\t".'<td style="padding: 5px 5px 5px 10px; text-align:center;">'.$id.'</td>';
+		$echo_str .= "\n\t\t\t\t\t".'<td style="padding: 5px 5px 5px 10px; text-align:center;">'.get_post_type($id).'</td>';
+		$echo_str .= "\n\t\t\t\t\t".'<td style="padding: 5px 5px 5px 10px; text-align:center;">'.get_the_title($id).'</td>';
+		$echo_str .= "\n\t\t\t\t\t".'<td style="padding: 5px 5px 5px 10px; text-align:left;">';
+		$echo_str .= "\n\t\t\t\t\t\t".'<textarea rows="3" disabled="disabled" style="width:100%;">'.trim($data['shortcode']).'</textarea>';
+		$echo_str .= "\n\t\t\t\t\t".'</td>';
+		$echo_str .= "\n\t\t\t\t".'</tr>';
+		$i++;
+	}
+	$echo_str .= "\n\t\t\t".'</tbody>';
+	$echo_str .= "\n\t\t".'</table>';
+	
+	return $echo_str;
+}
+
+function wfu_get_content_shortcodes($post, $tag) {
+	$ret = array();
+	$content = $post->post_content;
+	$hash = '';
+	if ( false === strpos( $content, '[' ) ) {
+		return false;
+	}
+
+	if ( shortcode_exists( $tag ) ) {
+		preg_match_all( '/' . get_shortcode_regex() . '/s', $content, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE );
+		if ( empty( $matches ) )
+			return false;
+
+		foreach ( $matches as $shortcode ) {
+			if ( $tag === $shortcode[2][0] ) {
+				$data['post_id'] = $post->ID;
+				if ( $hash == '' ) $hash = hash('md5', $content);
+				$data['post_hash'] = $hash;
+				$data['shortcode'] = $shortcode[0][0];
+				$data['position'] = $shortcode[0][1];
+			}
+			array_push($ret, $data);
+		}
+		return $ret;
+	}
+}
+
+function wfu_check_edit_shortcode($data) {
+	$post = get_post($data['post_id']);
+	$content = $post->post_content;
+	$hash = hash('md5', $content);
+	
+	return ( $hash == $data['post_hash'] );
+}
+
+function wfu_replace_shortcode($data, $new_shortcode) {
+	$post = get_post($data['post_id']);
+	$new_content = substr($post->post_content, 0, $data['position']).$new_shortcode.substr($post->post_content, (int)$data['position'] + strlen($data['shortcode']));
+	$new_post = array( 'ID' => $data['post_id'], 'post_content' => $new_content );
+	return ( wp_update_post( $new_post ) === 0 ? false : true );
+}
+
+function wfu_edit_shortcode($data, $message = '') {
+	$echo_str = '';
+	return $echo_str;
 }
 
 function wfu_manage_settings($message = '') {

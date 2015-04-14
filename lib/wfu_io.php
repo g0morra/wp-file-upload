@@ -21,7 +21,7 @@ function wfu_create_directory($path, $method, $ftpdata) {
 				if ( $pos1 ) {
 					$path = substr($path, $pos1 + strlen($flat_host));
 					ftp_mkdir($conn_id, $path);
-					ftp_chmod($conn_id, 511, $path);
+					ftp_chmod($conn_id, 493, $path);
 				}
 				else {
 					$ret_message = WFU_ERROR_ADMIN_FTPDIR_RESOLVE;
@@ -43,12 +43,14 @@ function wfu_create_directory($path, $method, $ftpdata) {
 }
 
 
-function wfu_upload_file($source, $target, $method, $ftpdata) {
+function wfu_upload_file($source, $target, $method, $ftpdata, $passive, $fileperms) {
 	$ret_array = "";
 	$ret_array["uploaded"] = false;
 	$ret_array["admin_message"] = "";
 	$ret_message = "";
 	$target_perms = substr(sprintf('%o', fileperms(dirname($target))), -4);
+	$target_perms = octdec($target_perms);
+	$target_perms = (int)$target_perms;
 	if ( $method == "" || $method == "normal" ) {
 		$ret_array["uploaded"] = move_uploaded_file($source, $target);
 		if ( !$ret_array["uploaded"] && !is_writable(dirname($target)) ) {
@@ -70,13 +72,21 @@ function wfu_upload_file($source, $target, $method, $ftpdata) {
 				$flat_host = preg_replace("/^(.*\.)?([^.]*\..*)$/", "$2", $ftp_host);
 				$pos1 = strpos($target, $flat_host);
 				if ( $pos1 ) {
+					if ( $passive == "true" ) ftp_pasv($conn_id, true);
 //					$temp_fname = tempnam(dirname($target), "tmp");
 //					move_uploaded_file($source, $temp_fname);
 					$target = substr($target, $pos1 + strlen($flat_host));
-					ftp_chmod($conn_id, 0755, dirname($target));
+//					ftp_chmod($conn_id, 0755, dirname($target));
 					$ret_array["uploaded"] = ftp_put($conn_id, $target, $source, FTP_BINARY);
-					ftp_chmod($conn_id, 0755, $target);
-					ftp_chmod($conn_id, $target_perms, dirname($target));
+					//apply user-defined permissions to file
+					$fileperms = trim($fileperms);
+					if ( strlen($fileperms) == 4 && sprintf("%04o", octdec($fileperms)) == $fileperms ) {
+						$fileperms = octdec($fileperms);
+						$fileperms = (int)$fileperms;
+						ftp_chmod($conn_id, $fileperms, $target);
+					}
+//					ftp_chmod($conn_id, 0755, $target);
+//					ftp_chmod($conn_id, $target_perms, dirname($target));
 					unlink($source);
 					if ( !$ret_array["uploaded"] ) {
 						$ret_message = WFU_ERROR_ADMIN_DIR_PERMISSION;

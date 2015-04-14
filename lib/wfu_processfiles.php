@@ -2,13 +2,16 @@
 
 function wfu_process_files($params, $method) {
 	$sid = $params["uploadid"];
+	$sesid = session_id();
 	$user = wp_get_current_user();
 	if ( 0 == $user->ID ) {
+		$user_id = 0;
 		$user_login = "guest";
 		$user_email = "";
 		$is_admin = false;
 	}
 	else {
+		$user_id = $user->ID;
 		$user_login = $user->user_login;
 		$user_email = $user->user_email;
 		$is_admin = current_user_can('manage_options');
@@ -116,6 +119,8 @@ function wfu_process_files($params, $method) {
 		$upload_path_ok = false;
 		$allowed_file_ok = false;
 		$size_file_ok = false;
+		$size_file_phpenv_ok = true;
+		$ignore_server_actions = false;
 		$file_output['color'] = $default_colors['color'];
 		$file_output['bgcolor'] = $default_colors['bgcolor'];
 		$file_output['borcolor'] = $default_colors['borcolor'];
@@ -134,9 +139,10 @@ function wfu_process_files($params, $method) {
 			$file_unique_id = wfu_create_random_string(20);
 
 		/* Get uploaded file size in Mbytes */
-		$upload_file_size = filesize($fileprops['tmp_name']) / 1024 / 1024;
 		// correct file size in case of checking of file otherwise $upload_file_size will be zero and the routine will fail
-		if ( $only_check ) $upload_file_size = $fileprops['size'] / 1024 / 1024;
+		if ( $only_check ) $upload_file_size = $fileprops['size'];
+		else $upload_file_size = filesize($fileprops['tmp_name']);
+		$upload_file_size_MB = $upload_file_size / 1024 / 1024;
 
 		if ( $upload_file_size > 0 ) {
 
@@ -150,9 +156,9 @@ function wfu_process_files($params, $method) {
 				$changable_data['user_data'] = $userdata_fields;
 				$changable_data['error_message'] = $filter_error_message;
 				$additional_data['file_unique_id'] = $file_unique_id;
-				$additional_data['file_size'] = filesize($fileprops['tmp_name']);
 				// correct file size in case of checking of file
 				if ( $only_check ) $additional_data['file_size'] = $fileprops['size'];
+				else $additional_data['file_size'] = filesize($fileprops['tmp_name']);
 				$additional_data['user_id'] = $user->ID;
 				$additional_data['page_id'] = $params["pageid"];
 				$ret_data = apply_filters('wfu_before_file_check', $changable_data, $additional_data);
@@ -174,7 +180,8 @@ function wfu_process_files($params, $method) {
 				$userdata_fields = $_SESSION[$file_map]['userdata'];
 			}
 			if ( $filter_error_message != '' ) {
-				$file_output['message_type'] = "error";
+				//errorabort flag designates that file will be aborted and no resuming will be attempted
+				$file_output['message_type'] = "errorabort";
 				$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], $filter_error_message);
 			}
 			else {
@@ -204,17 +211,22 @@ function wfu_process_files($params, $method) {
 					}
 
 				/* File size control */
-				if ( $upload_file_size <= $params["maxsize"] ) {
-					$size_file_ok = true;
+				if ( $upload_file_size_MB <= $params["maxsize"] ) {
+					if ( $params['php_env'] == '32bit' && $upload_file_size > 2147483647 ) $size_file_phpenv_ok = false;
+					else $size_file_ok = true;
 				}
 	
 				if ( !$upload_path_ok or !$allowed_file_ok or !$size_file_ok ) {
-					$file_output['message_type'] = "error";
+					//abort the file, no resuming will be attempted
+					$file_output['message_type'] = "errorabort";
 					$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_UPLOAD_FAILED);
 
 					if ( !$upload_path_ok ) $file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_DIR_EXIST);
 					if ( !$allowed_file_ok ) $file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_FILE_ALLOW);
-					if ( !$size_file_ok ) $file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_FILE_PLUGIN_SIZE);
+					if ( !$size_file_ok ) {
+						if ( $size_file_phpenv_ok ) $file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_FILE_PLUGIN_SIZE);
+						else $file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_FILE_PLUGIN_2GBSIZE);
+					}
 				}
 			}
 		}
@@ -237,21 +249,25 @@ function wfu_process_files($params, $method) {
 				$message_text = WFU_ERROR_FILE_PHP_TIME;
 				$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], WFU_ERROR_ADMIN_FILE_PHP_TIME);
 			}
+			//error (and not errorabort) flag designates that a resuming of the file may be attempted
 			$file_output['message_type'] = "error";
 			$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], $message_text);
 		}
-
+		//generate safe filename by removing invalid characters if forcefilename is deactivated
+		if ( $params['forcefilename'] != "true" ) $only_filename = wfu_upload_plugin_clean( $fileprops['name'] );
+		else $only_filename = $fileprops['name'];
+		
+		$message_processed = false;
 //		if ( $upload_path_ok and $allowed_file_ok and $size_file_ok ) {
-		if ( $file_output['message_type'] != "error" ) {
+		if ( substr($file_output['message_type'], 0, 5) != "error" ) {
 
 			if ( is_uploaded_file($fileprops['tmp_name']) || $only_check ) {
-				if ( $only_check ) $file_copied = true;
+				$source_path = $fileprops['tmp_name'];
+				$target_path = wfu_upload_plugin_full_path($params).$only_filename;
+				
+				if ( $only_check || $ignore_server_actions ) $file_copied = true;
 				else {
 					$file_copied = false;
-					$message_processed = false;
-					$source_path = $fileprops['tmp_name'];
-					$only_filename = wfu_upload_plugin_clean( $fileprops['name'] );
-					$target_path = wfu_upload_plugin_full_path($params).$only_filename;
 
 					$search = array ('/%filename%/', '/%filepath%/');	 
 					$replace = array ($only_filename, $target_path);
@@ -268,15 +284,16 @@ function wfu_process_files($params, $method) {
 							   previous filter wfu_before_file_check, corresponding them to the unique file id */
 							if ( $file_unique_id != '' ) $target_path = apply_filters('wfu_before_file_upload', $target_path, $file_unique_id);
 							//recalculate $only_filename in case it changed with wfu_before_file_upload filter
-							$only_filename = basename($target_path);
+							$only_filename = wfu_basename($target_path);
 							//move the uploaded file to its final destination
-							$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"]);
+							$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"], $params["ftppassivemode"], $params["ftpfilepermissions"]);
 							$file_copied = $wfu_upload_file_ret["uploaded"];
 							//process warning messages from wfu_upload_file
 							$echo_message = ob_get_contents();
 							//finish redirecting of echo to internal buffer
 							ob_end_clean();
 							if ( $echo_message != "" && !$file_copied ) {
+								//error (and not errorabort) flag designates that file may be resumed
 								$file_output['message_type'] = "error";
 								if ( stristr($echo_message, "warning") && stristr($echo_message, "permission denied") && stristr($echo_message, "unable to move") ) {
 									$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_DIR_PERMISSION);
@@ -327,15 +344,16 @@ function wfu_process_files($params, $method) {
 							   previous filter wfu_before_file_check, corresponding them to the unique file id */
 							if ( $file_unique_id != '' ) $target_path = apply_filters('wfu_before_file_upload', $target_path, $file_unique_id);
 							//recalculate $only_filename in case it changed with wfu_before_file_upload filter
-							$only_filename = basename($target_path);
+							$only_filename = wfu_basename($target_path);
 							//move the uploaded file to its final destination
-							$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"]);
+							$wfu_upload_file_ret = wfu_upload_file($source_path, $target_path, $params["accessmethod"], $params["ftpinfo"], $params["ftppassivemode"], $params["ftpfilepermissions"]);
 							$file_copied = $wfu_upload_file_ret["uploaded"];
 							//process warning messages from move_uploaded_file
 							$echo_message = ob_get_contents();
 							//finish redirecting of echo to internal buffer
 							ob_end_clean();
 							if ( $echo_message != "" && !$file_copied ) {
+								//error (and not errorabort) flag designates that file may be resumed
 								$file_output['message_type'] = "error";
 								if ( stristr($echo_message, "warning") && stristr($echo_message, "permission denied") && stristr($echo_message, "unable to move") ) {
 									$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_DIR_PERMISSION);
@@ -352,7 +370,8 @@ function wfu_process_files($params, $method) {
 							}
 						}
 						else {
-							$file_output['message_type'] = "error";
+							//abort the file and do not allow resuming
+							$file_output['message_type'] = "errorabort";
 							$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_WARNING_FILE_EXISTS);
 							$message_processed = true;
 							$file_copied = false;
@@ -382,7 +401,8 @@ function wfu_process_files($params, $method) {
 					}
 				}
 				else if ( !$message_processed ) {
-					$file_output['message_type'] = "error";
+					//abort the file and do not allow resuming
+					$file_output['message_type'] = "errorabort";
 					$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_UNKNOWN);
 				}
 
@@ -390,7 +410,8 @@ function wfu_process_files($params, $method) {
 //				unlink($source_path);			
 			}
 			else {
-				$file_output['message_type'] = "error";
+				//abort the file and do not allow resuming
+				$file_output['message_type'] = "errorabort";
 				$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_UNKNOWN);
 			}
 		}
@@ -399,7 +420,8 @@ function wfu_process_files($params, $method) {
 		if ( $file_output['message_type'] == "" ) {
 			if ( $file_copied ) $file_output['message_type'] = "success";
 			else {
-				$file_output['message_type'] = "error";
+				//abort the file and do not allow resuming
+				$file_output['message_type'] = "errorabort";
 				$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], WFU_ERROR_UNKNOWN);
 			}
 		}
@@ -412,6 +434,12 @@ function wfu_process_files($params, $method) {
 			if ( $file_output['message'] != "" || $file_output['admin_messages'] != "" )
 				$file_output['message_type'] = "warning";
 		}
+
+		/* set success status of the file, to be used for medialink and post actions */
+		$file_finished_successfully = ( !$only_check && ( $file_output['message_type'] == "success" || $file_output['message_type'] == "warning" ) );
+		/* set non-success status of the file, to be used for medialink and post actions */
+		$file_finished_unsuccessfully = ( substr($file_output['message_type'], 0, 5) == "error" );
+
 
 		/* adjust message details and colors according to file result */
 		/* FileResult: A */
@@ -439,14 +467,15 @@ function wfu_process_files($params, $method) {
 			$file_output['admin_messages'] = wfu_join_strings("<br />", preg_replace($search, $replace, WFU_SUCCESSMESSAGE_DETAILS), $file_output['admin_messages']);
 		}
 		/* FileResult: C */
-		elseif ( $file_output['message_type'] == "error" ) {
+		elseif ( substr($file_output['message_type'], 0, 5) == "error" ) {
 			$error_count ++;
 			$color_array = explode(",", $params['failmessagecolors']);
 			$file_output['color'] = $color_array[0];
 			$file_output['bgcolor'] = $color_array[1];
 			$file_output['borcolor'] = $color_array[2];
 			/* define variables that were not defined before due to error */
-			$only_filename = wfu_upload_plugin_clean( $fileprops['name'] );
+			if ( $params['forcefilename'] != "true" ) $only_filename = wfu_upload_plugin_clean( $fileprops['name'] );
+			else $only_filename = $fileprops['name'];
 			$target_path = wfu_upload_plugin_full_path($params).$only_filename;
 			$replace = array ($user_login, ( $user_email == "" ? "no email" : $user_email ), $only_filename, $target_path);
 			$file_output['header'] = preg_replace($search, $replace, $params['errormessage']);
@@ -457,29 +486,26 @@ function wfu_process_files($params, $method) {
 		/* suppress again any admin messages if user is not administrator or adminmessages is not activated */		
 		if ( $suppress_admin_messages ) $file_output['admin_messages'] = "";
 
-		/* set success status of the file, to be used for medialink and post actions */
-		$file_finished_successfully = ( !$only_check && ( $file_output['message_type'] == "success" || $file_output['message_type'] == "warning" ) );
-
 		$params_output_array[0] = $file_output;
 
 		/* Apply wfu_after_file_upload action after failed upload, in order to allow the user to perform any post-upload actions.
 		   If additional data are required, such as user_id or userdata values or filepath, they can be retrieved by implementing
 		   the previous filters wfu_before_file_check and wfu_before_file_upload, corresponding them to the unique file id */
-		if ( $file_unique_id != '' && $file_output['message_type'] == "error" ) {
+		if ( $file_unique_id != '' && $file_finished_unsuccessfully && !$ignore_server_actions ) {
 			do_action('wfu_after_file_upload', $file_unique_id, $file_output['message_type'], $file_output['message'], $file_output['admin_messages']);
 		}
 
 		/* log file upload action if file has finished uploading successfully */
-		if ( $file_finished_successfully ) {
+		if ( $file_finished_successfully && !$ignore_server_actions ) {
 			wfu_log_action('upload', $target_path, $user->ID, $uniqueuploadid, $params['pageid'], $sid, $userdata_fields);
-			/* Apply wfu_after_file_upload action after successfull upload, in order to allow the user to perform any post-upload actions.
+			/* Apply wfu_after_file_upload action after successful upload, in order to allow the user to perform any post-upload actions.
 			   If additional data are required, such as user_id or userdata values or filepath, they can be retrieved by implementing
 			   the previous filters wfu_before_file_check and wfu_before_file_upload, corresponding them to the unique file id */
 			do_action('wfu_after_file_upload', $file_unique_id, $file_output['message_type'], $file_output['message'], $file_output['admin_messages']);
 		}
 
 		/* add file to Media or attach file to current post if any of these options is activated and the file has finished uploading successfully */
-		if ( ( $params["medialink"] == "true" || $params["postlink"] == "true" ) && $file_finished_successfully ) {
+		if ( ( $params["medialink"] == "true" || $params["postlink"] == "true" ) && $file_finished_successfully && !$ignore_server_actions ) {
 			$pageid = ( $params["postlink"] == "true" ? $params['pageid'] : 0 );
 			wfu_process_media_insert($target_path, $pageid);
 		}
@@ -516,7 +542,7 @@ function wfu_process_files($params, $method) {
 		$notifyrecipients =  trim(preg_replace('/%useremail%/', $user_email, $params["notifyrecipients"]));
 		if ( $notifyrecipients != "" ) {
 			if ( $somefiles_Ok ) {	
-				if ( $method == 'no_ajax' ) {
+				if ( $method == 'no_ajax' && !$ignore_server_actions ) {
 					$send_error = wfu_send_notification_email($user, $notify_only_filename_list, $notify_target_path_list, $notify_attachment_list, $userdata_fields, $params);
 					if ( $send_error != "" ) {
 						$params_output_array["general"]['admin_messages']['notify'] = $send_error;
