@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wordpress File Upload\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-14 14:00+0200\n"
-"PO-Revision-Date: 2015-04-14 14:00+0200\n"
+"POT-Creation-Date: 2015-05-01 17:06+0200\n"
+"PO-Revision-Date: 2015-05-01 17:06+0200\n"
 "Last-Translator: nickboss <info@iptanus.com>\n"
 "Language-Team: Iptanus Team <info@iptanus.com>\n"
 "Language: en\n"
@@ -359,141 +359,147 @@ msgstr ""
 
 #: lib/wfu_constants.php:131
 msgid ""
+"Failed to delete the shortcode because the contents of the page changed. Try "
+"again to delete it."
+msgstr ""
+
+#: lib/wfu_constants.php:132
+msgid ""
 "The page containing the shortcode has been modified and it is no longer "
 "valid. Please go back to reload the shortcode."
 msgstr ""
 
-#: lib/wfu_constants.php:132
+#: lib/wfu_constants.php:133
 msgid ""
 "Failed to update the shortcode because the contents of the page changed. Go "
 "back to reload the shortcode."
 msgstr ""
 
-#: lib/wfu_constants.php:133
+#: lib/wfu_constants.php:134
 msgid ""
 "Failed to update the shortcode. Please try again. If the problem persists, "
 "go back and reload the shortcode."
 msgstr ""
 
-#: lib/wfu_constants.php:136
+#: lib/wfu_constants.php:137
 msgid ""
 "Insert variable %userid% inside text. It will be replaced by the id of the "
 "current user."
 msgstr ""
 
-#: lib/wfu_constants.php:137
+#: lib/wfu_constants.php:138
 msgid ""
 "Insert variable %username% inside text. It will be replaced by the username "
 "of the current user."
 msgstr ""
 
-#: lib/wfu_constants.php:138
+#: lib/wfu_constants.php:139
 msgid ""
 "Insert variable %useremail% inside text. It will be replaced by the email of "
 "the current user."
 msgstr ""
 
-#: lib/wfu_constants.php:139
+#: lib/wfu_constants.php:140
 msgid ""
 "Insert variable %filename% inside text. It will be replaced by the filename "
 "of the uploaded file."
 msgstr ""
 
-#: lib/wfu_constants.php:140
+#: lib/wfu_constants.php:141
 msgid ""
 "Insert variable %filepath% inside text. It will be replaced by the full "
 "filepath of the uploaded file."
 msgstr ""
 
-#: lib/wfu_constants.php:141
+#: lib/wfu_constants.php:142
 msgid ""
 "Insert variable %blogid% inside text. It will be replaced by the blog id of "
 "the website."
 msgstr ""
 
-#: lib/wfu_constants.php:142
+#: lib/wfu_constants.php:143
 msgid ""
 "Insert variable %pageid% inside text. It will be replaced by the id of the "
 "current page."
 msgstr ""
 
-#: lib/wfu_constants.php:143
+#: lib/wfu_constants.php:144
 msgid ""
 "Insert variable %pagetitle% inside text. It will be replaced by the title of "
 "the current page."
 msgstr ""
 
-#: lib/wfu_constants.php:144
+#: lib/wfu_constants.php:145
 msgid ""
 "Insert variable %userdataXXX% inside text. Select the user field from the "
 "drop-down list. It will be replaced by the value that the user entered in "
 "this field."
 msgstr ""
 
-#: lib/wfu_constants.php:145
+#: lib/wfu_constants.php:146
 msgid "Insert variable %n% inside text to denote a line change."
 msgstr ""
 
-#: lib/wfu_constants.php:148
+#: lib/wfu_constants.php:149
 msgid "Upload in progress"
 msgstr ""
 
-#: lib/wfu_constants.php:149
+#: lib/wfu_constants.php:150
 msgid "Upload in progress with warnings!"
 msgstr ""
 
-#: lib/wfu_constants.php:150
+#: lib/wfu_constants.php:151
 msgid "Upload in progress but some files already failed!"
 msgstr ""
 
-#: lib/wfu_constants.php:151
+#: lib/wfu_constants.php:152
 msgid "Upload in progress but no files uploaded so far!"
 msgstr ""
 
-#: lib/wfu_constants.php:152
+#: lib/wfu_constants.php:153
 msgid "All files uploaded successfully"
 msgstr ""
 
-#: lib/wfu_constants.php:153
+#: lib/wfu_constants.php:154
 msgid "All files uploaded successfully but there are warnings!"
 msgstr ""
 
-#: lib/wfu_constants.php:154
+#: lib/wfu_constants.php:155
 msgid "File uploaded successfully but there are warnings!"
 msgstr ""
 
-#: lib/wfu_constants.php:155
+#: lib/wfu_constants.php:156
 msgid "Some files failed to upload!"
 msgstr ""
 
-#: lib/wfu_constants.php:156
+#: lib/wfu_constants.php:157
 msgid "All files failed to upload"
 msgstr ""
 
-#: lib/wfu_constants.php:157
+#: lib/wfu_constants.php:158
 msgid "File failed to upload"
 msgstr ""
 
-#: lib/wfu_constants.php:158
+#: lib/wfu_constants.php:159
 msgid "There are no files to upload!"
 msgstr ""
 
-#: lib/wfu_constants.php:159
+#: lib/wfu_constants.php:160
 msgid "Test upload message"
 msgstr ""
 
-#: lib/wfu_constants.php:160
+#: lib/wfu_constants.php:161
 msgid "JSON parse warning!"
 msgstr ""
 
-#: lib/wfu_constants.php:161
+#: lib/wfu_constants.php:162
 msgid "please wait while redirecting..."
 msgstr ""
 
-#: lib/wfu_constants.php:162
+#: lib/wfu_constants.php:163
 msgid "Open visual shortcode editor in new window"
 msgstr ""
 
-#: lib/wfu_constants.php:163
+#: lib/wfu_constants.php:164
 msgid "loading visual editor"
 msgstr ""

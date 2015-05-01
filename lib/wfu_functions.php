@@ -122,39 +122,39 @@ function wfu_sanitize($var) {
 		return $typ;
 }
 
-function wfu_shortcode_string_to_array($shortcode) {
-	function _wfu_preg_replace_callback_alt($contents, $token) {
-		$in_block = false;
-		$prev_pos = 0;
-		$new_contents = '';
-		$ret['items'] = array();
-		$ret['tokens'] = array();
-		$ii = 0;
-		while ( ($pos = strpos($contents, '"', $prev_pos)) !== false ) {
-			if ( !$in_block ) {
-				$new_contents .= substr($contents, $prev_pos, $pos - $prev_pos + 1);
-				$in_block = true;
-			}
-			else {
-				$ret['items'][$ii] = substr($contents, $prev_pos, $pos - $prev_pos);
-				$ret['tokens'][$ii] = $token.sprintf('%03d', $ii);
-				$new_contents .= $token.sprintf('%03d', $ii).'"';
-				$ii ++;
-				$in_block = false;
-			}
-			$prev_pos = $pos + 1;
+function _wfu_preg_replace_callback_alt($contents, $token) {
+	$in_block = false;
+	$prev_pos = 0;
+	$new_contents = '';
+	$ret['items'] = array();
+	$ret['tokens'] = array();
+	$ii = 0;
+	while ( ($pos = strpos($contents, '"', $prev_pos)) !== false ) {
+		if ( !$in_block ) {
+			$new_contents .= substr($contents, $prev_pos, $pos - $prev_pos + 1);
+			$in_block = true;
 		}
-		if ( $in_block ) {
-			$ret['items'][$ii] = substr($contents, $prev_pos);
+		else {
+			$ret['items'][$ii] = substr($contents, $prev_pos, $pos - $prev_pos);
 			$ret['tokens'][$ii] = $token.sprintf('%03d', $ii);
 			$new_contents .= $token.sprintf('%03d', $ii).'"';
+			$ii ++;
+			$in_block = false;
 		}
-		else
-			$new_contents .= substr($contents, $prev_pos);
-		$ret['contents'] = $new_contents;
-		return $ret;
+		$prev_pos = $pos + 1;
 	}
+	if ( $in_block ) {
+		$ret['items'][$ii] = substr($contents, $prev_pos);
+		$ret['tokens'][$ii] = $token.sprintf('%03d', $ii);
+		$new_contents .= $token.sprintf('%03d', $ii).'"';
+	}
+	else
+		$new_contents .= substr($contents, $prev_pos);
+	$ret['contents'] = $new_contents;
+	return $ret;
+}
 
+function wfu_shortcode_string_to_array($shortcode) {
 	$i = 0;
 	$m1 = array();
 	$m2 = array();
@@ -234,7 +234,9 @@ function wfu_encode_plugin_options($plugin_options) {
 	$encoded_options = 'version='.$plugin_options['version'].';';
 	$encoded_options .= 'shortcode='.wfu_plugin_encode_string($plugin_options['shortcode']).';';
 	$encoded_options .= 'hashfiles='.$plugin_options['hashfiles'].';';
-	$encoded_options .= 'basedir='.wfu_plugin_encode_string($plugin_options['basedir']);
+	$encoded_options .= 'basedir='.wfu_plugin_encode_string($plugin_options['basedir']).';';
+	$encoded_options .= 'captcha_sitekey='.wfu_plugin_encode_string($plugin_options['captcha_sitekey']).';';
+	$encoded_options .= 'captcha_secretkey='.wfu_plugin_encode_string($plugin_options['captcha_secretkey']);
 	return $encoded_options;
 }
 
@@ -244,7 +246,7 @@ function wfu_decode_plugin_options($encoded_options) {
 	foreach ($decoded_array as $decoded_item) {
 		if ( trim($decoded_item) != "" ) {
 			list($item_key, $item_value) = explode("=", $decoded_item, 2);
-			if ( $item_key == 'shortcode' || $item_key == 'basedir' )
+			if ( $item_key == 'shortcode' || $item_key == 'basedir' || $item_key == 'captcha_sitekey' || $item_key == 'captcha_secretkey' )
 				$plugin_options[$item_key] = wfu_plugin_decode_string($item_value);
 			else
 				$plugin_options[$item_key] = $item_value;
@@ -1130,14 +1132,18 @@ function wfu_process_media_insert($file_path, $page_id){
 
 //********************* POST/GET Requests Functions ****************************************************************************************************
 
-function wfu_post_request($url, $params) {
-	$context_params = array(
-		'http' => array(
-			'method'  => 'POST',
-			'header'  => 'Content-type: application/x-www-form-urlencoded',
-			'content' => http_build_query($params)
-		)
+function wfu_post_request($url, $params, $verifypeer = false) {
+	$peer_key = version_compare(PHP_VERSION, '5.6.0', '<') ? 'CN_name' : 'peer_name';
+	$http_array = array(
+		'method'  => 'POST',
+		'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+		'content' => http_build_query($params)
 	);
+	if ( $verifypeer ) {
+		$http_array['verify_peer'] = true;
+		$http_array[$peer_key] = 'www.google.com';
+	}
+	$context_params = array( 'http' => $http_array );
 	$context = stream_context_create($context_params);
 	return file_get_contents($url, false, $context);
 }

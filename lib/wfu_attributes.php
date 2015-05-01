@@ -206,7 +206,7 @@ function wfu_attribute_definitions() {
 			"category"	=> "general",
 			"subcategory"	=> "Upload Path and Files",
 			"parent"	=> "",
-			"dependencies"	=> array("ftpinfo", "userftpdomain"),
+			"dependencies"	=> array("ftpinfo", "userftpdomain", "ftppassivemode", "ftpfilepermissions"),
 			"variables"	=> null,
 			"help"		=> "Some times files cannot be uploaded to the upload folder because of read/write permissions. A workaround is to use ftp to transfer the files, however ftp credentials must be declared, so use carefully and only if necessary."
 		),

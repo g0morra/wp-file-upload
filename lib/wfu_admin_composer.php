@@ -32,11 +32,13 @@ function wfu_shortcode_composer($data = '') {
 	}
 	
 	$shortcode_attrs = wfu_shortcode_string_to_array($shortcode);
+	$shortcode_id = '';
 	foreach ( $defs as $key => $def ) {
 		$defs[$key]['default'] = $def['value'];
 		if ( array_key_exists($def['attribute'], $shortcode_attrs) ) {
 			$defs[$key]['value'] = $shortcode_attrs[$def['attribute']];
 		}
+		if ( $def['attribute'] == 'uploadid' ) $shortcode_id = $defs[$key]['value'];
 	}
 
 	// index $components
@@ -59,7 +61,7 @@ function wfu_shortcode_composer($data = '') {
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=manage_mainmenu" class="button" title="go back">Go to Main Menu</a>';
 	$echo_str .= "\n\t".'</div>';
-	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px; margin-top: 20px;">Shortcode Composer for '.( $data == "" ? 'Test' : $posttype.' "'.$postname.'" ('.$postid.') Position '.$data['position'] ).'</h2>';
+	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px; margin-top: 20px;">Shortcode Composer for '.( $data == "" ? 'Test' : $posttype.' "'.$postname.'" ('.$postid.') Position '.$data['position'] ).' with ID '.$shortcode_id.'</h2>';
 	$echo_str .= "\n\t".'<div style="margin-top:10px; display:inline-block;">';
 	if ( $data != "") $echo_str .= "\n\t\t".'<input id="wfu_update_shortcode" type="button" value="Update" class="button-primary" disabled="disabled" onclick="wfu_save_shortcode()" /><span id="wfu_update_shortcode_wait" class="spinner" style="float:right; display:none;"></span>';
 	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_original_enc" type="hidden" value="'.wfu_plugin_encode_string($shortcode_full).'" />';

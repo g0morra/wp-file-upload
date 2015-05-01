@@ -3,7 +3,7 @@ Contributors: nickboss
 Donate link: http://www.iptanus.com/support/wordpress-file-upload
 Tags: upload, upload file, upload files, multiple, multiple upload, multiple uploads, captcha, progress bar, form, ajax, directory, HTML5, filelist, gallery, image gallery, browser, file browser, gallery, image gallery, shortcode, logging, file logging
 Requires at least: 2.9.2
-Tested up to: 4.1.1
+Tested up to: 4.2.1
 Stable tag: "trunk"
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -115,6 +115,10 @@ In the free version the upload will fail. However in the Pro version the upload 
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 2.7.0 =
+* corrected bug when deleting plugin instance from the Dashboard
+* corrected bug not finding "loading_icon.gif"
 
 = 2.6.0 =
 * full redesign of the upload algorithm to become more robust
@@ -381,6 +385,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.7.0 =
+Upgrade to address some minor bugs.
 
 = 2.6.0 =
 Important upgrade to add new features and address some bugs.

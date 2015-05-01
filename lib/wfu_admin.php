@@ -163,6 +163,19 @@ function wordpress_file_upload_manage_dashboard() {
 		if ( wfu_check_edit_shortcode($data) ) wfu_shortcode_composer($data);
 		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_EDIT_SHORTCODE_REJECTED);
 	}
+	elseif ( $action == 'delete_shortcode' && $data_enc != "" ) {
+		$data = wfu_decode_array_from_string($data_enc);
+		if ( wfu_check_edit_shortcode($data) ) $echo_str = wfu_delete_shortcode_prompt($data);
+		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_DELETE_SHORTCODE_REJECTED);
+	}
+	elseif ( $action == 'deleteshortcode' && $data_enc != "" ) {
+		$data = wfu_decode_array_from_string($data_enc);
+		if ( wfu_check_edit_shortcode($data) ) {
+			wfu_delete_shortcode($data);
+			$echo_str = wfu_manage_mainmenu();
+		}
+		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_DELETE_SHORTCODE_REJECTED);
+	}
 	else {
 		$echo_str = wfu_manage_mainmenu();		
 	}
@@ -200,7 +213,7 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Edition</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px; vertical-align:top;">';
+	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px;">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">Free</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'<td>';
@@ -219,11 +232,11 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Version</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px; vertical-align:top;">';
+	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px;">';
 	$cur_version = wfu_get_plugin_version();
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">'.$cur_version.'</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
-	$echo_str .= "\n\t\t\t\t\t".'<td style="vertical-align:top;">';
+	$echo_str .= "\n\t\t\t\t\t".'<td>';
 	$lat_version = wfu_get_latest_version();
 	$ret = wfu_compare_versions($cur_version, $lat_version);
 	if ( $ret['status'] && $ret['result'] == 'lower' ) {
@@ -246,10 +259,21 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Server Environment</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px; vertical-align:top;">';
-	if ( $php_env == '64bit' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">64bit</label></td><td style="vertical-align:top;"><label style="font-weight:normal; font-style:italic; cursor:default;">(Your server supports files up to 1 Exabyte, practically unlimited)</label>';
-	if ( $php_env == '32bit' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">32bit</label></td><td style="vertical-align:top;"><label style="font-weight:normal; font-style:italic; cursor:default;">(Your server does not support files larger than 2GB)</label>';
-	if ( $php_env == '' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">Unknown</label></td><td style="vertical-align:top;"><label style="font-weight:normal; font-style:italic; cursor:default;">(The maximum file size supported by the server cannot be determined)</label>';
+	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px;">';
+	if ( $php_env == '64bit' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">64bit</label></td><td><label style="font-weight:normal; font-style:italic; cursor:default;">(Your server supports files up to 1 Exabyte, practically unlimited)</label>';
+	if ( $php_env == '32bit' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">32bit</label></td><td><label style="font-weight:normal; font-style:italic; cursor:default;">(Your server does not support files larger than 2GB)</label>';
+	if ( $php_env == '' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">Unknown</label></td><td><label style="font-weight:normal; font-style:italic; cursor:default;">(The maximum file size supported by the server cannot be determined)</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t".'</tr>';
+	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Release Notes</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t".'<td colspan="2" style="width:100px;">';
+	$rel_path = ABSWPFILEUPLOAD_DIR.'release_notes.txt';
+	$rel_notes = '';
+	if ( file_exists($rel_path) ) $rel_notes = file_get_contents($rel_path);
+	$echo_str .= "\n\t\t\t\t\t\t".'<div style="text-align:justify;">'.$rel_notes.'</div>';
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t".'</tr>';
 	$echo_str .= "\n\t\t\t".'</tbody>';
@@ -369,9 +393,40 @@ function wfu_replace_shortcode($data, $new_shortcode) {
 	return ( wp_update_post( $new_post ) === 0 ? false : true );
 }
 
-function wfu_edit_shortcode($data, $message = '') {
-	$echo_str = '';
+function wfu_delete_shortcode_prompt($data) {
+	$siteurl = site_url();
+	$postid = $data['post_id'];
+	$data_enc = wfu_encode_array_to_string($data);
+	$echo_str = "\n".'<div class="wrap">';
+	$echo_str .= "\n\t".'<h2>Wordpress File Upload Control Panel</h2>';
+	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
+	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=manage_mainmenu" class="button" title="go back">Go to Main Menu</a>';
+	$echo_str .= "\n\t".'</div>';
+	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px; margin-top: 20px;">Delete Shortcode</h2>';
+	$echo_str .= "\n\t".'<form enctype="multipart/form-data" name="deletefile" id="deleteshortcode" method="post" action="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload" class="validate">';
+	$echo_str .= "\n\t\t".'<input type="hidden" name="action" value="deleteshortcode">';
+	$echo_str .= "\n\t\t".'<input type="hidden" name="data" value="'.$data_enc.'">';
+	$echo_str .= "\n\t\t".'<label>Are you sure that you want to delete shortcode for <strong>'.get_post_type($postid).' "'.get_the_title($postid).'" ('.$postid.') Position '.$data['position'].'</strong> ?</label><br/>';
+	$echo_str .= "\n\t\t".'<p class="submit">';
+	$echo_str .= "\n\t\t\t".'<input type="submit" class="button-primary" name="submit" value="Delete">';
+	$echo_str .= "\n\t\t\t".'<input type="submit" class="button-primary" name="submit" value="Cancel">';
+	$echo_str .= "\n\t\t".'</p>';
+	$echo_str .= "\n\t".'</form>';
+	$echo_str .= "\n".'</div>';
 	return $echo_str;
+}
+
+function wfu_delete_shortcode($data) {
+	//check if user is allowed to perform this action
+	if ( !current_user_can( 'manage_options' ) ) return false;
+
+	$res = true;
+	if ( isset($_POST['submit']) ) {
+		if ( $_POST['submit'] == "Delete" ) {
+			$res = wfu_replace_shortcode($data, '');
+		}
+	}
+	return $res;
 }
 
 function wfu_manage_settings($message = '') {
@@ -411,6 +466,24 @@ function wfu_manage_settings($message = '') {
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.$plugin_options['basedir'].'</strong></p>';
 	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'</tr>';
+	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<label for="wfu_captcha_sitekey">Google ReCaptcha Site Key</label>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<input name="wfu_captcha_sitekey" id="wfu_captcha_sitekey" type="text" value="'.$plugin_options['captcha_sitekey'].'" />';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.$plugin_options['captcha_sitekey'].'</strong></p>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t\t".'</tr>';
+	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<label for="wfu_captcha_secretkey">Google ReCaptcha Secret Key</label>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<input name="wfu_captcha_secretkey" id="wfu_captcha_secretkey" type="text" value="'.$plugin_options['captcha_secretkey'].'" />';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.$plugin_options['captcha_secretkey'].'</strong></p>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t\t".'</tr>';
 	$echo_str .= "\n\t\t\t\t".'</tbody>';
 	$echo_str .= "\n\t\t\t".'</table>';
 	$echo_str .= "\n\t\t\t".'<p class="submit">';
@@ -431,12 +504,14 @@ function wfu_update_settings() {
 
 //	$enabled = ( isset($_POST['wfu_enabled']) ? ( $_POST['wfu_enabled'] == "on" ? 1 : 0 ) : 0 ); 
 	$hashfiles = ( isset($_POST['wfu_hashfiles']) ? ( $_POST['wfu_hashfiles'] == "on" ? 1 : 0 ) : 0 ); 
-	if ( isset($_POST['wfu_basedir']) && isset($_POST['submit']) ) {
+	if ( isset($_POST['wfu_basedir']) && isset($_POST['wfu_captcha_sitekey']) && isset($_POST['wfu_captcha_secretkey']) && isset($_POST['submit']) ) {
 		if ( $_POST['submit'] == "Update" ) {
 			$new_plugin_options['version'] = '1.0';
 			$new_plugin_options['shortcode'] = $plugin_options['shortcode'];
 			$new_plugin_options['hashfiles'] = $hashfiles;
 			$new_plugin_options['basedir'] = $_POST['wfu_basedir'];
+			$new_plugin_options['captcha_sitekey'] = $_POST['wfu_captcha_sitekey'];
+			$new_plugin_options['captcha_secretkey'] = $_POST['wfu_captcha_secretkey'];
 			$encoded_options = wfu_encode_plugin_options($new_plugin_options);
 			update_option( "wordpress_file_upload_options", $encoded_options );
 			if ( $new_plugin_options['hashfiles'] == '1' && $plugin_options['hashfiles'] != '1' )
