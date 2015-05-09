@@ -4,6 +4,7 @@
 function wfu_prepare_subfolders_block($params, $widths, $heights) {
 	$sid = $params["uploadid"];
 	$selectsubdir = 'selectsubdir_'.$sid;
+	$editbox = 'selectsubdiredit_'.$sid;
 	$defaultvalue = 'selectsubdirdefault_'.$sid;
 	$hiddeninput = 'hiddeninput_'.$sid;
 	$subfolders_item = null;
@@ -16,9 +17,11 @@ function wfu_prepare_subfolders_block($params, $widths, $heights) {
 	if ( $heights["subfolders_label"] != "" ) $styles2 .= 'height: '.$heights["subfolders_label"].'; ';
 	if ( $styles2 != "" ) $styles2 = ' style="'.$styles2.'"';
 	$styles3 = "border: 1px solid; border-color: #BBBBBB;";
-	if ( $widths["subfolders_select"] != "" ) $styles3 .= 'width: '.$widths["subfolders_select"].'; ';
-	if ( $heights["subfolders_select"] != "" ) $styles3 .= 'height: '.$heights["subfolders_select"].'; ';
-	$styles3 = ' style="'.$styles3.'"';
+	$styles4 = "";
+	if ( $widths["subfolders_select"] != "" ) $styles4 .= 'width: '.$widths["subfolders_select"].'; ';
+	if ( $heights["subfolders_select"] != "" ) $styles4 .= 'height: '.$heights["subfolders_select"].'; ';
+	$styles3 = ' style="'.$styles3.$styles4.'"';
+	if ( $styles4 != "" ) $styles4 = ' style="'.$styles4.'"';
 	$subfolder_paths = array ( );
 	$linebr = "";
 	if ( $params["showtargetfolder"] == "true" || $params["askforsubfolders"] == "true" ) {
@@ -33,14 +36,24 @@ function wfu_prepare_subfolders_block($params, $widths, $heights) {
 	}
 	if ( $params["askforsubfolders"] == "true" ) {
 		$subfolders_item["line".$i++] = '<span class="file_item_clean"'.$styles2.'>'.$params["subfolderlabel"].' </span>';
+		$subfolders_item["line".$i++] = '<div class="file_item_clean"'.$styles4.'>';
+		$subfolders_item["line".$i++] = '<div class="file_item_clean_inner"'.( substr($params["subfoldertree"], 0, 5) == "auto+" ? '' : ' style="display:none;"' ).'>';
+		$subfolders_item["line".$i++] = '<input type="text" id="'.$editbox.'" class="file_item_clean_empty" value="'.WFU_SUBDIR_TYPEDIR.'"'.( substr($params["subfoldertree"], 0, 5) == "auto+" ? '' : ' style="display:none;"' ).' onchange="wfu_selectsubdiredit_change('.$sid.');" onfocus="wfu_selectsubdiredit_enter('.$sid.');" onblur="wfu_selectsubdiredit_exit('.$sid.');" />';
+		$subfolders_item["line".$i++] = '</div>';
 		$subfolders_item["line".$i++] = '<select class="file_item_clean"'.$styles3.' id="'.$selectsubdir.'" onchange="wfu_selectsubdir_check('.$sid.');">';
 		if ( $params["testmode"] == "true" ) {
 			$subfolders_item["line".$i++] = "\t".'<option>'.WFU_NOTIFY_TESTMODE.'</option>';
 		}
 		else {
 			$zeroind = $i;
-			$subfolders_item["line".$i++] = "\t".'<option>'.WFU_SUBDIR_SELECTDIR.'</option>';
+			$subfolders_item["line".$i++] = "\t".'<option'.( substr($params["subfoldertree"], 0, 5) == "auto+" ? ' style="display:none;"' : '' ).'>'.WFU_SUBDIR_SELECTDIR.'</option>';
 			array_push($subfolder_paths, "");
+			if ( substr($params["subfoldertree"], 0, 4) == "auto" ) {
+				$upload_directory = wfu_upload_plugin_full_path($params);
+				$dirtree = wfu_getTree($upload_directory);
+				foreach ( $dirtree as &$dir ) $dir = '*'.$dir;
+				$params["subfoldertree"] = implode(',', $dirtree);
+			}
 			$subfolders = wfu_parse_folderlist($params["subfoldertree"]);
 			if ( count($subfolders['path']) == 0 ) {
 				array_push($subfolders['path'], "");
@@ -57,6 +70,7 @@ function wfu_prepare_subfolders_block($params, $widths, $heights) {
 			if ( $default != -1 ) $subfolders_item["line".$zeroind] = "\t".'<option style="display:none;">'.WFU_SUBDIR_SELECTDIR.'</option>';
 		}
 		$subfolders_item["line".$i++] = '</select>';
+		$subfolders_item["line".$i++] = '</div>';
 		$subfolders_item["line".$i++] = '<input id="'.$defaultvalue.'" type="hidden" value="'.$default.'" />';
 	}
 

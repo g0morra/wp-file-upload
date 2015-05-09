@@ -33,6 +33,7 @@ The characteristics of the plugin are:
 * It is highly customizable with many (more than 50) options.
 * It produces notification messages and e-mails.
 * You can create additional fields that the user must fill in along with the uploaded file.
+* You can select from a list of subfolders.
 * It supports redirection to another url after successful upload.
 * It supports filters and actions before and after file upload, so that programmers can extend the plugin and make it cooperate with other plugins.
 * It contains a visual editor for customizing the plugin easily and without any knowledge of shortcodes or programming
@@ -115,6 +116,16 @@ In the free version the upload will fail. However in the Pro version the upload 
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 2.7.1 =
+* fixed bug with faulty plugin instances appearring when Woocommerce plugin is also installed
+* Upload of javascript (.js) files is not allowed for avoiding security issues
+* fixed bug with medialink and postlink attributes that were not working correctly
+* when medialink or postlink is activated, the files will be uploaded to the upload folder of WP website
+* when medialink or postlink is activated, subfolders will be deactivated
+* added option in subfolders to enable the list to populate automatically
+* added option in subfolders the user to be able to type the subfolder
+* wfu_before_file_check filter can modify the target path (not only the file name)
 
 = 2.7.0 =
 * corrected bug when deleting plugin instance from the Dashboard
@@ -386,6 +397,9 @@ Initial version.
 
 == Upgrade Notice ==
 
+= 2.7.1 =
+Upgrade to add some new features and address some bugs.
+
 = 2.7.0 =
 Upgrade to address some minor bugs.
 
@@ -566,7 +580,7 @@ A detailed list of attributes, together with instructions is shown below:
 * **ftpfilepermissions:** Force the uploaded files to have specific permissions. This is a 4-digit octal number, e.g. 0777. If left empty, then the ftp server will define the permissions.. Default value is "".
 * **showtargetfolder:** This attribute defines if a message with the upload directory will be shown. Default value is "false".
 * **askforsubfolders:** This attribute defines if the user can select a subfolder to upload the file. Default value is "false". If set to "true", then the user is able to select a subfolder of the path, defined by the attribute *uploadpath*, to upload a file through a drop down list. This attributed is used together with attribute *subfoldertree*, which defines the subfolders.
-* **subfoldertree:** This attribute defines the structure of the subfolders that the user can select to upload a file. Default value is "". The format of this attribute is as follows: the subfolders are separated by commas (,), e.g. "subfolder1, subfolder2". It is possible to use nested subfolders (a folder inside another folder). To do this place stars (*) before the name of the subfolder. The number of stars determines nesting level, e.g. "subfolder1, *nested1, *nested2, **nested3". Please note that the first subfolder must be the name of the folder defined by attribute *uploadpath* (only the last part) without any stars, while all the next subfolders must have at least one star. The user has also the capability to use a different name (from the actual subfolder name) to be shown in the drop down list for every subfolder, by separating the actual and shown name using the slash (/) symbol, e.g. "subfolder1, *subfolder2/shownname2, *subfolder3/shownname3".
+* **subfoldertree:** This attribute defines the structure of the subfolders that the user can select to upload a file. Default value is "". The format of this attribute is as follows: the subfolders are separated by commas (,), e.g. "subfolder1, subfolder2". It is possible to use nested subfolders (a folder inside another folder). To do this place stars (\*) before the name of the subfolder. The number of stars determines nesting level, e.g. "subfolder1, \*nested1, \*nested2, \*\*nested3". Please note that the first subfolder must be the name of the folder defined by attribute *uploadpath* (only the last part) without any stars, while all the next subfolders must have at least one star. The user has also the capability to use a different name (from the actual subfolder name) to be shown in the drop down list for every subfolder, by separating the actual and shown name using the slash (/) symbol, e.g. "subfolder1, \*subfolder2/shownname2, \*subfolder3/shownname3". For defining a default value that will be preselected use the (&) symbol before the item name (but after the stars, e.g. \*\*&nested3.
 * **dublicatespolicy:** This attribute defines what to do when the upload file has the same name with another file inside target directory. If it is set to "overwrite" then the upload file will replace the existing file. If it is set to "reject" then the upload operation will be cancelled. If it is set to "maintain both" then the upload file will be saved inside the target directory with another name, in order to keep both files. Default value is "overwrite".
 * **uniquepattern:** This attribute defines how to save the upload file when a file with the same name already exists inside the target directory. If it is set to "index" then the upload file will be saved with a numeric suffix, like (1), (2) etc. in order to keep the name of the uploaded file unique. If it is set to "datetimestamp", then the suffix will be an encoded datetime of the upload operation. The plugin ensures that the name of the uploaded file will be unique, in order to avoid accidental replacement of existing files. Default value is "index".
 

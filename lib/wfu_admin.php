@@ -186,8 +186,8 @@ function wordpress_file_upload_manage_dashboard() {
 function wfu_manage_mainmenu($message = '') {
 	if ( !current_user_can( 'manage_options' ) ) return;
 	
-//	$str = str_replace(array("\r\n", "\r", "\n"), "<br/>", (print_r($alldata, true)));
-//	echo str_replace(array("\t", " "), "&nbsp;", $str);
+	//get php version
+	$php_version = preg_replace("/-.*/", "", phpversion());
 
 	$siteurl = site_url();
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
@@ -263,6 +263,17 @@ function wfu_manage_mainmenu($message = '') {
 	if ( $php_env == '64bit' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">64bit</label></td><td><label style="font-weight:normal; font-style:italic; cursor:default;">(Your server supports files up to 1 Exabyte, practically unlimited)</label>';
 	if ( $php_env == '32bit' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">32bit</label></td><td><label style="font-weight:normal; font-style:italic; cursor:default;">(Your server does not support files larger than 2GB)</label>';
 	if ( $php_env == '' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">Unknown</label></td><td><label style="font-weight:normal; font-style:italic; cursor:default;">(The maximum file size supported by the server cannot be determined)</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t".'</tr>';
+	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">PHP Version</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px;">';
+	$cur_version = wfu_get_plugin_version();
+	$echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">'.$php_version.'</label>';
+	$echo_str .= "\n\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t\t".'<td>';
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t".'</tr>';
 	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
@@ -371,11 +382,12 @@ function wfu_get_content_shortcodes($post, $tag) {
 				$data['post_hash'] = $hash;
 				$data['shortcode'] = $shortcode[0][0];
 				$data['position'] = $shortcode[0][1];
+				array_push($ret, $data);
 			}
-			array_push($ret, $data);
 		}
-		return $ret;
 	}
+	if ( count($ret) == 0 ) return false;
+	return $ret;
 }
 
 function wfu_check_edit_shortcode($data) {

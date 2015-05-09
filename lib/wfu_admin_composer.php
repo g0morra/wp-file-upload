@@ -265,7 +265,12 @@ function wfu_shortcode_composer($data = '') {
 		elseif ( $def['type'] == "folderlist" ) {
 			$echo_str .= $dlp."\t\t".'<div id="wfu_subfolders_inner_shadow_'.$attr.'" class="wfu_subfolders_inner_shadow" style="display:none;"></div>';
 			$subfolders = wfu_parse_folderlist($def['value']);
-			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" class="wfu_select_folders'.( count($subfolders['path']) == 0 ? ' wfu_select_folders_empty' : '' ).'" size="7" onchange="wfu_subfolders_changed(\''.$attr.'\');">';
+			$poptitle = "Populate list automatically with the first-level subfolders of the path defined in uploadpath";
+			$edittitle = "Allow the user to type the subfolder and filter the list during typing";
+			$echo_str .= $dlp."\t\t".'<input type="checkbox" id="wfu_subfolders_auto_'.$attr.'"'.( substr($def['value'], 0, 4) == "auto" ? ' checked="checked"' : '' ).' onchange="wfu_subfolders_auto_changed(\''.$attr.'\');" title="'.$poptitle.'" /><label for="wfu_subfolders_auto_'.$attr.'" title="'.$poptitle.'"> Auto-populate list</label>';
+			$echo_str .= $dlp."\t\t".'<div style="display:'.( substr($def['value'], 0, 4) == "auto" ? 'inline' : 'none' ).'; padding:0; margin:0 0 0 30px; background:none; border:none;"><input type="checkbox" id="wfu_subfolders_editable_'.$attr.'"'.( substr($def['value'], 0, 5) == "auto+" ? ' checked="checked"' : '' ).' onchange="wfu_subfolders_auto_changed(\''.$attr.'\');" title="'.$edittitle.'" /><label for="wfu_subfolders_editable_'.$attr.'" title="'.$edittitle.'"> List is editable</label></div><br />';
+			$echo_str .= $dlp."\t\t".'<input type="hidden" id="wfu_subfolders_manualtext_'.$attr.'" value="'.( substr($def['value'], 0, 4) == "auto" ? "" : $def['value'] ).'" />';
+			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" class="wfu_select_folders'.( count($subfolders['path']) == 0 ? ' wfu_select_folders_empty' : '' ).'" size="7"'.( substr($def['value'], 0, 4) == "auto" ? ' disabled="disabled"' : '' ).' onchange="wfu_subfolders_changed(\''.$attr.'\');">';
 			foreach ($subfolders['path'] as $ind => $subfolder) {
 				if ( substr($subfolder, -1) == '/' ) $subfolder = substr($subfolder, 0, -1);
 				$subfolder_raw = explode('/', $subfolder);
@@ -274,7 +279,7 @@ function wfu_shortcode_composer($data = '') {
 				$subvalue = str_repeat("*", intval($subfolders['level'][$ind])).( $subfolders['default'][$ind] ? '&' : '' ).( $subfolder == "" ? '{root}' : $subfolder ).'/'.$subfolders['label'][$ind];
 				$echo_str .= $dlp."\t\t\t".'<option class="'.( $subfolders['default'][$ind] ? 'wfu_select_folders_option_default' : '' ).'" value="'.wfu_plugin_encode_string($subvalue).'">'.$text.'</option>';
 			}
-			$echo_str .= $dlp."\t\t\t".'<option value="">'.( count($subfolders['path']) == 0 ? 'press here' : '' ).'</option>';
+			$echo_str .= $dlp."\t\t\t".'<option value="">'.( substr($def['value'], 0, 4) != "auto" && count($subfolders['path']) == 0 ? 'press here' : '' ).'</option>';
 			$echo_str .= $dlp."\t\t".'</select>';
 			$echo_str .= $dlp."\t\t".'<div id="wfu_subfolder_nav_'.$attr.'" class="wfu_subfolder_nav_container">';
 			$echo_str .= $dlp."\t\t\t".'<table class="wfu_subfolder_nav"><tbody>';

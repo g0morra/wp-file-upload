@@ -4,7 +4,7 @@ session_start();
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.7.0
+Version: 2.7.1
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -162,6 +162,9 @@ function wordpress_file_upload_function($incomingfromhandler) {
 		
 	}
 	$params["userdata_fields"] = $userdata_fields; 
+	
+	/* If medialink or postlink is activated, then subfolders are deactivated */
+	if ( $params["medialink"] == "true" || $params["postlink"] == "true" ) $params["askforsubfolders"] = "false";
 
 	/* Prepare information about directory or selection of target subdirectory */
 	$subfolders = wfu_prepare_subfolders_block($params, $widths, $heights);
@@ -265,9 +268,9 @@ function wordpress_file_upload_function($incomingfromhandler) {
 		$wordpress_file_upload_output .= call_user_func_array("wfu_add_div", $section_array);
 	}
 
-	/* Pass constants to javascript and set page unload hook */
+	/* Pass constants to javascript and run plugin post-load actions */
 	$consts = wfu_set_javascript_constants();
-	$handler = 'function() { wfu_Initialize_Consts("'.$consts.'"); wfu_install_unload_hook(); }';
+	$handler = 'function() { wfu_Initialize_Consts("'.$consts.'"); wfu_plugin_load_action('.$sid.'); }';
 	$wordpress_file_upload_output .= "\n\t".'<script type="text/javascript">if(window.addEventListener) { window.addEventListener("load", '.$handler.', false); } else if(window.attachEvent) { window.attachEvent("onload", '.$handler.'); } else { window["onload"] = '.$handler.'; }</script>';
 	$wordpress_file_upload_output .= '</div>';
 //	$wordpress_file_upload_output .= '<div>';

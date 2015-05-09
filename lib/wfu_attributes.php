@@ -306,7 +306,7 @@ function wfu_attribute_definitions() {
 			"parent"	=> "askforsubfolders",
 			"dependencies"	=> null,
 			"variables"	=> null,
-			"help"		=> "The list of folders a user can select. Please see documentation on how to create the list of folders."
+			"help"		=> "The list of folders a user can select. Please see documentation on how to create the list of folders. If 'Auto-populate list' is selected, then the list will be filled automatically with the first-level subfolders inside the directory defined by uploadpath. If 'List is editable' is selected, then the user will have the capability to type the subfolder and filter the subfolder list and/or define a new subfolder."
 		),
 		array(
 			"name"		=> "File Duplicates Policy",

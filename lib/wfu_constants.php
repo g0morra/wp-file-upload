@@ -111,6 +111,7 @@ DEFINE("WFU_WARNING_REDIRECT_NOTEXECUTED_FILESFAILED", __("Redirection not execu
 //define plugin messages
 DEFINE("WFU_NOTIFY_TESTMODE", __("Test Mode", "wordpress-file-upload"));
 DEFINE("WFU_SUBDIR_SELECTDIR", __("select dir...", "wordpress-file-upload"));
+DEFINE("WFU_SUBDIR_TYPEDIR", __("type dir", "wordpress-file-upload"));
 DEFINE("WFU_SUCCESSMESSAGE_DETAILS", __('Upload path: %filepath%', 'wordpress-file-upload'));
 DEFINE("WFU_FAILMESSAGE_DETAILS", __('Failed upload path: %filepath%', 'wordpress-file-upload'));
 DEFINE("WFU_USERDATA_REQUIREDLABEL", __(' (required)', 'wordpress-file-upload'));
@@ -221,7 +222,8 @@ function wfu_set_javascript_constants() {
 		"max_time_limit" => WFU_MAX_TIME_LIMIT,
 		"response_url" => WFU_RESPONSE_URL,
 		"ajax_url" => WFU_AJAX_URL,
-		"wfu_pageexit_prompt" => WFU_PAGEEXIT_PROMPT
+		"wfu_pageexit_prompt" => WFU_PAGEEXIT_PROMPT,
+		"wfu_subdir_typedir" => WFU_SUBDIR_TYPEDIR
 	);
 	$consts_txt = "";
 	foreach ( $consts as $key => $val )

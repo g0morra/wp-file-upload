@@ -106,9 +106,15 @@ function wfu_process_files($params, $method) {
 	$params["uploadpath"] =  preg_replace($search, $replace, $params["uploadpath"]);
 
 	/* append subfolder name to upload path */
-	if ( $params["askforsubfolders"] == "true" && $params['subdir_selection_index'] >= 1 ) {
-		if ( substr($params["uploadpath"], -1, 1) == "/" ) $params["uploadpath"] .= $params['subfoldersarray'][$params['subdir_selection_index']];
-		else $params["uploadpath"] .= '/'.$params['subfoldersarray'][$params['subdir_selection_index']];
+	if ( $params["askforsubfolders"] == "true" ) {
+		if ( $params["subfoldertree"] == "auto+" && $params['subdir_selection_index'] != '' ) {
+			if ( substr($params["uploadpath"], -1, 1) == "/" ) $params["uploadpath"] .= $params['subdir_selection_index'];
+			else $params["uploadpath"] .= '/'.$params['subdir_selection_index'];			
+		}
+		elseif ( $params["subfoldertree"] != "auto+" && $params['subdir_selection_index'] >= 1 ) {
+			if ( substr($params["uploadpath"], -1, 1) == "/" ) $params["uploadpath"] .= $params['subfoldersarray'][$params['subdir_selection_index']];
+			else $params["uploadpath"] .= '/'.$params['subfoldersarray'][$params['subdir_selection_index']];
+		}
 	}
 
 	if ( $files_count == 1 ) {
@@ -143,15 +149,16 @@ function wfu_process_files($params, $method) {
 		if ( $only_check ) $upload_file_size = $fileprops['size'];
 		else $upload_file_size = filesize($fileprops['tmp_name']);
 		$upload_file_size_MB = $upload_file_size / 1024 / 1024;
+		
+		$only_filename = $fileprops['name'];
+		$target_path = wfu_upload_plugin_full_path($params).$only_filename;
 
 		if ( $upload_file_size > 0 ) {
-
 			/* Section to perform filter action wfu_before_file_check before file is checked in order to perform
 			   any filename or userdata modifications or reject the upload of the file by setting error_message item
 			   of $ret_data array to a non-empty value */
 			$filter_error_message = '';
 			if ( $file_unique_id != '' && !$filedata_previously_defined ) {
-				$target_path = wfu_upload_plugin_full_path($params).$fileprops['name'];
 				$changable_data['file_path'] = $target_path;
 				$changable_data['user_data'] = $userdata_fields;
 				$changable_data['error_message'] = $filter_error_message;
@@ -162,21 +169,23 @@ function wfu_process_files($params, $method) {
 				$additional_data['user_id'] = $user->ID;
 				$additional_data['page_id'] = $params["pageid"];
 				$ret_data = apply_filters('wfu_before_file_check', $changable_data, $additional_data);
-				$fileprops['name'] = str_replace(wfu_upload_plugin_full_path($params), '', $ret_data['file_path']);
+				$target_path = $ret_data['file_path'];
+				$fileprops['name'] = wfu_basename($target_path);
 				$userdata_fields = $ret_data['user_data'];
 				$filter_error_message = $ret_data['error_message'];
 				// if this is a file check, which means that a second pass of the file will follow, then we do not want to
 				// apply the filters again, so we store the changable data to session variables for this specific file
 				if ( $only_check ) {
 					$_SESSION[$file_map]['file_unique_id'] = $file_unique_id;
-					$_SESSION[$file_map]['filename'] = $fileprops['name'];
+					$_SESSION[$file_map]['filepath'] = $target_path;
 					$_SESSION[$file_map]['userdata'] = $userdata_fields;
 				}
 			}
 			// if this is a second pass of the file, because a first pass with file checking was done before, then retrieve
 			// file data that may have previously changed because of application of filters
 			if ( $filedata_previously_defined ) {
-				$fileprops['name'] = $_SESSION[$file_map]['filename'];
+				$target_path = $_SESSION[$file_map]['filepath'];
+				$fileprops['name'] = wfu_basename($target_path);
 				$userdata_fields = $_SESSION[$file_map]['userdata'];
 			}
 			if ( $filter_error_message != '' ) {
@@ -186,23 +195,28 @@ function wfu_process_files($params, $method) {
 			}
 			else {
 
+				/* if medialink or postlink is activated then the target path becomes the current wordpress upload folder */
+				if ( $params["medialink"] == "true" || $params["postlink"] == "true" ) {
+					$mediapath = wp_upload_dir();
+					$target_path = $mediapath['path'].'/'.$fileprops['name'];
+				}
 				/* Check if upload path exist */
-				if ( is_dir( wfu_upload_plugin_full_path($params) ) ) {		
+				if ( is_dir( wfu_basedir($target_path) ) ) {		
 					$upload_path_ok = true;
 				}
 				/* Attempt to create path if user has selected to do so */ 
 				else if ( $params["createpath"] == "true" ) {
-					$wfu_create_directory_ret = wfu_create_directory(wfu_upload_plugin_full_path($params), $params["accessmethod"], $params["ftpinfo"]);
+					$wfu_create_directory_ret = wfu_create_directory(wfu_basedir($target_path), $params["accessmethod"], $params["ftpinfo"]);
 					if ( $wfu_create_directory_ret != "" ) {
 						$file_output['admin_messages'] = wfu_join_strings("<br />", $file_output['admin_messages'], $wfu_create_directory_ret);
 					}
-					if ( is_dir( wfu_upload_plugin_full_path($params) ) ) {		
+					if ( is_dir( wfu_basedir($target_path) ) ) {		
 						$upload_path_ok = true;
 					}
 				}
 
-				/* File name control, reject files with .php extension for security reasons */
-				if ( strtolower(substr($fileprops['name'], -4)) != ".php" )
+				/* File name control, reject files with .php and .js extension for security reasons */
+				if ( strtolower(substr($fileprops['name'], -4)) != ".php" && strtolower(substr($fileprops['name'], -3)) != ".js" )
 					foreach ($allowed_patterns as $allowed_pattern) {
 						if ( wfu_upload_plugin_wildcard_match( $allowed_pattern, $fileprops['name']) ) {
 							$allowed_file_ok = true;
@@ -263,15 +277,10 @@ function wfu_process_files($params, $method) {
 
 			if ( is_uploaded_file($fileprops['tmp_name']) || $only_check ) {
 				$source_path = $fileprops['tmp_name'];
-				$target_path = wfu_upload_plugin_full_path($params).$only_filename;
 				
 				if ( $only_check || $ignore_server_actions ) $file_copied = true;
 				else {
 					$file_copied = false;
-
-					$search = array ('/%filename%/', '/%filepath%/');	 
-					$replace = array ($only_filename, $target_path);
-					$success_message =  preg_replace($search, $replace, $params["successmessage"]);
 
 					if ($source_path) {
 						$file_exists = file_exists($target_path);
@@ -310,7 +319,7 @@ function wfu_process_files($params, $method) {
 							}
 						}
 						else if ( $file_exists && $params["dublicatespolicy"] == "maintain both" ) {
-							$full_path = wfu_upload_plugin_full_path($params);
+							$full_path = wfu_basedir($target_path);
 							$name_part = $only_filename;
 							$ext_part = "";
 							$dot_pos = strrpos($name_part, ".");
@@ -473,10 +482,6 @@ function wfu_process_files($params, $method) {
 			$file_output['color'] = $color_array[0];
 			$file_output['bgcolor'] = $color_array[1];
 			$file_output['borcolor'] = $color_array[2];
-			/* define variables that were not defined before due to error */
-			if ( $params['forcefilename'] != "true" ) $only_filename = wfu_upload_plugin_clean( $fileprops['name'] );
-			else $only_filename = $fileprops['name'];
-			$target_path = wfu_upload_plugin_full_path($params).$only_filename;
 			$replace = array ($user_login, ( $user_email == "" ? "no email" : $user_email ), $only_filename, $target_path);
 			$file_output['header'] = preg_replace($search, $replace, $params['errormessage']);
 			/* prepare and prepend details of failed file upload, visible only to administrator */

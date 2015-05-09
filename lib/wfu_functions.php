@@ -76,6 +76,11 @@ function wfu_create_string($size) {
 	return $str;
 }
 
+function wfu_html_output($output) {
+	$output = str_replace(array("\r\n", "\r", "\n"), "<br/>", $output);
+	return str_replace(array("\t", " "), "&nbsp;", $output);
+}
+
 //********************* Array Functions ****************************************************************************************************
 
 function wfu_encode_array_to_string($arr) {
@@ -320,6 +325,11 @@ function wfu_basename($path) {
 	return preg_replace('/.*(\\\\|\\/)/', '', $path);
 }
 
+function wfu_basedir($path) {
+	if ( !$path || $path == "" ) return "";
+	return substr($path, 0, strlen($path) - strlen(wfu_basename($path)));
+}
+
 function wfu_upload_plugin_full_path( $params ) {
 	$path = $params["uploadpath"];
 	if ( $params["accessmethod"]=='ftp' && $params["ftpinfo"] != '' && $params["useftpdomain"] == "true" ) {
@@ -386,12 +396,22 @@ function wfu_delTree($dir) {
 	return rmdir($dir);
 }
 
+function wfu_getTree($dir) {
+	$tree = array();
+	$files = array_diff(scandir($dir), array('.','..'));
+	foreach ($files as $file) {
+		if ( is_dir("$dir/$file") ) array_push($tree, $file);
+	}
+	return $tree;
+}
+
 function wfu_parse_folderlist($subfoldertree) {
 	$ret['path'] = array();
 	$ret['label'] = array();
 	$ret['level'] = array();
 	$ret['default'] = array();
 
+	if ( substr($subfoldertree, 0, 4) == "auto" ) return $ret;
 	$subfolders = explode(",", $subfoldertree);
 	if ( count($subfolders) == 0 ) return $ret;
 	if ( count($subfolders) == 1 && trim($subfolders[0]) == "" ) return $ret;
@@ -1109,11 +1129,13 @@ function wfu_send_notification_email($user, $only_filename_list, $target_path_li
 
 //********************* Media Functions ****************************************************************************************************
 
-// function wfu_process_media_insert contribution from Aaron Olin
-function wfu_process_media_insert($file_path, $page_id){   
+// function wfu_process_media_insert contribution from Aaron Olin with some corrections regarding the upload path
+function wfu_process_media_insert($file_path, $page_id){
+	$wp_upload_dir = wp_upload_dir();
 	$filetype = wp_check_filetype( wfu_basename( $file_path ), null );
 
 	$attachment = array(
+		'guid'           => $wp_upload_dir['url'] . '/' . wfu_basename( $file_path ), 
 		'post_mime_type' => $filetype['type'],
 		'post_title'     => preg_replace( '/\.[^.]+$/', '', wfu_basename( $file_path ) ),
 		'post_content'   => '',

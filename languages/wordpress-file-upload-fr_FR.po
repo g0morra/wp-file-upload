@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wordpress File Upload\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-05-01 17:06+0200\n"
-"PO-Revision-Date: 2015-05-01 17:06+0200\n"
+"POT-Creation-Date: 2015-05-09 22:52+0200\n"
+"PO-Revision-Date: 2015-05-09 22:52+0200\n"
 "Last-Translator: nickboss <nickboss@iptanus.com>\n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -360,90 +360,94 @@ msgid "select dir..."
 msgstr ""
 
 #: lib/wfu_constants.php:114
+msgid "type dir"
+msgstr ""
+
+#: lib/wfu_constants.php:115
 msgid "Upload path: %filepath%"
 msgstr "Chemin d'Upload : %filepath%"
 
-#: lib/wfu_constants.php:115
+#: lib/wfu_constants.php:116
 msgid "Failed upload path: %filepath%"
 msgstr "Mauvais répertoir d'envoi: %filepath%"
 
-#: lib/wfu_constants.php:116
+#: lib/wfu_constants.php:117
 msgid " (required)"
 msgstr ""
 
-#: lib/wfu_constants.php:117
+#: lib/wfu_constants.php:118
 msgid "Files are being uploaded. Are you sure you want to exit the page?"
 msgstr ""
 
-#: lib/wfu_constants.php:120
+#: lib/wfu_constants.php:121
 msgid "This is a test message"
 msgstr "Ceci est un message de test"
 
-#: lib/wfu_constants.php:121
+#: lib/wfu_constants.php:122
 msgid "This is a test administrator message"
 msgstr "Ceci est un message administrateur de test"
 
-#: lib/wfu_constants.php:122
+#: lib/wfu_constants.php:123
 msgid "File testfile 1 under test"
 msgstr "File testfile 1 under test"
 
-#: lib/wfu_constants.php:123
+#: lib/wfu_constants.php:124
 msgid "File testfile 1 message"
 msgstr "File testfile 1 message"
 
-#: lib/wfu_constants.php:124
+#: lib/wfu_constants.php:125
 msgid "File testfile 1 administrator message"
 msgstr "Message administrateur File testfile"
 
-#: lib/wfu_constants.php:125
+#: lib/wfu_constants.php:126
 msgid "File testfile 2 under test"
 msgstr "En test File testfile"
 
-#: lib/wfu_constants.php:126
+#: lib/wfu_constants.php:127
 msgid "File testfile 2 message"
 msgstr "Message File testfile 2"
 
-#: lib/wfu_constants.php:127
+#: lib/wfu_constants.php:128
 msgid "File testfile 2 administrator message"
 msgstr "Message administrateur File testfile 2"
 
-#: lib/wfu_constants.php:130
+#: lib/wfu_constants.php:131
 msgid ""
 "Failed to edit the shortcode because the contents of the page changed. Try "
 "again to edit the shortcode."
 msgstr ""
 
-#: lib/wfu_constants.php:131
+#: lib/wfu_constants.php:132
 msgid ""
 "Failed to delete the shortcode because the contents of the page changed. Try "
 "again to delete it."
 msgstr ""
 
-#: lib/wfu_constants.php:132
+#: lib/wfu_constants.php:133
 msgid ""
 "The page containing the shortcode has been modified and it is no longer "
 "valid. Please go back to reload the shortcode."
 msgstr ""
 
-#: lib/wfu_constants.php:133
+#: lib/wfu_constants.php:134
 msgid ""
 "Failed to update the shortcode because the contents of the page changed. Go "
 "back to reload the shortcode."
 msgstr ""
 
-#: lib/wfu_constants.php:134
+#: lib/wfu_constants.php:135
 msgid ""
 "Failed to update the shortcode. Please try again. If the problem persists, "
 "go back and reload the shortcode."
 msgstr ""
 
-#: lib/wfu_constants.php:137
+#: lib/wfu_constants.php:138
 msgid ""
 "Insert variable %userid% inside text. It will be replaced by the id of the "
 "current user."
 msgstr ""
 
-#: lib/wfu_constants.php:138
+#: lib/wfu_constants.php:139
 msgid ""
 "Insert variable %username% inside text. It will be replaced by the username "
 "of the current user."
@@ -451,7 +455,7 @@ msgstr ""
 "Insérez la variable %username% dans le texte. Il sera remplacé par le "
 "username de l'utilisateur courant."
 
-#: lib/wfu_constants.php:139
+#: lib/wfu_constants.php:140
 msgid ""
 "Insert variable %useremail% inside text. It will be replaced by the email of "
 "the current user."
@@ -459,7 +463,7 @@ msgstr ""
 "Insérez la variable %useremail% dans le texte. Il sera remplacé par l'email "
 "de l'utilisateur courant."
 
-#: lib/wfu_constants.php:140
+#: lib/wfu_constants.php:141
 msgid ""
 "Insert variable %filename% inside text. It will be replaced by the filename "
 "of the uploaded file."
@@ -467,7 +471,7 @@ msgstr ""
 "Insérez la variable %filename% dans le texte. Il sera remplacé par le nom du "
 "fichier à envoyer."
 
-#: lib/wfu_constants.php:141
+#: lib/wfu_constants.php:142
 msgid ""
 "Insert variable %filepath% inside text. It will be replaced by the full "
 "filepath of the uploaded file."
@@ -475,7 +479,7 @@ msgstr ""
 "Insérez la variable %filepath% dans le texte. Il sera remplacé par le chemin "
 "complet du fichier envoyé."
 
-#: lib/wfu_constants.php:142
+#: lib/wfu_constants.php:143
 msgid ""
 "Insert variable %blogid% inside text. It will be replaced by the blog id of "
 "the website."
@@ -483,19 +487,19 @@ msgstr ""
 "Insérez la variable %blogid% dans le texte. Il sera remplacé par l'id du "
 "blog du site web."
 
-#: lib/wfu_constants.php:143
+#: lib/wfu_constants.php:144
 msgid ""
 "Insert variable %pageid% inside text. It will be replaced by the id of the "
 "current page."
 msgstr ""
 
-#: lib/wfu_constants.php:144
+#: lib/wfu_constants.php:145
 msgid ""
 "Insert variable %pagetitle% inside text. It will be replaced by the title of "
 "the current page."
 msgstr ""
 
-#: lib/wfu_constants.php:145
+#: lib/wfu_constants.php:146
 msgid ""
 "Insert variable %userdataXXX% inside text. Select the user field from the "
 "drop-down list. It will be replaced by the value that the user entered in "
@@ -505,74 +509,74 @@ msgstr ""
 "l'utilisateur dans la liste déroulante. Il sera remplacé par la valeur que "
 "l'utilisateur aura entré dans ce champs."
 
-#: lib/wfu_constants.php:146
+#: lib/wfu_constants.php:147
 msgid "Insert variable %n% inside text to denote a line change."
 msgstr ""
 "Insérez la variable %n% à l'intérieur du texte pour indiquer un changement "
 "de ligne."
 
-#: lib/wfu_constants.php:149
+#: lib/wfu_constants.php:150
 msgid "Upload in progress"
 msgstr "Envoi en cours"
 
-#: lib/wfu_constants.php:150
+#: lib/wfu_constants.php:151
 msgid "Upload in progress with warnings!"
 msgstr "Envoi en cours mais avec des avertissements!"
 
-#: lib/wfu_constants.php:151
+#: lib/wfu_constants.php:152
 msgid "Upload in progress but some files already failed!"
 msgstr "Envoi en cours mais certains fichiers ont échoués!"
 
-#: lib/wfu_constants.php:152
+#: lib/wfu_constants.php:153
 msgid "Upload in progress but no files uploaded so far!"
 msgstr "Envoi en cours mais aucun fichiers n'a été envoyé pour le moment!"
 
-#: lib/wfu_constants.php:153
+#: lib/wfu_constants.php:154
 msgid "All files uploaded successfully"
 msgstr "Tous les fichiers ont été envoyés avec succès"
 
-#: lib/wfu_constants.php:154
+#: lib/wfu_constants.php:155
 msgid "All files uploaded successfully but there are warnings!"
 msgstr ""
 "Tous les fichiers ont été envoyer avec succès mais avec des avertissements!"
 
-#: lib/wfu_constants.php:155
+#: lib/wfu_constants.php:156
 msgid "File uploaded successfully but there are warnings!"
 msgstr "Fichiers envoyés avec succès mais certain avec un avertissement."
 
-#: lib/wfu_constants.php:156
+#: lib/wfu_constants.php:157
 msgid "Some files failed to upload!"
 msgstr "Certains fichiers n'ont pas été envoyé"
 
-#: lib/wfu_constants.php:157
+#: lib/wfu_constants.php:158
 msgid "All files failed to upload"
 msgstr "Impossible d'envoyer les fichiers"
 
-#: lib/wfu_constants.php:158
+#: lib/wfu_constants.php:159
 msgid "File failed to upload"
 msgstr "Impossible d'envoyer le fichier"
 
-#: lib/wfu_constants.php:159
+#: lib/wfu_constants.php:160
 msgid "There are no files to upload!"
 msgstr "Il n'y a pas de fichiers à envoyer"
 
-#: lib/wfu_constants.php:160
+#: lib/wfu_constants.php:161
 msgid "Test upload message"
 msgstr "Message de test d'upload"
 
-#: lib/wfu_constants.php:161
+#: lib/wfu_constants.php:162
 msgid "JSON parse warning!"
 msgstr "Avertisements d'analyse JSON."
 
-#: lib/wfu_constants.php:162
+#: lib/wfu_constants.php:163
 msgid "please wait while redirecting..."
 msgstr "merci de patienter pendans la redirection..."
 
-#: lib/wfu_constants.php:163
+#: lib/wfu_constants.php:164
 msgid "Open visual shortcode editor in new window"
 msgstr ""
 
-#: lib/wfu_constants.php:164
+#: lib/wfu_constants.php:165
 msgid "loading visual editor"
 msgstr ""
 
