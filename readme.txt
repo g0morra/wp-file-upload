@@ -117,8 +117,11 @@ In the free version the upload will fail. However in the Pro version the upload 
 
 == Changelog ==
 
+= 2.7.2 =
+* important bug fix in Pro version, very slight changes in free version
+
 = 2.7.1 =
-* fixed bug with faulty plugin instances appearring when Woocommerce plugin is also installed
+* fixed bug with faulty plugin instances appearing when Woocommerce plugin is also installed
 * Upload of javascript (.js) files is not allowed for avoiding security issues
 * fixed bug with medialink and postlink attributes that were not working correctly
 * when medialink or postlink is activated, the files will be uploaded to the upload folder of WP website
@@ -397,6 +400,9 @@ Initial version.
 
 == Upgrade Notice ==
 
+= 2.7.2 =
+Upgrade to address some bugs.
+
 = 2.7.1 =
 Upgrade to add some new features and address some bugs.
 
@@ -577,7 +583,7 @@ A detailed list of attributes, together with instructions is shown below:
 * **ftpinfo:** This attribute defines the ftp access information. It has the syntax *username:password@domain*. If username, password or domain contains the characters (:) or (@), then replace them with (\\:) and (\\@) in order to avoid misreading of the attribute.
 * **useftpdomain:** This attribute is used when the ftp domain used to upload files is in different domain than Wordpress installation. If it is set to "true" (and also uploadmethod is "ftp"), then the domain that will be used to upload files will be the one defined in ftpinfo attribute. Default value is "false".
 * **ftppassivemode:** If this attribute is set to "true", FTP passive mode will be used instead of active mode. It is used if files fail to upload when using FTP method. Default value is "false".
-* **ftpfilepermissions:** Force the uploaded files to have specific permissions. This is a 4-digit octal number, e.g. 0777. If left empty, then the ftp server will define the permissions.. Default value is "".
+* **ftpfilepermissions:** Force the uploaded files to have specific permissions. This is a 4-digit octal number, e.g. 0777. If left empty, then the ftp server will define the permissions. Default value is "".
 * **showtargetfolder:** This attribute defines if a message with the upload directory will be shown. Default value is "false".
 * **askforsubfolders:** This attribute defines if the user can select a subfolder to upload the file. Default value is "false". If set to "true", then the user is able to select a subfolder of the path, defined by the attribute *uploadpath*, to upload a file through a drop down list. This attributed is used together with attribute *subfoldertree*, which defines the subfolders.
 * **subfoldertree:** This attribute defines the structure of the subfolders that the user can select to upload a file. Default value is "". The format of this attribute is as follows: the subfolders are separated by commas (,), e.g. "subfolder1, subfolder2". It is possible to use nested subfolders (a folder inside another folder). To do this place stars (\*) before the name of the subfolder. The number of stars determines nesting level, e.g. "subfolder1, \*nested1, \*nested2, \*\*nested3". Please note that the first subfolder must be the name of the folder defined by attribute *uploadpath* (only the last part) without any stars, while all the next subfolders must have at least one star. The user has also the capability to use a different name (from the actual subfolder name) to be shown in the drop down list for every subfolder, by separating the actual and shown name using the slash (/) symbol, e.g. "subfolder1, \*subfolder2/shownname2, \*subfolder3/shownname3". For defining a default value that will be preselected use the (&) symbol before the item name (but after the stars, e.g. \*\*&nested3.

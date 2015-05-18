@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Wordpress File Upload\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-09 22:52+0200\n"
-"PO-Revision-Date: 2015-05-09 22:52+0200\n"
+"PO-Revision-Date: 2015-05-11 21:36+0200\n"
 "Last-Translator: nickboss <nickboss@iptanus.com>\n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -373,7 +373,7 @@ msgstr "Mauvais répertoir d'envoi: %filepath%"
 
 #: lib/wfu_constants.php:117
 msgid " (required)"
-msgstr ""
+msgstr " (requis)"
 
 #: lib/wfu_constants.php:118
 msgid "Files are being uploaded. Are you sure you want to exit the page?"
