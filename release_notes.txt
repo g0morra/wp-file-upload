@@ -1,3 +1,3 @@
-<span><strong>Latest release notes: </strong>An important bug fixed that prevented the plugin to operate correctly with the new captcha. Hopefully now everything works fine.</span>
+<span><strong>Latest release notes: </strong>A<!--  --> new filter was added, <strong>wfu_before_email_notification</strong> in order to allow modifications to the email contents before it is sent, or perform validity checks. This was a request of several users that wanted more flexibility, especially when including in the email body the list of uploaded files.</span>
 <!--
 -->

@@ -1088,43 +1088,67 @@ function wfu_add_div() {
 //********************* Email Functions ****************************************************************************************************
 
 function wfu_send_notification_email($user, $only_filename_list, $target_path_list, $attachment_list, $userdata_fields, $params) {
-	if ( 0 == $user->ID ) {
-		$user_login = "guest";
-		$user_email = "";
+	//apply wfu_before_email_notification filter
+	$changable_data['recipients'] = $params["notifyrecipients"];
+	$changable_data['subject'] = $params["notifysubject"];
+	$changable_data['message'] = $params["notifymessage"];
+	$changable_data['headers'] = $params["notifyheaders"];
+	$changable_data['user_data'] = $userdata_fields;
+	$changable_data['filename'] = $only_filename_list;
+	$changable_data['filepath'] = $target_path_list;
+	$changable_data['error_message'] = '';
+	$additional_data['shortcode_id'] = $params["uploadid"];
+	$ret_data = apply_filters('wfu_before_email_notification', $changable_data, $additional_data);
+	
+	if ( $ret_data['error_message'] == '' ) {
+		$notifyrecipients = $ret_data['recipients'];
+		$notifysubject = $ret_data['subject'];
+		$notifymessage = $ret_data['message'];
+		$notifyheaders = $ret_data['headers'];
+		$userdata_fields = $ret_data['user_data'];
+		$only_filename_list = $ret_data['filename'];
+		$target_path_list = $ret_data['filepath'];
+
+		if ( 0 == $user->ID ) {
+			$user_login = "guest";
+			$user_email = "";
+		}
+		else {
+			$user_login = $user->user_login;
+			$user_email = $user->user_email;
+		}
+		$search = array ('/%useremail%/', '/%n%/', '/%dq%/', '/%brl%/', '/%brr%/');	 
+		$replace = array ($user_email, "\n", "\"", "[", "]");
+		foreach ( $userdata_fields as $userdata_key => $userdata_field ) { 
+			$ind = 1 + $userdata_key;
+			array_push($search, '/%userdata'.$ind.'%/');  
+			array_push($replace, $userdata_field["value"]);
+		}   
+//		$notifyrecipients =  trim(preg_replace('/%useremail%/', $user_email, $params["notifyrecipients"]));
+		$notifyrecipients =  preg_replace($search, $replace, $notifyrecipients);
+		$search = array ('/%n%/', '/%dq%/', '/%brl%/', '/%brr%/');	 
+		$replace = array ("\n", "\"", "[", "]");
+		$notifyheaders =  preg_replace($search, $replace, $notifyheaders);
+		$search = array ('/%username%/', '/%useremail%/', '/%filename%/', '/%filepath%/', '/%n%/', '/%dq%/', '/%brl%/', '/%brr%/');	 
+		$replace = array ($user_login, ( $user_email == "" ? "no email" : $user_email ), $only_filename_list, $target_path_list, "\n", "\"", "[", "]");
+		foreach ( $userdata_fields as $userdata_key => $userdata_field ) { 
+			$ind = 1 + $userdata_key;
+			array_push($search, '/%userdata'.$ind.'%/');  
+			array_push($replace, $userdata_field["value"]);
+		}   
+		$notifysubject = preg_replace($search, $replace, $notifysubject);
+		$notifymessage = preg_replace($search, $replace, $notifymessage);
+
+		if ( $params["attachfile"] == "true" ) {
+			$attachments = explode(",", $attachment_list);
+			$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $notifyheaders, $attachments); 
+		}
+		else {
+			$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $notifyheaders); 
+		}
+		return ( $notify_sent ? "" : WFU_WARNING_NOTIFY_NOTSENT_UNKNOWNERROR );
 	}
-	else {
-		$user_login = $user->user_login;
-		$user_email = $user->user_email;
-	}
-	$search = array ('/%useremail%/');	 
-	$replace = array ($user_email);
-	foreach ( $userdata_fields as $userdata_key => $userdata_field ) { 
-		$ind = 1 + $userdata_key;
-		array_push($search, '/%userdata'.$ind.'%/');  
-		array_push($replace, $userdata_field["value"]);
-	}   
-//	$notifyrecipients =  trim(preg_replace('/%useremail%/', $user_email, $params["notifyrecipients"]));
-	$notifyrecipients =  preg_replace($search, $replace, $params["notifyrecipients"]);
-	$search = array ('/%n%/');	 
-	$replace = array ("\n");
-	$notifyheaders =  preg_replace($search, $replace, $params["notifyheaders"]);
-	$search = array ('/%username%/', '/%useremail%/', '/%filename%/', '/%filepath%/', '/%n%/');	 
-	$replace = array ($user_login, ( $user_email == "" ? "no email" : $user_email ), $only_filename_list, $target_path_list, "\n");
-	foreach ( $userdata_fields as $userdata_key => $userdata_field ) { 
-		$ind = 1 + $userdata_key;
-		array_push($search, '/%userdata'.$ind.'%/');  
-		array_push($replace, $userdata_field["value"]);
-	}   
-	$notifysubject = preg_replace($search, $replace, $params["notifysubject"]);
-	$notifymessage = preg_replace($search, $replace, $params["notifymessage"]);
-	if ( $params["attachfile"] == "true" ) {
-		$attachments = explode(",", $attachment_list);
-		$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $notifyheaders, $attachments); 
-	}
-	else {
-		$notify_sent = wp_mail($notifyrecipients, $notifysubject, $notifymessage, $notifyheaders); 
-	}
-	return ( $notify_sent ? "" : WFU_WARNING_NOTIFY_NOTSENT_UNKNOWNERROR );
+	else return $ret_data['error_message'];
 }
 
 //********************* Media Functions ****************************************************************************************************

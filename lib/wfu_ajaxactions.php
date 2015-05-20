@@ -116,9 +116,9 @@ function wfu_ajax_action_save_shortcode() {
 	
 	if ( $_POST['post_id'] == "" ) {
 		$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
-
 		$new_plugin_options['version'] = '1.0';
-		$new_plugin_options['shortcode'] = wfu_plugin_decode_string($_POST['shortcode']);
+		$new_plugin_options['shortcode'] = $plugin_options['shortcode'];
+		$new_plugin_options['hashfiles'] = $plugin_options['hashfiles'];
 		$new_plugin_options['basedir'] = $plugin_options['basedir'];
 		$encoded_options = wfu_encode_plugin_options($new_plugin_options);
 		update_option( "wordpress_file_upload_options", $encoded_options );

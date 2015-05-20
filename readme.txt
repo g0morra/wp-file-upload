@@ -3,7 +3,7 @@ Contributors: nickboss
 Donate link: http://www.iptanus.com/support/wordpress-file-upload
 Tags: upload, upload file, upload files, multiple, multiple upload, multiple uploads, captcha, progress bar, form, ajax, directory, HTML5, filelist, gallery, image gallery, browser, file browser, gallery, image gallery, shortcode, logging, file logging
 Requires at least: 2.9.2
-Tested up to: 4.2.1
+Tested up to: 4.2.2
 Stable tag: "trunk"
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -116,6 +116,11 @@ In the free version the upload will fail. However in the Pro version the upload 
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 2.7.3 =
+* important bug fix in Pro version
+* added wfu_before_email_notification filter
+* corrected bug not showing correctly special characters (double quotes and braces) in email notifications
 
 = 2.7.2 =
 * important bug fix in Pro version, very slight changes in free version
@@ -399,6 +404,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.7.3 =
+Upgrade to add some new features and address some bugs.
 
 = 2.7.2 =
 Upgrade to address some bugs.
@@ -744,8 +752,9 @@ add_filter('wfu_before_file_check', 'wfu_before_file_check_handler', 10, 2);
 //  $changable_data is an array that can be modified by the filter and contains the items:
 //    file_path: the full path of the uploaded file
 //    user_data: an array of user data values, if userdata are activated
-//    error_message: if this is non-zero, then upload of the file will be cancelled showing this error message to the user
+//    error_message: initially it is set to an empty value, if the handler sets a non-empty value then upload of the file will be cancelled showing this error message (message will be shown only to administrators if adminmessages attribute has been activated)
 //  $additional_data is an array with additional data to be used by the filter (but cannot be modified) as follows:
+//    shortcode_id: this is the id of the plugin, as set using uploadid attribute; it can be used to apply this filter only to a specific instance of the plugin (if it is used in more than one pages or posts)
 //    file_unique_id: this id is unique for each individual file upload and can be used to identify each separate upload
 //    file_size: the size of the uploaded file
 //    user_id: the id of the user that submitted the file for upload
@@ -775,6 +784,32 @@ add_filter('wfu_before_file_upload', 'wfu_before_file_upload_handler', 10, 2);
 function wfu_before_file_upload_handler($file_path, $file_unique_id) {
 	// Add code here...
 	return $file_path;
+}
+`
+
+**wfu_before_email_notification**
+
+It is executed before email notification is sent, in order to allow advanced checks or modifications to the email. You can use it as follows:
+
+`
+add_filter('wfu_before_email_notification', 'wfu_before_email_notification_handler', 10, 2);
+
+//The following function takes two parameters, $changable_data and $additional_data.
+//  $changable_data is an array that can be modified by the filter and contains the items:
+//    recipients: the list of recipients (before dynamic variables are applied)
+//    subject: the email subject (before dynamic variables are applied)
+//    message: the email body (before dynamic variables are applied)
+//    headers: the email headers, if exist (before dynamic variables are applied)
+//    user_data: an array of user data values, if userdata are activated
+//    filename: a comma separated list of uploaded file names (only the file names)
+//    filepath: a comma separated list of uploaded file paths (absolute full file paths)
+//    error_message: initially it is set to an empty value, if the handler sets a non-empty value then email sending will be cancelled showing this error message (message will be shown only to administrators if adminmessages attribute has been activated)
+//  $additional_data is an array with additional data to be used by the filter (but cannot be modified) as follows:
+//    shortcode_id: this is the id of the plugin, as set using uploadid attribute; it can be used to apply this filter only to a specific instance of the plugin (if it is used in more than one pages or posts)
+//The function must return the final $changable_data.
+function wfu_before_email_notification_handler($changable_data, $additional_data) {
+	// Add code here...
+	return $changable_data;
 }
 `
 

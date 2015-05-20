@@ -162,6 +162,7 @@ function wfu_process_files($params, $method) {
 				$changable_data['file_path'] = $target_path;
 				$changable_data['user_data'] = $userdata_fields;
 				$changable_data['error_message'] = $filter_error_message;
+				$additional_data['shortcode_id'] = $sid;
 				$additional_data['file_unique_id'] = $file_unique_id;
 				// correct file size in case of checking of file
 				if ( $only_check ) $additional_data['file_size'] = $fileprops['size'];

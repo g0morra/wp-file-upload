@@ -478,24 +478,6 @@ function wfu_manage_settings($message = '') {
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.$plugin_options['basedir'].'</strong></p>';
 	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'</tr>';
-	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
-	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<label for="wfu_captcha_sitekey">Google ReCaptcha Site Key</label>';
-	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<input name="wfu_captcha_sitekey" id="wfu_captcha_sitekey" type="text" value="'.$plugin_options['captcha_sitekey'].'" />';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.$plugin_options['captcha_sitekey'].'</strong></p>';
-	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
-	$echo_str .= "\n\t\t\t\t\t".'</tr>';
-	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
-	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<label for="wfu_captcha_secretkey">Google ReCaptcha Secret Key</label>';
-	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<input name="wfu_captcha_secretkey" id="wfu_captcha_secretkey" type="text" value="'.$plugin_options['captcha_secretkey'].'" />';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.$plugin_options['captcha_secretkey'].'</strong></p>';
-	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
-	$echo_str .= "\n\t\t\t\t\t".'</tr>';
 	$echo_str .= "\n\t\t\t\t".'</tbody>';
 	$echo_str .= "\n\t\t\t".'</table>';
 	$echo_str .= "\n\t\t\t".'<p class="submit">';
@@ -522,8 +504,6 @@ function wfu_update_settings() {
 			$new_plugin_options['shortcode'] = $plugin_options['shortcode'];
 			$new_plugin_options['hashfiles'] = $hashfiles;
 			$new_plugin_options['basedir'] = $_POST['wfu_basedir'];
-			$new_plugin_options['captcha_sitekey'] = $_POST['wfu_captcha_sitekey'];
-			$new_plugin_options['captcha_secretkey'] = $_POST['wfu_captcha_secretkey'];
 			$encoded_options = wfu_encode_plugin_options($new_plugin_options);
 			update_option( "wordpress_file_upload_options", $encoded_options );
 			if ( $new_plugin_options['hashfiles'] == '1' && $plugin_options['hashfiles'] != '1' )
