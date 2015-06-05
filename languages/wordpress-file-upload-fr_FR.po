@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wordpress File Upload\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-05-09 22:52+0200\n"
-"PO-Revision-Date: 2015-05-11 21:36+0200\n"
+"POT-Creation-Date: 2015-06-05 18:03+0200\n"
+"PO-Revision-Date: 2015-06-05 18:03+0200\n"
 "Last-Translator: nickboss <nickboss@iptanus.com>\n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -14,6 +14,7 @@ msgstr ""
 "X-Poedit-Basepath: ../\n"
 "X-Generator: Poedit 1.7.5\n"
 "X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: vendor\n"
 
 #: lib/wfu_constants.php:7
 msgid "Upload files"
@@ -21,7 +22,7 @@ msgstr "Envoyer des fichiers"
 
 #: lib/wfu_constants.php:8
 msgid "Select File"
-msgstr "Sélectionner un fichier"
+msgstr "Sélectionnez un fichier"
 
 #: lib/wfu_constants.php:9
 msgid "Upload File"
@@ -40,15 +41,15 @@ msgstr ""
 "vous prevenir qu'un nouveau fichier a été uploadé. %n%%n%Cordialement"
 
 #: lib/wfu_constants.php:34
-#, fuzzy, php-format
+#, php-format
 msgid "File %filename% uploaded successfully"
-msgstr "Le fichier %filename% a été correctement envoyé"
+msgstr "Le fichier %filename% a été envoyé avec succès"
 
 #: lib/wfu_constants.php:35
-#, fuzzy, php-format
+#, php-format
 msgid "File %filename% uploaded successfully but with warnings"
 msgstr ""
-"Le fichier %filename% a été envoyé avec succès mais avec des avertissements"
+"Le fichier %filename% a été envoyé avec succès, mais avec des avertissements"
 
 #: lib/wfu_constants.php:36
 msgid "File %filename% not uploaded"
@@ -145,6 +146,8 @@ msgstr "La taille du fichier est supérieure à la taille limite."
 #: lib/wfu_constants.php:72
 msgid "The uploaded file exceeds 2GB and is not supported by this server."
 msgstr ""
+"Le fichier téléchargé excède 2 Go et ne sont pas pris en charge par ce "
+"serveur."
 
 #: lib/wfu_constants.php:73
 msgid ""
@@ -294,12 +297,16 @@ msgid ""
 "There are more than one instances of the plugin in this page with the same "
 "id. Please change it."
 msgstr ""
+"Il ya plus d'un cas de le plugin dans cette page avec le même id. S'il vous "
+"plaît changer."
 
 #: lib/wfu_constants.php:99
 msgid ""
 "Cannot edit the shortcode because the page has been modified. Please reload "
 "the page."
 msgstr ""
+"Impossible de modifier le shortcode car la page a été modifiée. Veuillez "
+"recharger la page."
 
 #: lib/wfu_constants.php:102
 msgid "Upload skipped! File already exists."
@@ -357,11 +364,11 @@ msgstr "Mode de test"
 
 #: lib/wfu_constants.php:113
 msgid "select dir..."
-msgstr ""
+msgstr "sélectionnez dir"
 
 #: lib/wfu_constants.php:114
 msgid "type dir"
-msgstr ""
+msgstr "tapez dir"
 
 #: lib/wfu_constants.php:115
 msgid "Upload path: %filepath%"
@@ -377,7 +384,7 @@ msgstr " (requis)"
 
 #: lib/wfu_constants.php:118
 msgid "Files are being uploaded. Are you sure you want to exit the page?"
-msgstr ""
+msgstr "Les fichiers sont envoyés. Êtes-vous sûr de vouloir quitter la page?"
 
 #: lib/wfu_constants.php:121
 msgid "This is a test message"
@@ -416,36 +423,48 @@ msgid ""
 "Failed to edit the shortcode because the contents of the page changed. Try "
 "again to edit the shortcode."
 msgstr ""
+"Impossible de modifier le shortcode parce que le contenu de la page changé. "
+"Essayez à nouveau de modifier le shortcode."
 
 #: lib/wfu_constants.php:132
 msgid ""
 "Failed to delete the shortcode because the contents of the page changed. Try "
 "again to delete it."
 msgstr ""
+"Impossible de supprimer le shortcode parce que le contenu de la page changé. "
+"Essayez à nouveau de le supprimer."
 
 #: lib/wfu_constants.php:133
 msgid ""
 "The page containing the shortcode has been modified and it is no longer "
 "valid. Please go back to reload the shortcode."
 msgstr ""
+"La page contenant le shortcode a été modifié et il est plus valide. S'il "
+"vous plaît revenir à recharger le shortcode."
 
 #: lib/wfu_constants.php:134
 msgid ""
 "Failed to update the shortcode because the contents of the page changed. Go "
 "back to reload the shortcode."
 msgstr ""
+"Impossible de mettre à jour le shortcode parce que le contenu de la page "
+"changé. Retour à recharger le shortcode."
 
 #: lib/wfu_constants.php:135
 msgid ""
 "Failed to update the shortcode. Please try again. If the problem persists, "
 "go back and reload the shortcode."
 msgstr ""
+"Impossible de mettre à jour le shortcode. S'il vous plaît essayer à nouveau. "
+"Si le problème persiste, revenir en arrière et recharger le shortcode."
 
 #: lib/wfu_constants.php:138
 msgid ""
 "Insert variable %userid% inside text. It will be replaced by the id of the "
 "current user."
 msgstr ""
+"Insérez %userid% variable dans le texte. Il sera remplacé par l'id de "
+"l'utilisateur courant."
 
 #: lib/wfu_constants.php:139
 msgid ""
@@ -492,12 +511,16 @@ msgid ""
 "Insert variable %pageid% inside text. It will be replaced by the id of the "
 "current page."
 msgstr ""
+"Insérez %pageid% variable dans le texte. Il sera remplacé par l'id de la "
+"page en cours."
 
 #: lib/wfu_constants.php:145
 msgid ""
 "Insert variable %pagetitle% inside text. It will be replaced by the title of "
 "the current page."
 msgstr ""
+"Insérez %pagetitle% variable dans le texte. Il sera remplacé par le titre de "
+"la page courante."
 
 #: lib/wfu_constants.php:146
 msgid ""
@@ -574,11 +597,14 @@ msgstr "merci de patienter pendans la redirection..."
 
 #: lib/wfu_constants.php:164
 msgid "Open visual shortcode editor in new window"
-msgstr ""
+msgstr "Ouvrez l'éditeur de shortcode visuelle dans une nouvelle fenêtre"
 
 #: lib/wfu_constants.php:165
 msgid "loading visual editor"
-msgstr ""
+msgstr "chargement éditeur visuel"
+
+#~ msgid "Select File/Select Files"
+#~ msgstr "Sélectionner un fichier/Sélectionner des fichiers"
 
 #~ msgid "Upload File/Upload Files"
 #~ msgstr "Envoyer le fichier/Envoyer les fichiers"
@@ -586,11 +612,33 @@ msgstr ""
 #~ msgid "Please fill in the above words: "
 #~ msgstr "Merci de remplir dans les mots ci-dessus:"
 
+#~ msgid ""
+#~ "ERROR: Captcha not supported! You have an old PHP version. Upgrade your "
+#~ "PHP or use RecaptchaV2 (no account)."
+#~ msgstr ""
+#~ "Erreur: Captcha pas pris en charge! Vous avez une ancienne version de "
+#~ "PHP. Améliorez votre PHP ou utiliser RecaptchaV2 (no account)."
+
+#~ msgid "ERROR: No site key. Please contact administrator!"
+#~ msgstr ""
+#~ "Erreur: Aucune clé du site. S'il vous plaît contacter l'administrateur!"
+
+#~ msgid ""
+#~ "ERROR: No site key defined! Please go to the plugin settings in Dashboard "
+#~ "to define Google Recaptcha keys."
+#~ msgstr ""
+#~ "ERREUR : Aucun site clé définie ! S'il vous plaît aller à la "
+#~ "configuration du plugin dans le Tableau de bord pour définir des clés de "
+#~ "Google Recaptcha."
+
 #~ msgid "Bad captcha image!"
 #~ msgstr "Mauvaise image de captcha!"
 
 #~ msgid "No input!"
 #~ msgstr "Aucune entrée!"
+
+#~ msgid "Captcha not completed!"
+#~ msgstr "Captcha pas terminée!"
 
 #~ msgid "Wrong captcha!"
 #~ msgstr "Mauvaise captcha!"
@@ -603,6 +651,18 @@ msgstr ""
 
 #~ msgid "Captcha not supported by your browser!"
 #~ msgstr "Captcha n'a pas supporté par votre navigateur!"
+
+#~ msgid "the secret parameter is missing"
+#~ msgstr "le paramètre secret est manquant"
+
+#~ msgid "the secret parameter is invalid or malformed"
+#~ msgstr "le paramètre secret est invalide ou malformé"
+
+#~ msgid "the response parameter is missing"
+#~ msgstr "le paramètre de réponse est manquant"
+
+#~ msgid "the response parameter is invalid or malformed"
+#~ msgstr "le paramètre de réponse est invalide ou malformé"
 
 #~ msgid "Please do not use drag drop due to an internal problem."
 #~ msgstr "Ne pas utiliser un glisser-déposer à cause d'un problème interne."
@@ -618,6 +678,10 @@ msgstr ""
 #~ msgstr ""
 #~ "Envoi de ficher en blocs interrompu suite à une erreur dans bloc "
 #~ "précédent!"
+
+#~ msgid "Chunked upload failed, final file could not be created!"
+#~ msgstr ""
+#~ "Envoi de ficher en blocs échoué, fichier final ne pouvait être créé!"
 
 #~ msgid "Could not write file chuck to destination on chunk %d"
 #~ msgstr "Impossible d'écrire le bloc de fichier a destination sur bloc %d"
@@ -636,6 +700,9 @@ msgstr ""
 
 #~ msgid "correct captcha"
 #~ msgstr "exact captcha"
+
+#~ msgid "click to continue the upload"
+#~ msgstr "cliquer pour continuer l'envoi"
 
 #~ msgid "Clear file list?"
 #~ msgstr "Effacer la liste des fichiers?"

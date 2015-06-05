@@ -16,7 +16,7 @@ function wfu_process_files($params, $method) {
 		$user_email = $user->user_email;
 		$is_admin = current_user_can('manage_options');
 	}
-	$uniqueuploadid = ( isset($_POST['uniqueuploadid_'.$sid]) ? $_POST['uniqueuploadid_'.$sid] : "" );
+	$unique_id = sanitize_text_field($_POST['uniqueuploadid_'.$sid]);
 	// determine if this routine is only for checking the file
 	$only_check = ( isset($_POST['only_check']) ? ( $_POST['only_check'] == "1" ) : false );
 
@@ -30,14 +30,13 @@ function wfu_process_files($params, $method) {
 	$notify_attachment_list = "";
 	$uploadedfile = 'uploadedfile_'.$sid;
 	$hiddeninput = 'hiddeninput_'.$sid;
-	$unique_id = ( isset($_POST['unique_id']) ? $_POST['unique_id'] : "" );
 	$allowed_patterns = explode(",",$params["uploadpatterns"]);
 	foreach ($allowed_patterns as $key => $allowed_pattern) {
 		$allowed_patterns[$key] = trim($allowed_pattern);
 	}
 	$userdata_fields = $params["userdata_fields"]; 
 	foreach ( $userdata_fields as $userdata_key => $userdata_field ) 
-		$userdata_fields[$userdata_key]["value"] = ( isset($_POST[$hiddeninput.'_userdata_'.$userdata_key]) ? $_POST[$hiddeninput.'_userdata_'.$userdata_key] : "" );
+		$userdata_fields[$userdata_key]["value"] = ( isset($_POST[$hiddeninput.'_userdata_'.$userdata_key]) ? sanitize_text_field($_POST[$hiddeninput.'_userdata_'.$userdata_key]) : "" );
 	$params_output_array["version"] = "full";
 	$params_output_array["general"]['shortcode_id'] = $sid;
 	$params_output_array["general"]['unique_id'] = $unique_id;
@@ -70,6 +69,8 @@ function wfu_process_files($params, $method) {
 		file_count: the number of files processed
 		filedata: message type, header, message and admin message of each file, encoded and separated by comma (,) */
 	$params_output_array["general"]['safe_output'] = "";
+	/* js_script is javascript code that is executed after each file upload and is defined in wfu_after_file_upload action */
+	$params_output_array["general"]['js_script'] = "";
 
 	/* adjust $uploadedfile variable (holding file data) if this is a redirection caused because the browser of the user could not handle AJAX upload */
 	if ( isset($_FILES[$uploadedfile.'_redirected']) ) $uploadedfile .= '_redirected';
@@ -146,8 +147,14 @@ function wfu_process_files($params, $method) {
 
 		/* Get uploaded file size in Mbytes */
 		// correct file size in case of checking of file otherwise $upload_file_size will be zero and the routine will fail
-		if ( $only_check ) $upload_file_size = $fileprops['size'];
-		else $upload_file_size = filesize($fileprops['tmp_name']);
+		if ( $only_check ) {
+			$upload_file_size = $fileprops['size'];
+			if ( $upload_file_size == 0 ) $upload_file_size ++;
+		}
+		else {
+			$upload_file_size = filesize($fileprops['tmp_name']);
+			if ( $upload_file_size == 0 && file_exists($fileprops['tmp_name']) && $fileprops['error'] == 0 ) $upload_file_size ++;
+		}
 		$upload_file_size_MB = $upload_file_size / 1024 / 1024;
 		
 		$only_filename = $fileprops['name'];
@@ -171,7 +178,7 @@ function wfu_process_files($params, $method) {
 				$additional_data['page_id'] = $params["pageid"];
 				$ret_data = apply_filters('wfu_before_file_check', $changable_data, $additional_data);
 				$target_path = $ret_data['file_path'];
-				$fileprops['name'] = wfu_basename($target_path);
+				$only_filename = wfu_basename($target_path);
 				$userdata_fields = $ret_data['user_data'];
 				$filter_error_message = $ret_data['error_message'];
 				// if this is a file check, which means that a second pass of the file will follow, then we do not want to
@@ -186,7 +193,7 @@ function wfu_process_files($params, $method) {
 			// file data that may have previously changed because of application of filters
 			if ( $filedata_previously_defined ) {
 				$target_path = $_SESSION[$file_map]['filepath'];
-				$fileprops['name'] = wfu_basename($target_path);
+				$only_filename = wfu_basename($target_path);
 				$userdata_fields = $_SESSION[$file_map]['userdata'];
 			}
 			if ( $filter_error_message != '' ) {
@@ -196,10 +203,17 @@ function wfu_process_files($params, $method) {
 			}
 			else {
 
+				/* generate safe filename by removing invalid characters if forcefilename is deactivated */
+				if ( $params['forcefilename'] != "true" ) {
+					$only_filename = wfu_upload_plugin_clean( $only_filename );
+					//reconstruct target_path
+					$target_path = wfu_basedir($target_path).$only_filename;
+				}
+
 				/* if medialink or postlink is activated then the target path becomes the current wordpress upload folder */
 				if ( $params["medialink"] == "true" || $params["postlink"] == "true" ) {
 					$mediapath = wp_upload_dir();
-					$target_path = $mediapath['path'].'/'.$fileprops['name'];
+					$target_path = $mediapath['path'].'/'.$only_filename;
 				}
 				/* Check if upload path exist */
 				if ( is_dir( wfu_basedir($target_path) ) ) {		
@@ -217,9 +231,9 @@ function wfu_process_files($params, $method) {
 				}
 
 				/* File name control, reject files with .php and .js extension for security reasons */
-				if ( strtolower(substr($fileprops['name'], -4)) != ".php" && strtolower(substr($fileprops['name'], -3)) != ".js" )
+				if ( strtolower(substr($only_filename, -4)) != ".php" && strtolower(substr($only_filename, -3)) != ".js" )
 					foreach ($allowed_patterns as $allowed_pattern) {
-						if ( wfu_upload_plugin_wildcard_match( $allowed_pattern, $fileprops['name']) ) {
+						if ( wfu_upload_plugin_wildcard_match( $allowed_pattern, $only_filename) ) {
 							$allowed_file_ok = true;
 							break ;
 						}
@@ -268,9 +282,6 @@ function wfu_process_files($params, $method) {
 			$file_output['message_type'] = "error";
 			$file_output['message'] = wfu_join_strings("<br />", $file_output['message'], $message_text);
 		}
-		//generate safe filename by removing invalid characters if forcefilename is deactivated
-		if ( $params['forcefilename'] != "true" ) $only_filename = wfu_upload_plugin_clean( $fileprops['name'] );
-		else $only_filename = $fileprops['name'];
 		
 		$message_processed = false;
 //		if ( $upload_path_ok and $allowed_file_ok and $size_file_ok ) {
@@ -401,8 +412,8 @@ function wfu_process_files($params, $method) {
 					/* prepare redirect link if redirection is enabled */
 					if ( $params["redirect"] == "true" ) {
 						/* Define dynamic redirect link from variables */
-						$search = array ('/%filename%/');	 
-						$replace = array ($only_filename);
+						$search = array ('/%filename%/', '/%username%/');	 
+						$replace = array ($only_filename, $user_login);
 						$params_output_array["general"]['redirect_link'] =  trim(preg_replace($search, $replace, $params["redirectlink"]));
 					}
 					
@@ -494,19 +505,43 @@ function wfu_process_files($params, $method) {
 
 		$params_output_array[0] = $file_output;
 
-		/* Apply wfu_after_file_upload action after failed upload, in order to allow the user to perform any post-upload actions.
-		   If additional data are required, such as user_id or userdata values or filepath, they can be retrieved by implementing
-		   the previous filters wfu_before_file_check and wfu_before_file_upload, corresponding them to the unique file id */
 		if ( $file_unique_id != '' && $file_finished_unsuccessfully && !$ignore_server_actions ) {
+			/* Apply wfu_after_file_upload filter after failed upload, in order to allow the user to perform any post-upload actions.
+			   If additional data are required, such as user_id or userdata values or filepath, they can be retrieved by implementing
+			   the previous filters wfu_before_file_check and wfu_before_file_upload, corresponding them to the unique file id.
+			   This actions allows to define custom javascript code to run after each file finishes (either suceeded or failed).
+			   For backward compatibility, the wfu_after_file_upload action that was implemented in previous version of the plugin
+			   still remains. */
+			$changable_data['ret_value'] = null;
+			$changable_data['js_script'] = '';
+			$additional_data['shortcode_id'] = $sid;
+			$additional_data['file_unique_id'] = $file_unique_id;
+			$additional_data['upload_result'] = $file_output['message_type'];
+			$additional_data['error_message'] = $file_output['message'];
+			$additional_data['admin_messages'] = $file_output['admin_messages'];
+			$ret_data = apply_filters('wfu_after_file_upload', $changable_data, $additional_data);
+			$params_output_array["general"]['js_script'] = $ret_data['js_script'];
 			do_action('wfu_after_file_upload', $file_unique_id, $file_output['message_type'], $file_output['message'], $file_output['admin_messages']);
 		}
 
-		/* log file upload action if file has finished uploading successfully */
 		if ( $file_finished_successfully && !$ignore_server_actions ) {
-			wfu_log_action('upload', $target_path, $user->ID, $uniqueuploadid, $params['pageid'], $sid, $userdata_fields);
-			/* Apply wfu_after_file_upload action after successful upload, in order to allow the user to perform any post-upload actions.
+			/* log file upload action if file has finished uploading successfully */
+			wfu_log_action('upload', $target_path, $user->ID, $unique_id, $params['pageid'], $sid, $userdata_fields);
+			/* Apply wfu_after_file_upload filter after failed upload, in order to allow the user to perform any post-upload actions.
 			   If additional data are required, such as user_id or userdata values or filepath, they can be retrieved by implementing
-			   the previous filters wfu_before_file_check and wfu_before_file_upload, corresponding them to the unique file id */
+			   the previous filters wfu_before_file_check and wfu_before_file_upload, corresponding them to the unique file id.
+			   This actions allows to define custom javascript code to run after each file finishes (either suceeded or failed).
+			   For backward compatibility, the wfu_after_file_upload action that was implemented in previous version of the plugin
+			   still remains. */
+			$changable_data['ret_value'] = null;
+			$changable_data['js_script'] = '';
+			$additional_data['shortcode_id'] = $sid;
+			$additional_data['file_unique_id'] = $file_unique_id;
+			$additional_data['upload_result'] = $file_output['message_type'];
+			$additional_data['error_message'] = $file_output['message'];
+			$additional_data['admin_messages'] = $file_output['admin_messages'];
+			$ret_data = apply_filters('wfu_after_file_upload', $changable_data, $additional_data);
+			$params_output_array["general"]['js_script'] = $ret_data['js_script'];
 			do_action('wfu_after_file_upload', $file_unique_id, $file_output['message_type'], $file_output['message'], $file_output['admin_messages']);
 		}
 

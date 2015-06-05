@@ -8,7 +8,8 @@ function wfu_ajax_action_send_email_notification() {
 
 	$arr = wfu_get_params_fields_from_index($_POST['params_index']);
 	//check referer using server sessions to avoid CSRF attacks
-	if ( $_SESSION["wfu_token_".$arr['shortcode_id']] != $_POST['session_token'] ) die();
+	$sid = $arr['shortcode_id'];
+	if ( $_SESSION["wfu_token_".$sid] != $_POST['session_token'] ) die();
 	if ( $user->user_login != $arr['user_login'] ) die();
 
 	$params_str = get_option('wfu_params_'.$arr['unique_id']);
@@ -17,7 +18,7 @@ function wfu_ajax_action_send_email_notification() {
 	/* initialize return array */
 	$params_output_array["version"] = "full";
 	$params_output_array["general"]['shortcode_id'] = $params["uploadid"];
-	$params_output_array["general"]['unique_id'] = ( isset($_POST['unique_id']) ? $_POST['unique_id'] : "" );
+	$params_output_array["general"]['unique_id'] = ( isset($_POST['uniqueuploadid_'.$sid]) ? sanitize_text_field($_POST['uniqueuploadid_'.$sid]) : "" );
 	$params_output_array["general"]['state'] = 0;
 	$params_output_array["general"]['files_count'] = 0;
 	$params_output_array["general"]['update_wpfilebase'] = "";
@@ -58,14 +59,39 @@ function wfu_ajax_action_send_email_notification() {
 	/* construct safe output */
 	$sout = "0;".WFU_DEFAULTMESSAGECOLORS.";0";
 
-	die("wfu_fileupload_success:".$sout.":".wfu_encode_array_to_string($params_output_array)); 
+	die("wfu_fileupload_success::".$sout.":".wfu_encode_array_to_string($params_output_array)); 
 }
 
 function wfu_ajax_action_callback() {
+	if ( !isset($_REQUEST['session_token']) ) die();
+	$session_token = sanitize_text_field( $_REQUEST["session_token"] );
+	if ( $session_token == "" ) die();
+
+/* This section is executed when forceclassic is enabled or when redirection to the classic uploader was performed */
+	if ( isset($_REQUEST['sid']) && isset($_REQUEST['start_time']) ) {
+		//this request came from classic non-HTML5 uploader
+		$sid = sanitize_text_field( $_REQUEST["sid"] );
+		if ( $sid == "" ) die();
+		$start_time = sanitize_text_field( $_REQUEST["start_time"] );
+		
+		$_SESSION['wfu_check_refresh_'.$sid] = 'form button pressed';
+		$_SESSION['wfu_start_time_'.$sid] = $start_time;
+
+		die("wfu_response_success:");
+	}
+	
+/* This section is executed when normal HTML5 upload is performed */
+	if ( !isset($_REQUEST['params_index']) ) die();
+	
+	$params_index = sanitize_text_field( $_REQUEST["params_index"] );
+	
+	if ( $params_index == "" ) die();
+	
 	$user = wp_get_current_user();
-	$arr = wfu_get_params_fields_from_index($_POST['params_index']);
+	$arr = wfu_get_params_fields_from_index($params_index);
+	$sid = $arr['shortcode_id'];
 	//check referrer using server sessions to avoid CSRF attacks
-	if ( $_SESSION["wfu_token_".$arr['shortcode_id']] != $_POST['session_token'] ) {
+	if ( $_SESSION["wfu_token_".$sid] != $session_token ) {
 		echo "Session failed!<br/><br/>Session Data:<br/>";
 		print_r(wfu_sanitize($_SESSION));
 		echo "<br/><br/>Post Data:<br/>";
@@ -83,14 +109,15 @@ function wfu_ajax_action_callback() {
 		die('force_errorabort_code');
 	}
 
-	//get the unique id of the upload
-	$unique_id = ( isset($_POST['unique_id']) ? $_POST['unique_id'] : "" );
-	
-	//the first pass to this callback script is for closing the previous connection_aborted
+	//if force_connection_close is set, then the first pass to this callback script is for closing the previous connection
 	if ( isset($_POST["force_connection_close"]) && $_POST["force_connection_close"] === "1" ) {
 		header("Connection: Close");
 		die("success");
 	}
+	
+	//get the unique id of the upload
+	$unique_id = ( isset($_POST['uniqueuploadid_'.$sid]) ? sanitize_text_field($_POST['uniqueuploadid_'.$sid]) : "" );
+	if ( strlen($unique_id) != 10 ) die('force_errorabort_code');
 	
 	//if upload has finished then perform post upload actions
 	if ( isset($_POST["upload_finished"]) && $_POST["upload_finished"] === "1" ) {
@@ -100,14 +127,26 @@ function wfu_ajax_action_callback() {
 	$params_str = get_option('wfu_params_'.$arr['unique_id']);
 	$params = wfu_decode_array_from_string($params_str);
 
-	$params['subdir_selection_index'] = $_POST['subdir_sel_index'];
+
+	//if this is the first pass of an upload attempt then perform pre-upload actions
+	if ( !isset($_SESSION['wfu_upload_first_pass_'.$unique_id]) || $_SESSION['wfu_upload_first_pass_'.$unique_id] != 'true' ) {
+		$_SESSION['wfu_upload_first_pass_'.$unique_id] = 'true';
+	}
+
+	if ( !isset($_POST["subdir_sel_index"]) ) die();
+	$subdir_sel_index = sanitize_text_field( $_POST["subdir_sel_index"] );
+	$params['subdir_selection_index'] = $subdir_sel_index;
 	$_SESSION['wfu_check_refresh_'.$params["uploadid"]] = 'do not process';
 
 	$wfu_process_file_array = wfu_process_files($params, 'ajax');
 	// extract safe_output from wfu_process_file_array and pass it as separate part of the response text
 	$safe_output = $wfu_process_file_array["general"]['safe_output'];
 	unset($wfu_process_file_array["general"]['safe_output']);
-	die("wfu_fileupload_success:".$safe_output.":".wfu_encode_array_to_string($wfu_process_file_array)); 
+	// get javascript code that has been defined in wfu_after_file_upload action
+	$js_script = wfu_plugin_encode_string($wfu_process_file_array["general"]['js_script']);
+	unset($wfu_process_file_array["general"]['js_script']);
+
+	die("wfu_fileupload_success:".$js_script.":".$safe_output.":".wfu_encode_array_to_string($wfu_process_file_array)); 
 }
 
 function wfu_ajax_action_save_shortcode() {
@@ -120,6 +159,7 @@ function wfu_ajax_action_save_shortcode() {
 		$new_plugin_options['shortcode'] = $plugin_options['shortcode'];
 		$new_plugin_options['hashfiles'] = $plugin_options['hashfiles'];
 		$new_plugin_options['basedir'] = $plugin_options['basedir'];
+		$new_plugin_options['postmethod'] = $plugin_options['postmethod'];
 		$encoded_options = wfu_encode_plugin_options($new_plugin_options);
 		update_option( "wordpress_file_upload_options", $encoded_options );
 

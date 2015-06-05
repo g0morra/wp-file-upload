@@ -240,6 +240,7 @@ function wfu_encode_plugin_options($plugin_options) {
 	$encoded_options .= 'shortcode='.wfu_plugin_encode_string($plugin_options['shortcode']).';';
 	$encoded_options .= 'hashfiles='.$plugin_options['hashfiles'].';';
 	$encoded_options .= 'basedir='.wfu_plugin_encode_string($plugin_options['basedir']).';';
+	$encoded_options .= 'postmethod='.$plugin_options['postmethod'].';';
 	$encoded_options .= 'captcha_sitekey='.wfu_plugin_encode_string($plugin_options['captcha_sitekey']).';';
 	$encoded_options .= 'captcha_secretkey='.wfu_plugin_encode_string($plugin_options['captcha_secretkey']);
 	return $encoded_options;
@@ -1088,6 +1089,8 @@ function wfu_add_div() {
 //********************* Email Functions ****************************************************************************************************
 
 function wfu_send_notification_email($user, $only_filename_list, $target_path_list, $attachment_list, $userdata_fields, $params) {
+	global $blog_id;
+	
 	//apply wfu_before_email_notification filter
 	$changable_data['recipients'] = $params["notifyrecipients"];
 	$changable_data['subject'] = $params["notifysubject"];
@@ -1129,8 +1132,8 @@ function wfu_send_notification_email($user, $only_filename_list, $target_path_li
 		$search = array ('/%n%/', '/%dq%/', '/%brl%/', '/%brr%/');	 
 		$replace = array ("\n", "\"", "[", "]");
 		$notifyheaders =  preg_replace($search, $replace, $notifyheaders);
-		$search = array ('/%username%/', '/%useremail%/', '/%filename%/', '/%filepath%/', '/%n%/', '/%dq%/', '/%brl%/', '/%brr%/');	 
-		$replace = array ($user_login, ( $user_email == "" ? "no email" : $user_email ), $only_filename_list, $target_path_list, "\n", "\"", "[", "]");
+		$search = array ('/%username%/', '/%useremail%/', '/%filename%/', '/%filepath%/', '/%blogid%/', '/%pageid%/', '/%pagetitle%/', '/%n%/', '/%dq%/', '/%brl%/', '/%brr%/');	 
+		$replace = array ($user_login, ( $user_email == "" ? "no email" : $user_email ), $only_filename_list, $target_path_list, $blog_id, $params["pageid"], get_the_title($params["pageid"]), "\n", "\"", "[", "]");
 		foreach ( $userdata_fields as $userdata_key => $userdata_field ) { 
 			$ind = 1 + $userdata_key;
 			array_push($search, '/%userdata'.$ind.'%/');  
@@ -1179,19 +1182,82 @@ function wfu_process_media_insert($file_path, $page_id){
 //********************* POST/GET Requests Functions ****************************************************************************************************
 
 function wfu_post_request($url, $params, $verifypeer = false) {
-	$peer_key = version_compare(PHP_VERSION, '5.6.0', '<') ? 'CN_name' : 'peer_name';
-	$http_array = array(
-		'method'  => 'POST',
-		'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-		'content' => http_build_query($params)
-	);
-	if ( $verifypeer ) {
-		$http_array['verify_peer'] = true;
-		$http_array[$peer_key] = 'www.google.com';
+	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
+	if ( $plugin_options['postmethod'] == 'curl' ) {
+		// POST request using CURL
+		$ch = curl_init($url);
+		$options = array(
+			CURLOPT_POST => true,
+			CURLOPT_POSTFIELDS => http_build_query($params),
+			CURLOPT_HTTPHEADER => array(
+				'Content-Type: application/x-www-form-urlencoded'
+			),
+			CURLINFO_HEADER_OUT => false,
+			CURLOPT_HEADER => false,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_SSL_VERIFYPEER => $verifypeer
+		);
+		curl_setopt_array($ch, $options);
+		$result = curl_exec($ch);
+		curl_close ($ch);
+		return $result;
 	}
-	$context_params = array( 'http' => $http_array );
-	$context = stream_context_create($context_params);
-	return file_get_contents($url, false, $context);
+	elseif ( $plugin_options['postmethod'] == 'socket' ) {
+		// POST request using sockets
+		$scheme = "";
+		$port = 80;
+		$timeout = null;
+		$errno = 0;
+        $errstr = '';
+		$url = parse_url($url);
+		$host = $url['host'];
+		$path = $url['path'];
+		if ( $url['scheme'] == 'https' ) { 
+			$scheme = "ssl://";
+			$port = 443;
+			$timeout = 30;
+		}
+		elseif ( $url['scheme'] != 'http' ) return '';
+		$handle = fsockopen($scheme.$host, $port, $errno, $errstr, (is_null($timeout) ? ini_get("default_socket_timeout") : $timeout));
+		if ( $errno !== 0 || $errstr !== '' ) $handle = false;
+		if ( $handle !== false ) {
+			$content = http_build_query($params);
+			$request = "POST " . $path . " HTTP/1.1\r\n";
+            $request .= "Host: " . $host . "\r\n";
+            $request .= "Content-Type: application/x-www-form-urlencoded\r\n";
+            $request .= "Content-length: " . strlen($content) . "\r\n";
+            $request .= "Connection: close\r\n\r\n";
+            $request .= $content . "\r\n\r\n";
+			fwrite($handle, $request, strlen($request));
+			$response = '';
+			while ( !feof($handle) ) {
+                $response .= fgets($handle, 4096);
+            }
+			fclose($handle);
+			if (0 === strpos($response, 'HTTP/1.1 200 OK')) {
+                $parts = preg_split("#\n\s*\n#Uis", $response);
+                return $parts[1];
+            }
+			return '';
+		}
+		return '';
+	}
+	else {
+		// POST request using file_get_contents
+		$peer_key = version_compare(PHP_VERSION, '5.6.0', '<') ? 'CN_name' : 'peer_name';
+		$http_array = array(
+			'method'  => 'POST',
+			'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+			'content' => http_build_query($params)
+		);
+		if ( $verifypeer ) {
+			$http_array['verify_peer'] = true;
+			$http_array[$peer_key] = 'www.google.com';
+		}
+		$context_params = array( 'http' => $http_array );
+		$context = stream_context_create($context_params);
+		return file_get_contents($url, false, $context);
+	}
 }
 
 ?>

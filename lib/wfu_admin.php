@@ -202,7 +202,7 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=plugin_settings" class="button" title="Settings">Settings</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser" class="button" title="File browser">File Browser</a>';
-	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=shortcode_composer" class="button" title="Shortcode composer">Shortcode Composer</a>';
+//	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=shortcode_composer" class="button" title="Shortcode composer">Shortcode Composer</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=view_log" class="button" title="View log">View Log</a>';
 	if ( current_user_can( 'manage_options' ) ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=sync_db" class="button" title="Update database to reflect current status of files">Sync Database</a>';
 	$echo_str .= "\n\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">Status</h3>';
@@ -478,6 +478,19 @@ function wfu_manage_settings($message = '') {
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.$plugin_options['basedir'].'</strong></p>';
 	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'</tr>';
+	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<label for="wfu_postmethod">Post Method</label>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<select name="wfu_postmethod" id="wfu_postmethod" value="'.$plugin_options['postmethod'].'">';
+	$echo_str .= "\n\t\t\t\t\t\t\t\t".'<option value="fopen"'.( $plugin_options['postmethod'] == 'fopen' || $plugin_options['postmethod'] == '' ? ' selected="selected"' : '' ).'>Using fopen (default)</option>';
+	$echo_str .= "\n\t\t\t\t\t\t\t\t".'<option value="curl"'.( $plugin_options['postmethod'] == 'curl' ? ' selected="selected"' : '' ).'>Using cURL</option>';
+	$echo_str .= "\n\t\t\t\t\t\t\t\t".'<option value="socket"'.( $plugin_options['postmethod'] == 'socket' ? ' selected="selected"' : '' ).'>Using Sockets</option>';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'</select>';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.( $plugin_options['postmethod'] == 'fopen' || $plugin_options['postmethod'] == '' ? 'Using fopen' : ( $plugin_options['postmethod'] == 'curl' ? 'Using cURL' : 'Using Sockets' ) ).'</strong></p>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t\t".'</tr>';
 	$echo_str .= "\n\t\t\t\t".'</tbody>';
 	$echo_str .= "\n\t\t\t".'</table>';
 	$echo_str .= "\n\t\t\t".'<p class="submit">';
@@ -498,12 +511,13 @@ function wfu_update_settings() {
 
 //	$enabled = ( isset($_POST['wfu_enabled']) ? ( $_POST['wfu_enabled'] == "on" ? 1 : 0 ) : 0 ); 
 	$hashfiles = ( isset($_POST['wfu_hashfiles']) ? ( $_POST['wfu_hashfiles'] == "on" ? 1 : 0 ) : 0 ); 
-	if ( isset($_POST['wfu_basedir']) && isset($_POST['wfu_captcha_sitekey']) && isset($_POST['wfu_captcha_secretkey']) && isset($_POST['submit']) ) {
+	if ( isset($_POST['wfu_basedir']) && isset($_POST['wfu_postmethod']) && isset($_POST['submit']) ) {
 		if ( $_POST['submit'] == "Update" ) {
 			$new_plugin_options['version'] = '1.0';
 			$new_plugin_options['shortcode'] = $plugin_options['shortcode'];
 			$new_plugin_options['hashfiles'] = $hashfiles;
 			$new_plugin_options['basedir'] = $_POST['wfu_basedir'];
+			$new_plugin_options['postmethod'] = $_POST['wfu_postmethod'];
 			$encoded_options = wfu_encode_plugin_options($new_plugin_options);
 			update_option( "wordpress_file_upload_options", $encoded_options );
 			if ( $new_plugin_options['hashfiles'] == '1' && $plugin_options['hashfiles'] != '1' )

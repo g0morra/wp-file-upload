@@ -361,7 +361,7 @@ function wfu_attribute_definitions() {
 			"subcategory"	=> "Redirection",
 			"parent"	=> "redirect",
 			"dependencies"	=> null,
-			"variables"	=> array("%filename%"),
+			"variables"	=> array("%filename%", "%username%"),
 			"help"		=> "This is the redirect URL. The URL can be dynamic by using variables. Please see Documentation on how to use variables inside attributes."
 		),
 		array(

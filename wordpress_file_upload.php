@@ -1,10 +1,10 @@
 <?php
-session_start();
+if( !session_id() ) { session_start(); }
 /*Plugin Name: Wordpress File Upload
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.7.3
+Version: 2.7.4
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -308,18 +308,24 @@ function wordpress_file_upload_function($incomingfromhandler) {
 		elseif ( $code == "1" || $code == "2" || $code == "3" ) $params['adminerrors'] = constant('WFU_ERROR_REDIRECTION_ERRORCODE'.$code);
 		else $params['adminerrors'] = WFU_ERROR_REDIRECTION_ERRORCODE0;
 	}
+	
+	$unique_id = ( isset($_POST['uniqueuploadid_'.$sid]) ? sanitize_text_field($_POST['uniqueuploadid_'.$sid]) : "" );
+	if ( strlen($unique_id) == 10 ) {
 
-	$params['subdir_selection_index'] = -1;
-	if ( isset( $_POST[$hiddeninput] ) ) $params['subdir_selection_index'] = $_POST[$hiddeninput];
+		$params['subdir_selection_index'] = -1;
+		if ( isset( $_POST[$hiddeninput] ) ) $params['subdir_selection_index'] = sanitize_text_field($_POST[$hiddeninput]);
 
-	$wfu_process_file_array = wfu_process_files($params, 'no_ajax');
-	$safe_output = $wfu_process_file_array["general"]['safe_output'];
-	unset($wfu_process_file_array["general"]['safe_output']);
+		$wfu_process_file_array = wfu_process_files($params, 'no_ajax');
+		$safe_output = $wfu_process_file_array["general"]['safe_output'];
+		unset($wfu_process_file_array["general"]['safe_output']);
+		unset($wfu_process_file_array["general"]['js_script']);
 
-	$wfu_process_file_array_str = wfu_encode_array_to_string($wfu_process_file_array);
-	$ProcessUploadComplete_functiondef = 'function(){wfu_ProcessUploadComplete('.$sid.', 1, "'.$wfu_process_file_array_str.'", "no-ajax", "", "", "'.$safe_output.'", ["false", "", "false"]);}';
-	$wordpress_file_upload_output .= '<script type="text/javascript">window.onload='.$ProcessUploadComplete_functiondef.'</script>';
+		$wfu_process_file_array_str = wfu_encode_array_to_string($wfu_process_file_array);
+		$ProcessUploadComplete_functiondef = 'function(){wfu_ProcessUploadComplete('.$sid.', 1, "'.$wfu_process_file_array_str.'", "no-ajax", "", "", "'.$safe_output.'", ["false", "", "false"]);}';
+		$wordpress_file_upload_output .= '<script type="text/javascript">window.onload='.$ProcessUploadComplete_functiondef.'</script>';
 
+	}
+	
 	$wordpress_file_upload_output .= wfu_post_plugin_actions($params);
 	return $wordpress_file_upload_output."\n";
 }

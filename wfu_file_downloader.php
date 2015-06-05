@@ -1,5 +1,5 @@
 <?php
-session_start();
+if( !session_id() ) { session_start(); }
 include_once( dirname(__FILE__).'/lib/wfu_functions.php' );
 wfu_download_file();
 
