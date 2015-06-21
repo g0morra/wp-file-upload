@@ -384,7 +384,22 @@ function wfu_shortcode_composer($data = '') {
 			foreach ( $roles as $roleid => $rolename )
 				$echo_str .= $dlp."\t\t\t".'<option value="'.$roleid.'"'.( in_array($roleid, $selected) ? ' selected="selected"' : '' ).'>'.$rolename.'</option>';
 			$echo_str .= $dlp."\t\t".'</select>';
-			$echo_str .= $dlp."\t\t".'<div class="wfu_rolelist_checkall"><input id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_rolelist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' checked="checked"' : '' ).' /> Select all (including guests)</div>';
+			$echo_str .= $dlp."\t\t".'<div class="wfu_rolelist_checkall"><input id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_rolelist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_all"> Select all</label></div>';
+		}
+		elseif ( $def['type'] == "userlist" ) {
+			$users = get_users();
+			$def['value'] = strtolower($def['value']);
+			if ( $def['value'] == "all" ) $selected = array($users[0]->user_login);
+			else $selected = explode(",", $def['value']);
+			$echo_str .= $dlp."\t\t".'<table class="wfu_userlist_container"><tbody><tr><td>';
+			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.count($users).'" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' disabled="disabled"' : '' ).'>';
+			foreach ( $users as $userid => $user )
+				$echo_str .= $dlp."\t\t\t".'<option value="'.$user->user_login.'"'.( in_array($user->user_login, $selected) ? ' selected="selected"' : '' ).'>'.$user->display_name.' ('.$user->user_login.')</option>';
+			$echo_str .= $dlp."\t\t".'</select>';
+			$echo_str .= $dlp."\t\t".'</td><td>';
+			$echo_str .= $dlp."\t\t".'<div class="wfu_userlist_checkall"><input id="wfu_attribute_'.$attr.'_guests" type="checkbox" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" || in_array("guests", $selected) ? ' checked="checked"' : '' ).( strtolower($def['value']) == "all" ? ' disabled="disabled"' : '' ).' /><label for="wfu_attribute_'.$attr.'_guests"> Include guests</label></div><br />';
+			$echo_str .= $dlp."\t\t".'<div class="wfu_userlist_checkall"><input id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_all"> Select all (including guests)</label></div>';
+			$echo_str .= $dlp."\t\t".'</td></tr></tbody></table>';
 		}
 		elseif ( $def['type'] == "dimensions" ) {
 			$vals_arr = explode(",", $def['value']);

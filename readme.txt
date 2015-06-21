@@ -41,8 +41,10 @@ The characteristics of the plugin are:
 
 The plugin is translated in the following languages:
 
+* German
 * French, kindly provided by Thomas Bastide of http://www.omicronn.fr/
 * Serbian, kindly provided by Andrijana Nikolic of http://webhostinggeeks.com/
+* Greek
 
 Please note that old desktop browsers or mobile browsers may not support all of the above functionalities. In order to get full functionality use the latest versions browsers, supporting HTML5, AJAX and CSS3.
 
@@ -124,6 +126,9 @@ In the free version the upload will fail. However in the Pro version the upload 
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 2.7.5 =
+* added German and Greek translation
 
 = 2.7.4 =
 * added Serbian translation thanks to Andrijana Nikolic from http://webhostinggeeks.com/
@@ -427,6 +432,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.7.5 =
+Upgrade to add some new features.
 
 = 2.7.4 =
 Upgrade to add some new features and address some bugs.
@@ -838,9 +846,9 @@ function wfu_before_email_notification_handler($changable_data, $additional_data
 }
 `
 
-**wfu_before_file_check**
+**wfu_after_file_upload**
 
-It is executed before file is uploaded and before any internal file checks, in order to allow the filter to perform its own checks or change some basic upload parameters, such as filename or userdata. You can use it as follows:
+It is executed after the upload process for each individual file has finished, in order to allow additional actions to be executed (such as define custom javascript code to be executed in client's browser after file upload). You can use it as follows:
 
 `
 add_filter('wfu_after_file_upload', 'wfu_after_file_upload_handler', 10, 2);
