@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wordpress File Upload\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-22 02:03+0200\n"
-"PO-Revision-Date: 2015-06-22 02:03+0200\n"
+"POT-Creation-Date: 2015-06-25 14:30+0200\n"
+"PO-Revision-Date: 2015-06-25 14:30+0200\n"
 "Last-Translator: nickboss <info@iptanus.com>\n"
 "Language-Team: Iptanus Team <info@iptanus.com>\n"
 "Language: el\n"
@@ -415,13 +415,21 @@ msgstr "Μήνυμα διαχειριστή αρχείου testfile 2"
 
 #: lib/wfu_constants.php:131
 msgid ""
+"Failed to add the shortcode to the page/post. Please try again. If the "
+"message persists, contact administrator."
+msgstr ""
+"Δεν κατέστη δυνατή η προσθήκη του shortcode στη σελίδα / άρθρο. Παρακαλώ "
+"προσπάθησε ξανά. Αν το μήνυμα συνεχίζει, επικοινωνήστε με το διαχειριστή."
+
+#: lib/wfu_constants.php:132
+msgid ""
 "Failed to edit the shortcode because the contents of the page changed. Try "
 "again to edit the shortcode."
 msgstr ""
 "Δεν ήταν δυνατή η επεξεργασία του shortcode διότι τα περιεχόμενα της σελίδας "
 "άλλαξαν. Παρακαλούμε δοκιμάστε ξανά να επεξεργαστείτε το shortcode."
 
-#: lib/wfu_constants.php:132
+#: lib/wfu_constants.php:133
 msgid ""
 "Failed to delete the shortcode because the contents of the page changed. Try "
 "again to delete it."
@@ -429,7 +437,7 @@ msgstr ""
 "Δεν ήταν δυνατή η διαγραφή του shortcode διότι τα περιεχόμενα της σελίδας "
 "άλλαξαν. Παρακαλούμε δοκιμάστε ξανά να διαγράψετε το shortcode."
 
-#: lib/wfu_constants.php:133
+#: lib/wfu_constants.php:134
 msgid ""
 "The page containing the shortcode has been modified and it is no longer "
 "valid. Please go back to reload the shortcode."
@@ -437,7 +445,7 @@ msgstr ""
 "Η σελίδα που περιέχει το shortcode τροποποιήθηκε και δεν είναι πλέον σε "
 "ισχύ. Παρακαλούμε πηγαίνετε πίσω και ξαναφορτώστε το shortcode."
 
-#: lib/wfu_constants.php:134
+#: lib/wfu_constants.php:135
 msgid ""
 "Failed to update the shortcode because the contents of the page changed. Go "
 "back to reload the shortcode."
@@ -445,7 +453,7 @@ msgstr ""
 "Δεν ήταν δυνατή η ενημέρωση του shortcode διότι τα περιεχόμενα της σελίδας "
 "άλλαξαν. Πηγαίνετε πίσω και ξαναφορτώστε το shortcode."
 
-#: lib/wfu_constants.php:135
+#: lib/wfu_constants.php:136
 msgid ""
 "Failed to update the shortcode. Please try again. If the problem persists, "
 "go back and reload the shortcode."
@@ -453,7 +461,7 @@ msgstr ""
 "Δεν ήταν δυνατή η ενημέρωση του shortcode. Παρακαλούμε ξαναδοκιμάστε. Αν το "
 "πρόβλημα παραμείνει, πηγαίνετε πίσω και ξαναφορτώστε το shortcode."
 
-#: lib/wfu_constants.php:138
+#: lib/wfu_constants.php:139
 msgid ""
 "Insert variable %userid% inside text. It will be replaced by the id of the "
 "current user."
@@ -461,7 +469,7 @@ msgstr ""
 "Εισάγετε τη μεταβλητή %userid% στο κείμενο. Θα αντικατασταθεί από το id του "
 "τρέχοντος χρήστη."
 
-#: lib/wfu_constants.php:139
+#: lib/wfu_constants.php:140
 msgid ""
 "Insert variable %username% inside text. It will be replaced by the username "
 "of the current user."
@@ -469,7 +477,7 @@ msgstr ""
 "Εισάγετε τη μεταβλητή %username% στο κείμενο. Θα αντικατασταθεί από το όνομα "
 "του τρέχοντος χρήστη."
 
-#: lib/wfu_constants.php:140
+#: lib/wfu_constants.php:141
 msgid ""
 "Insert variable %useremail% inside text. It will be replaced by the email of "
 "the current user."
@@ -477,7 +485,7 @@ msgstr ""
 "Εισάγετε τη μεταβλητή %useremail% στο κείμενο. Θα αντικατασταθεί από το "
 "email του τρέχοντος χρήστη."
 
-#: lib/wfu_constants.php:141
+#: lib/wfu_constants.php:142
 msgid ""
 "Insert variable %filename% inside text. It will be replaced by the filename "
 "of the uploaded file."
@@ -485,7 +493,7 @@ msgstr ""
 "Εισάγετε τη μεταβλητή %filename% στο κείμενο. Θα αντικατασταθεί από το όνομα "
 "του αποστελλομένου αρχείου."
 
-#: lib/wfu_constants.php:142
+#: lib/wfu_constants.php:143
 msgid ""
 "Insert variable %filepath% inside text. It will be replaced by the full "
 "filepath of the uploaded file."
@@ -493,7 +501,7 @@ msgstr ""
 "Εισάγετε τη μεταβλητή %filepath% στο κείμενο. Θα αντικατασταθεί από την "
 "πλήρη διαδρομή του αποστελλομένου αρχείου."
 
-#: lib/wfu_constants.php:143
+#: lib/wfu_constants.php:144
 msgid ""
 "Insert variable %blogid% inside text. It will be replaced by the blog id of "
 "the website."
@@ -501,7 +509,7 @@ msgstr ""
 "Εισάγετε τη μεταβλητή %blogid% στο κείμενο. Θα αντικατασταθεί από το blog id "
 "της ιστοσελίδας."
 
-#: lib/wfu_constants.php:144
+#: lib/wfu_constants.php:145
 msgid ""
 "Insert variable %pageid% inside text. It will be replaced by the id of the "
 "current page."
@@ -509,7 +517,7 @@ msgstr ""
 "Εισάγετε τη μεταβλητή %pageid% στο κείμενο. Θα αντικατασταθεί από το id της "
 "τρέχουσας σελίδας."
 
-#: lib/wfu_constants.php:145
+#: lib/wfu_constants.php:146
 msgid ""
 "Insert variable %pagetitle% inside text. It will be replaced by the title of "
 "the current page."
@@ -517,7 +525,7 @@ msgstr ""
 "Εισάγετε τη μεταβλητή %pagetitle% στο κείμενο. Θα αντικατασταθεί από τον "
 "τίτλο της τρέχουσας σελίδας."
 
-#: lib/wfu_constants.php:146
+#: lib/wfu_constants.php:147
 msgid ""
 "Insert variable %userdataXXX% inside text. Select the user field from the "
 "drop-down list. It will be replaced by the value that the user entered in "
@@ -527,72 +535,72 @@ msgstr ""
 "από την εμφανιζόμενη dropdown λίστα. Θα αντικατασταθεί από την τιμή που "
 "εισήγαγε ο χρήστης σε αυτό το πεδίο."
 
-#: lib/wfu_constants.php:147
+#: lib/wfu_constants.php:148
 msgid "Insert variable %n% inside text to denote a line change."
 msgstr ""
 "Εισάγετε τη μεταβλητή %n% στο κείμενο για να υποδείξετε αλλαγή γραμμής."
 
-#: lib/wfu_constants.php:150
+#: lib/wfu_constants.php:151
 msgid "Upload in progress"
 msgstr "Αποστολή σε εξέλιξη"
 
-#: lib/wfu_constants.php:151
+#: lib/wfu_constants.php:152
 msgid "Upload in progress with warnings!"
 msgstr "Αποστολή σε εξέλιξη με προειδοποιήσεις!"
 
-#: lib/wfu_constants.php:152
+#: lib/wfu_constants.php:153
 msgid "Upload in progress but some files already failed!"
 msgstr "Αποστολή σε εξέλιξη αλλά κάποια αρχεία ήδη απέτυχαν!"
 
-#: lib/wfu_constants.php:153
+#: lib/wfu_constants.php:154
 msgid "Upload in progress but no files uploaded so far!"
 msgstr "Αποστολή σε εξέλιξη αλλά δεν απεστάλη κανένα αρχείο μέχρι τώρα!"
 
-#: lib/wfu_constants.php:154
+#: lib/wfu_constants.php:155
 msgid "All files uploaded successfully"
 msgstr "Όλα τα αρχεία απεστάλησαν επιτυχώς"
 
-#: lib/wfu_constants.php:155
+#: lib/wfu_constants.php:156
 msgid "All files uploaded successfully but there are warnings!"
 msgstr "Όλα τα αρχεία απεστάλησαν επιτυχώς αλλά υπάρχουν προειδοποιήσεις!"
 
-#: lib/wfu_constants.php:156
+#: lib/wfu_constants.php:157
 msgid "File uploaded successfully but there are warnings!"
 msgstr "Το αρχείο απεστάλη επιτυχώς αλλά υπάρχουν προειδοποιήσεις!"
 
-#: lib/wfu_constants.php:157
+#: lib/wfu_constants.php:158
 msgid "Some files failed to upload!"
 msgstr "Μερικά αρχεία απέτυχαν να αποσταλούν!"
 
-#: lib/wfu_constants.php:158
+#: lib/wfu_constants.php:159
 msgid "All files failed to upload"
 msgstr "Όλα τα αρχεία απέτυχαν να αποσταλούν"
 
-#: lib/wfu_constants.php:159
+#: lib/wfu_constants.php:160
 msgid "File failed to upload"
 msgstr "Το αρχείο απέτυχε να αποσταλεί"
 
-#: lib/wfu_constants.php:160
+#: lib/wfu_constants.php:161
 msgid "There are no files to upload!"
 msgstr "Δεν υπάρχουν αρχεία για αποστολή!"
 
-#: lib/wfu_constants.php:161
+#: lib/wfu_constants.php:162
 msgid "Test upload message"
 msgstr "Μήνυμα αποστολής ελέγχου"
 
-#: lib/wfu_constants.php:162
+#: lib/wfu_constants.php:163
 msgid "JSON parse warning!"
 msgstr "Προειδοποίηση μετατροπής JSON!"
 
-#: lib/wfu_constants.php:163
+#: lib/wfu_constants.php:164
 msgid "please wait while redirecting..."
 msgstr "παρακαλούμε περιμένετε ενώ γίνεται αναδρομολόγηση..."
 
-#: lib/wfu_constants.php:164
+#: lib/wfu_constants.php:165
 msgid "Open visual shortcode editor in new window"
 msgstr "Ανοίξτε τη γραφική επεξεργασία του shortcode σε νέο παράθυρο"
 
-#: lib/wfu_constants.php:165
+#: lib/wfu_constants.php:166
 msgid "loading visual editor"
 msgstr "φόρτωση του γραφικού επεξεργαστή"
 

@@ -128,6 +128,7 @@ DEFINE("WFU_TESTMESSAGE_FILE2_MESSAGE", __('File testfile 2 message', 'wordpress
 DEFINE("WFU_TESTMESSAGE_FILE2_ADMINMESSAGE", __('File testfile 2 administrator message', 'wordpress-file-upload'));
 
 //define admin area messages
+DEFINE("WFU_DASHBOARD_ADD_SHORTCODE_REJECTED", __("Failed to add the shortcode to the page/post. Please try again. If the message persists, contact administrator.", "wordpress-file-upload"));
 DEFINE("WFU_DASHBOARD_EDIT_SHORTCODE_REJECTED", __("Failed to edit the shortcode because the contents of the page changed. Try again to edit the shortcode.", "wordpress-file-upload"));
 DEFINE("WFU_DASHBOARD_DELETE_SHORTCODE_REJECTED", __("Failed to delete the shortcode because the contents of the page changed. Try again to delete it.", "wordpress-file-upload"));
 DEFINE("WFU_DASHBOARD_PAGE_OBSOLETE", __("The page containing the shortcode has been modified and it is no longer valid. Please go back to reload the shortcode.", "wordpress-file-upload"));

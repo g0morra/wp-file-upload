@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wordpress File Upload\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-22 02:03+0200\n"
-"PO-Revision-Date: 2015-06-22 02:03+0200\n"
+"POT-Creation-Date: 2015-06-25 14:29+0200\n"
+"PO-Revision-Date: 2015-06-25 14:30+0200\n"
 "Last-Translator: nickboss <info@iptanus.com>\n"
 "Language-Team: Iptanus Team <info@iptanus.com>\n"
 "Language: de_DE\n"
@@ -429,13 +429,22 @@ msgstr "Datei testfile 2 Admin-Nachricht"
 
 #: lib/wfu_constants.php:131
 msgid ""
+"Failed to add the shortcode to the page/post. Please try again. If the "
+"message persists, contact administrator."
+msgstr ""
+"Fehler beim Abrufen der Shortcode zu der Seite / Beitrag hinzuzufügen. Bitte "
+"versuche es erneut. Wenn die Meldung weiterhin, wenden Sie sich "
+"Administrator."
+
+#: lib/wfu_constants.php:132
+msgid ""
 "Failed to edit the shortcode because the contents of the page changed. Try "
 "again to edit the shortcode."
 msgstr ""
 "Der Shortcode konnte nicht bearbeitet, da sich der Inhalt der Seite geändert "
 "hat. Versuchen Sie erneut den Shortcode zu bearbeiten."
 
-#: lib/wfu_constants.php:132
+#: lib/wfu_constants.php:133
 msgid ""
 "Failed to delete the shortcode because the contents of the page changed. Try "
 "again to delete it."
@@ -443,7 +452,7 @@ msgstr ""
 "Der Shortcode konnte nicht gelöscht werden, da sich der Inhalt der Seite "
 "geändert hat. Versuchen Sie erneut den Shortcode zu löschen."
 
-#: lib/wfu_constants.php:133
+#: lib/wfu_constants.php:134
 msgid ""
 "The page containing the shortcode has been modified and it is no longer "
 "valid. Please go back to reload the shortcode."
@@ -451,7 +460,7 @@ msgstr ""
 "Die Seite mit dem Shortcode wurde modifiziert und ist nicht mehr gültig. "
 "Bitte gehen Sie zurück um zu den Shortcode zu laden."
 
-#: lib/wfu_constants.php:134
+#: lib/wfu_constants.php:135
 msgid ""
 "Failed to update the shortcode because the contents of the page changed. Go "
 "back to reload the shortcode."
@@ -459,7 +468,7 @@ msgstr ""
 "Der Shortcode konnte nicht aktualisiert werden, da sich der Inhalt der Seite "
 "geändert geändert hat. Gehen Sie zurück um zu den Shortcode neu zu laden."
 
-#: lib/wfu_constants.php:135
+#: lib/wfu_constants.php:136
 msgid ""
 "Failed to update the shortcode. Please try again. If the problem persists, "
 "go back and reload the shortcode."
@@ -468,7 +477,7 @@ msgstr ""
 "Wenn das Problem weiterhin besteht, gehen Sie zurück und laden Sie den "
 "Shortcode neu."
 
-#: lib/wfu_constants.php:138
+#: lib/wfu_constants.php:139
 msgid ""
 "Insert variable %userid% inside text. It will be replaced by the id of the "
 "current user."
@@ -476,7 +485,7 @@ msgstr ""
 "Fügen Sie die Variable %userid% in den Text ein. Sie wird durch die ID des "
 "aktuellen Benutzers ersetzt."
 
-#: lib/wfu_constants.php:139
+#: lib/wfu_constants.php:140
 msgid ""
 "Insert variable %username% inside text. It will be replaced by the username "
 "of the current user."
@@ -484,7 +493,7 @@ msgstr ""
 "Fügen Sie die Variable %username% in den Text ein. Sie wird durch den "
 "Benutzernamen des aktuellen Benutzers ersetzt."
 
-#: lib/wfu_constants.php:140
+#: lib/wfu_constants.php:141
 msgid ""
 "Insert variable %useremail% inside text. It will be replaced by the email of "
 "the current user."
@@ -492,7 +501,7 @@ msgstr ""
 "Fügen Sie die Variable %useremail% in den Text ein. Sie wird durch die E-"
 "Mail-Adresse des aktuellen Benutzers ersetzt."
 
-#: lib/wfu_constants.php:141
+#: lib/wfu_constants.php:142
 msgid ""
 "Insert variable %filename% inside text. It will be replaced by the filename "
 "of the uploaded file."
@@ -500,7 +509,7 @@ msgstr ""
 "Fügen Sie die Variable %filename% in den Text. Sie wird durch den Dateinamen "
 "der hochgeladenen Dateien ersetzt."
 
-#: lib/wfu_constants.php:142
+#: lib/wfu_constants.php:143
 msgid ""
 "Insert variable %filepath% inside text. It will be replaced by the full "
 "filepath of the uploaded file."
@@ -508,7 +517,7 @@ msgstr ""
 "Fügen Sie die Variable %filepath% in den Text ein. Sie wird durch die "
 "vollständige Dateipfad der hochgeladenen Dateien ersetzt."
 
-#: lib/wfu_constants.php:143
+#: lib/wfu_constants.php:144
 msgid ""
 "Insert variable %blogid% inside text. It will be replaced by the blog id of "
 "the website."
@@ -516,7 +525,7 @@ msgstr ""
 "Fügen Sie die Variable %blogid% in den Text ein. Sie wird durch die Blog-ID "
 "der Website ersetzt werden."
 
-#: lib/wfu_constants.php:144
+#: lib/wfu_constants.php:145
 msgid ""
 "Insert variable %pageid% inside text. It will be replaced by the id of the "
 "current page."
@@ -524,7 +533,7 @@ msgstr ""
 "Fügen Sie die Variable %pageid% in den Text ein. Sie wird durch die ID der "
 "aktuellen Seite ersetzt."
 
-#: lib/wfu_constants.php:145
+#: lib/wfu_constants.php:146
 msgid ""
 "Insert variable %pagetitle% inside text. It will be replaced by the title of "
 "the current page."
@@ -532,7 +541,7 @@ msgstr ""
 "Fügen Sie die Variable %pagetitle% in den Text ein. Sie wird durch dden "
 "Title des aktuellen Benutzers ersetzt."
 
-#: lib/wfu_constants.php:146
+#: lib/wfu_constants.php:147
 msgid ""
 "Insert variable %userdataXXX% inside text. Select the user field from the "
 "drop-down list. It will be replaced by the value that the user entered in "
@@ -542,73 +551,73 @@ msgstr ""
 "Feld \"Benutzer\" aus der Dropdown Liste. Die Variable wird durch den Wert "
 "ersetzt, die der Benutzer in dieses Feld eingetragen hat."
 
-#: lib/wfu_constants.php:147
+#: lib/wfu_constants.php:148
 msgid "Insert variable %n% inside text to denote a line change."
 msgstr ""
 "Fügen Sie die Variable %n% in den Text ein, um eine Änderung der Zeile zu "
 "kennzeichnen."
 
-#: lib/wfu_constants.php:150
+#: lib/wfu_constants.php:151
 msgid "Upload in progress"
 msgstr "Upload läuft"
 
-#: lib/wfu_constants.php:151
+#: lib/wfu_constants.php:152
 msgid "Upload in progress with warnings!"
 msgstr "Upload läuft mit Warnhinweisen!"
 
-#: lib/wfu_constants.php:152
+#: lib/wfu_constants.php:153
 msgid "Upload in progress but some files already failed!"
 msgstr "Upload läuft, aber einige Dateien bereits gescheitert!"
 
-#: lib/wfu_constants.php:153
+#: lib/wfu_constants.php:154
 msgid "Upload in progress but no files uploaded so far!"
 msgstr "Upload läuft aber keine Dateien hochgeladen bis jetzt!"
 
-#: lib/wfu_constants.php:154
+#: lib/wfu_constants.php:155
 msgid "All files uploaded successfully"
 msgstr "Alle Dateien erfolgreich hochgeladen"
 
-#: lib/wfu_constants.php:155
+#: lib/wfu_constants.php:156
 msgid "All files uploaded successfully but there are warnings!"
 msgstr "Alle Dateien erfolgreich hochgeladen, aber es gibt Warnhinweise!"
 
-#: lib/wfu_constants.php:156
+#: lib/wfu_constants.php:157
 msgid "File uploaded successfully but there are warnings!"
 msgstr "Datei erfolgreich hochgeladen, aber es gibt Warnhinweise!"
 
-#: lib/wfu_constants.php:157
+#: lib/wfu_constants.php:158
 msgid "Some files failed to upload!"
 msgstr "Einige Dateien konnten nicht hochgeladen werden!"
 
-#: lib/wfu_constants.php:158
+#: lib/wfu_constants.php:159
 msgid "All files failed to upload"
 msgstr "Alle Dateien konnten nicht hochgeladen werden"
 
-#: lib/wfu_constants.php:159
+#: lib/wfu_constants.php:160
 msgid "File failed to upload"
 msgstr "Datei konnte nicht hochgeladen werden"
 
-#: lib/wfu_constants.php:160
+#: lib/wfu_constants.php:161
 msgid "There are no files to upload!"
 msgstr "Es gibt keine Dateien zum Hochladen!"
 
-#: lib/wfu_constants.php:161
+#: lib/wfu_constants.php:162
 msgid "Test upload message"
 msgstr "Test-Upload-Nachricht"
 
-#: lib/wfu_constants.php:162
+#: lib/wfu_constants.php:163
 msgid "JSON parse warning!"
 msgstr "JSON parse Warnung!"
 
-#: lib/wfu_constants.php:163
+#: lib/wfu_constants.php:164
 msgid "please wait while redirecting..."
 msgstr "Bitte warten Sie, Sie werden umgeleitet ..."
 
-#: lib/wfu_constants.php:164
+#: lib/wfu_constants.php:165
 msgid "Open visual shortcode editor in new window"
 msgstr "Offenen des visuellen Shortcode-Editor in neuem Fenster"
 
-#: lib/wfu_constants.php:165
+#: lib/wfu_constants.php:166
 msgid "loading visual editor"
 msgstr "visueller Editor laden"
 

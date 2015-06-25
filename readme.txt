@@ -56,7 +56,7 @@ Please visit the **Other Notes** section for customization options of this plugi
 
 1. First install the plugin using Wordpress auto-installer or download the .zip file from wordpress.org and install it from the Plugins section of your Dashboard or copy wordpress_file_upload directory inside wp-contents/plugins directory of your wordpress site.
 1. Activate the plugin from Plugins section of your Dashboard.
-1. In order to use the plugin simply put the shortcode [wordpress_file_upload] in the contents of any page.
+1. In order to use the plugin simply go to the Dashboard / Settings / Wordpress File Upload and follow the instructions in Plugin Instances or alternatively put the shortcode [wordpress_file_upload] in the contents of any page.
 1. Open the page on your browser and you will see the upload form.
 1. You can change the upload directory or any other settings easily by pressing the small edit button found at the left-top corner of the upload form. A new window (or tab) with pop up with plugin options. If you do not see the new window, adjust your browser settings to allow pop-up windows.
 1. Full documentation about the plugin options can be found at https://wordpress.org/plugins/wp-file-upload/other_notes/ or at http://www.iptanus.com/wordpress-plugins/wordpress-file-upload/ (including the Pro version)
@@ -126,6 +126,10 @@ In the free version the upload will fail. However in the Pro version the upload 
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 2.7.6 =
+* added functionality in Dashboard to add the plugin to a page automatically
+* fixed bug that was not showing the Shortcode Composer because the plugin could not find the plugin instance when the shortcode was nested in other shortcodes
 
 = 2.7.5 =
 * added German and Greek translation
@@ -432,6 +436,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 2.7.6 =
+Upgrade to add some new features and address some bugs.
 
 = 2.7.5 =
 Upgrade to add some new features.
@@ -902,3 +909,4 @@ function wfu_after_file_upload_handler($file_unique_id, $upload_result, $error_m
 
 The plugin requires to have Javascript enabled in your browser. For Internet Explorer you also need to have Active-X enabled.
 Please note that old desktop browsers or mobile browsers may not support all of the plugin's features. In order to get full functionality use the latest versions of browsers, supporting HTML5, AJAX and CSS3.
+
