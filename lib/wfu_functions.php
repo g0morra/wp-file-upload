@@ -81,6 +81,10 @@ function wfu_html_output($output) {
 	return str_replace(array("\t", " "), "&nbsp;", $output);
 }
 
+function wfu_sanitize_code($code) {
+	return preg_replace("/[^A-Za-z0-9]/", "", $code);
+}
+
 //********************* Array Functions ****************************************************************************************************
 
 function wfu_encode_array_to_string($arr) {
@@ -242,7 +246,8 @@ function wfu_encode_plugin_options($plugin_options) {
 	$encoded_options .= 'basedir='.wfu_plugin_encode_string($plugin_options['basedir']).';';
 	$encoded_options .= 'postmethod='.$plugin_options['postmethod'].';';
 	$encoded_options .= 'captcha_sitekey='.wfu_plugin_encode_string($plugin_options['captcha_sitekey']).';';
-	$encoded_options .= 'captcha_secretkey='.wfu_plugin_encode_string($plugin_options['captcha_secretkey']);
+	$encoded_options .= 'captcha_secretkey='.wfu_plugin_encode_string($plugin_options['captcha_secretkey']).';';
+	$encoded_options .= 'browser_permissions='.wfu_encode_array_to_string($plugin_options['browser_permissions']);
 	return $encoded_options;
 }
 
@@ -254,6 +259,8 @@ function wfu_decode_plugin_options($encoded_options) {
 			list($item_key, $item_value) = explode("=", $decoded_item, 2);
 			if ( $item_key == 'shortcode' || $item_key == 'basedir' || $item_key == 'captcha_sitekey' || $item_key == 'captcha_secretkey' )
 				$plugin_options[$item_key] = wfu_plugin_decode_string($item_value);
+			elseif ( $item_key == 'browser_permissions' )
+				$plugin_options[$item_key] = wfu_decode_array_from_string($item_value);
 			else
 				$plugin_options[$item_key] = $item_value;
 		}
@@ -335,6 +342,8 @@ function wfu_upload_plugin_full_path( $params ) {
 	$path = $params["uploadpath"];
 	if ( $params["accessmethod"]=='ftp' && $params["ftpinfo"] != '' && $params["useftpdomain"] == "true" ) {
 		$ftpdata_flat =  str_replace(array('\:', '\@'), array('\_', '\_'), $params["ftpinfo"]);
+		//remove parent folder symbol (..) in path so that the path does not go outside host
+		$ftpdata_flat =  str_replace('..', '', $ftpdata_flat);
 		$pos1 = strpos($ftpdata_flat, ":");
 		$pos2 = strpos($ftpdata_flat, "@");
 		if ( $pos1 && $pos2 && $pos2 > $pos1 ) {
@@ -353,6 +362,8 @@ function wfu_upload_plugin_full_path( $params ) {
 			$start_folder = ABSPATH;
 			$path = substr($path, 2, strlen($path) - 2);
 		}
+		//remove additional parent folder symbols (..) in path so that the path does not go outside the $start_folder
+		$path =  str_replace('..', '', $path);
 		if ( substr($path, 0, 1) == "/" ) $path = substr($path, 1, strlen($path) - 1);
 		if ( substr($path, -1, 1) == "/" ) $path = substr($path, 0, strlen($path) - 1);
 		$full_upload_path = $start_folder;
@@ -574,6 +585,35 @@ function wfu_debug_log($message) {
 	file_put_contents($logpath, $message, FILE_APPEND);
 }
 
+function wfu_safe_store_filepath($path) {
+	$code = wfu_create_random_string(16);
+	$_SESSION['wfu_filepath_safe_storage'][$code] = $path;
+	return $code;
+}
+
+function wfu_get_filepath_from_safe($code) {
+	//sanitize $code
+	$code = wfu_sanitize_code($code);
+	//return filepath from session variable, if exists
+	if ( !isset($_SESSION['wfu_filepath_safe_storage'][$code]) ) return false;
+	return $_SESSION['wfu_filepath_safe_storage'][$code];
+}
+
+function wfu_file_extension_restricted($filename) {
+	return ( 
+		substr($filename, -4) == ".php" ||
+		substr($filename, -3) == ".js" ||
+		substr($filename, -4) == ".pht" ||
+		substr($filename, -5) == ".php3" ||
+		substr($filename, -5) == ".php4" ||
+		substr($filename, -5) == ".php5" ||
+		substr($filename, -6) == ".phtml" ||
+		substr($filename, -4) == ".htm" ||
+		substr($filename, -5) == ".html" ||
+		substr($filename, -9) == ".htaccess" 
+		);
+}
+
 //********************* User Functions *****************************************************************************************************
 
 function wfu_get_user_role($user, $param_roles) {
@@ -597,6 +637,24 @@ function wfu_get_user_role($user, $param_roles) {
 		$result_role = 'visitor';
 	}
 	return $result_role;		
+}
+
+function wfu_get_user_valid_role_names($user) {
+	global $wp_roles;
+	
+	$result_roles = array();
+	if ( !empty( $user->roles ) && is_array( $user->roles ) ) {
+		/* get all valid roles */
+		$roles = $wp_roles->get_names();
+		/* Go through the array of the roles of the current user */
+		foreach ( $user->roles as $user_role ) {
+			$user_role = strtolower($user_role);
+			/* If one role of the current user matches to the roles allowed to upload */
+			if ( in_array($user_role, array_keys($roles)) ) array_push($result_roles, $user_role);
+		}
+	}
+
+	return $result_roles;		
 }
 
 //*********************** DB Functions *****************************************************************************************************
@@ -973,6 +1031,51 @@ function wfu_sync_database() {
 		}
 	}
 	return $obsolete_count;
+}
+
+function wfu_get_recs_of_user($userid) {
+	global $wpdb;
+	$table_name1 = $wpdb->prefix . "wfu_log";
+	$table_name2 = $wpdb->prefix . "wfu_userdata";
+	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
+
+	$filerecs = $wpdb->get_results('SELECT * FROM '.$table_name1.' WHERE action <> \'other\' AND uploaduserid = '.$userid.' AND date_to = 0');
+	$out = array();
+	foreach( $filerecs as $filerec ) {
+		$obsolete = true;
+		//calculate full file path
+		$filepath = ABSPATH;
+		if ( substr($filepath, -1) == '/' ) $filepath = substr($filepath, 0, -1);
+		$filepath .= $filerec->filepath;
+		if ( file_exists($filepath) ) {
+			if ( $plugin_options['hashfiles'] == '1' ) {
+				$filehash = md5_file($filepath);
+				if ( $filehash == $filerec->filehash ) $obsolete = false;
+			}
+			else {
+				$filesize = filesize($filepath);
+				if ( $filesize == $filerec->filesize ) $obsolete = false;
+			}
+		}
+		if ( $obsolete ) {
+			$now_date = date('Y-m-d H:i:s');
+			//make previous record obsolete
+			$wpdb->update($table_name1,
+				array( 'date_to' => $now_date ),
+				array( 'idlog' => $filerec->idlog ),
+				array( '%s' ),
+				array( '%d' )
+			);
+		}
+		else {
+			$filerec->userdata = null;
+			if ( $filerec->uploadid != '' ) 
+				$filerec->userdata = $wpdb->get_results('SELECT * FROM '.$table_name2.' WHERE uploadid = \''.$filerec->uploadid.'\' AND date_to = 0');
+			array_push($out, $filerec);
+		}
+	}
+	
+	return $out;
 }
 
 //********************* Shortcode Options Functions ****************************************************************************************

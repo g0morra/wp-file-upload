@@ -168,6 +168,7 @@ DEFINE("WFU_MAX_TIME_LIMIT", ini_get("max_input_time"));
 DEFINE("WFU_RESPONSE_URL", $siteurl.WPFILEUPLOAD_DIR."wfu_response.php");
 DEFINE("WFU_AJAX_URL", $siteurl."/wp-admin/admin-ajax.php");
 DEFINE("WFU_DOWNLOADER_URL", $siteurl.WPFILEUPLOAD_DIR."wfu_file_downloader.php");
+DEFINE("WFU_PHP_ARRAY_MAXLEN", '10000');
 DEFINE("WFU_PRO_VERSION_URL", 'http://www.iptanus.com/product/wordpress-file-upload-pro/');
 
 //define colors

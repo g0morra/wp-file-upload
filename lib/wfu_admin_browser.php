@@ -1,29 +1,38 @@
 <?php
 
-function wfu_browse_files($basedir) {
+function wfu_browse_files($basedir_code) {
 	$siteurl = site_url();
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
 	$user = wp_get_current_user();
 	//store session variables for use from the downloader
 	
 	if ( !current_user_can( 'manage_options' ) ) return;
-	//first decode basedir
-	$basedir = wfu_plugin_decode_string($basedir);
-	//then extract sort info from basedir
-	$ret = wfu_extract_sortdata_from_path($basedir);
-	$basedir = $ret['path'];
-	$sort = $ret['sort'];
+
+	//first decode basedir_code
+	$basedir = wfu_get_filepath_from_safe($basedir_code);
+	//clean session array holding dir and file paths if it is too big
+	if ( isset($_SESSION['wfu_filepath_safe_storage']) && count($_SESSION['wfu_filepath_safe_storage']) > WFU_PHP_ARRAY_MAXLEN ) $_SESSION['wfu_filepath_safe_storage'] = array();
+	
+	//extract sort info from basedir
+	if ( $basedir !== false ) {
+		$ret = wfu_extract_sortdata_from_path($basedir);
+		$basedir = $ret['path'];
+		$sort = $ret['sort'];
+	}
 	if ( $sort == "" ) $sort = 'name';
 	if ( substr($sort, 0, 1) == '-' ) $order = SORT_DESC;
 	else $order = SORT_ASC;
 
 	//adjust basedir to have a standard format
-	if ( $basedir != "" ) {
+	if ( $basedir !== false ) {
 		if ( substr($basedir, -1) != '/' ) $basedir .= '/';
-		if ( !file_exists($basedir) ) $basedir = "";
+		if ( substr($basedir, 0, 1) == '/' ) $basedir = substr($basedir, 1);
+		//calculate the absolute path of basedir knowing that basedir is relative to website root
+		$basedir = ABSPATH.$basedir;
+		if ( !file_exists($basedir) ) $basedir = false;
 	}
 	//set basedit to default value if empty
-	if ( $basedir == "" ) {
+	if ( $basedir === false ) {
 		$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
 		$basedir = ( isset($plugin_options['basedir']) ? $plugin_options['basedir'] : "" );
 		$temp_params = array( 'uploadpath' => $basedir, 'accessmethod' => 'normal', 'ftpinfo' => '', 'useftpdomain' => 'false' );
@@ -38,7 +47,8 @@ function wfu_browse_files($basedir) {
 	foreach ( $parts as $part ) {
 		$part = trim($part);
 		if ( $part != "" ) {
-			if ( $part == 'root' && $prev == "" ) $prev = ABSPATH;
+//			if ( $part == 'root' && $prev == "" ) $prev = ABSPATH;
+			if ( $part == 'root' && $prev == "" ) $prev = "";
 			else $prev .= $part.'/';
 			array_push($route, array( 'item' => $part, 'path' => $prev ));
 		}
@@ -57,31 +67,34 @@ function wfu_browse_files($basedir) {
 	$echo_str .= "\n\t".'<div>';
 	$echo_str .= "\n\t\t".'<span><strong>Location:</strong> </span>';
 	foreach ( $route as $item ) {
-		$echo_str .= '<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.wfu_plugin_encode_string($item['path']).'">'.$item['item'].'</a>';
+		// store dir path that we need to pass to other functions in session, instead of exposing it in the url
+		$dir_code = wfu_safe_store_filepath($item['path']);
+		$echo_str .= '<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'">'.$item['item'].'</a>';
 		$echo_str .= '<span>/</span>';
 	}
 	//file browser header
 	$echo_str .= "\n\t".'</div>';
-	$echo_str .= "\n\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=create_dir&dir='.wfu_plugin_encode_string($basedir.'[['.$sort.']]').'" class="button" title="create folder" style="margin-top:6px">Create folder</a>';
+//	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.$sort.']]');
+//	$echo_str .= "\n\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=create_dir&dir='.$dir_code.'" class="button" title="create folder" style="margin-top:6px">Create folder</a>';
 	$echo_str .= "\n\t".'<div style="margin-top:10px;">';
 	$echo_str .= "\n\t\t".'<table class="widefat">';
 	$echo_str .= "\n\t\t\t".'<thead>';
 	$echo_str .= "\n\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="30%" style="text-align:left;">';
-	$enc_dir = wfu_plugin_encode_string($basedir.'[['.( substr($sort, -4) == 'name' ? ( $order == SORT_ASC ? '-name' : 'name' ) : 'name' ).']]');
-	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$enc_dir.'">Name'.( substr($sort, -4) == 'name' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
+	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.( substr($sort, -4) == 'name' ? ( $order == SORT_ASC ? '-name' : 'name' ) : 'name' ).']]');
+	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'">Name'.( substr($sort, -4) == 'name' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="10%" style="text-align:right;">';
-	$enc_dir = wfu_plugin_encode_string($basedir.'[['.( substr($sort, -4) == 'size' ? ( $order == SORT_ASC ? '-size' : 'size' ) : 'size' ).']]');
-	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$enc_dir.'">Size'.( substr($sort, -4) == 'size' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
+	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.( substr($sort, -4) == 'size' ? ( $order == SORT_ASC ? '-size' : 'size' ) : 'size' ).']]');
+	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'">Size'.( substr($sort, -4) == 'size' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="20%" style="text-align:left;">';
-	$enc_dir = wfu_plugin_encode_string($basedir.'[['.( substr($sort, -4) == 'date' ? ( $order == SORT_ASC ? '-date' : 'date' ) : 'date' ).']]');
-	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$enc_dir.'">Date'.( substr($sort, -4) == 'date' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
+	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.( substr($sort, -4) == 'date' ? ( $order == SORT_ASC ? '-date' : 'date' ) : 'date' ).']]');
+	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'">Date'.( substr($sort, -4) == 'date' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="10%" style="text-align:center;">';
-	$enc_dir = wfu_plugin_encode_string($basedir.'[['.( substr($sort, -4) == 'user' ? ( $order == SORT_ASC ? '-user' : 'user' ) : 'user' ).']]');
-	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$enc_dir.'">Uploaded By'.( substr($sort, -4) == 'user' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
+	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.( substr($sort, -4) == 'user' ? ( $order == SORT_ASC ? '-user' : 'user' ) : 'user' ).']]');
+	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'">Uploaded By'.( substr($sort, -4) == 'user' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="30%" style="text-align:left;">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label>User Data</label>';
@@ -103,8 +116,11 @@ function wfu_browse_files($basedir) {
 					array_push($dirlist, array( 'name' => $file, 'fullpath' => $filepath, 'mdate' => $stat['mtime'] ));
 				}
 				else {
-					//find relative file record in database together with user data
-					$filerec = wfu_get_file_rec($filepath, true);
+					//find relative file record in database together with user data;
+					//if the file is php, then file record is null meaning that the file can only be viewed
+					//if file record is not found then the file can only be viewed
+					if ( preg_match("/\.php$/", $filepath) ) $filerec = null;
+					else $filerec = wfu_get_file_rec($filepath, true);
 					//find user who uploaded the file
 					$username = '';
 					if ( $filerec != null ) $username = wfu_get_username_by_id($filerec->uploaduserid);
@@ -123,10 +139,10 @@ function wfu_browse_files($basedir) {
 
 	//show subfolders first
 	if ( $reldir != "root/" ) {
-		$enc_dir = wfu_plugin_encode_string($updir);
+		$dir_code = wfu_safe_store_filepath(substr($updir, strlen(ABSPATH)));
 		$echo_str .= "\n\t\t\t\t".'<tr>';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="30%" style="padding: 5px 5px 5px 10px; text-align:left;">';
-		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$enc_dir.'" title="go up">..</a>';
+		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'" title="go up">..</a>';
 		$echo_str .= "\n\t\t\t\t\t".'</td>';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="10%" style="padding: 5px 5px 5px 10px; text-align:right;"> </td>';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="20%" style="padding: 5px 5px 5px 10px; text-align:left;"> </td>';
@@ -136,18 +152,22 @@ function wfu_browse_files($basedir) {
 	}
 	$ii = 1;
 	foreach ( $dirlist as $dir ) {
-		$enc_dir = wfu_plugin_encode_string($dir['fullpath'].'[['.$sort.']]');
+		$dir_code = wfu_safe_store_filepath(substr($dir['fullpath'], strlen(ABSPATH)).'[['.$sort.']]');
 		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_dir_actions\')){document.getElementsByName(\'wfu_dir_actions\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_dir_actions_'.$ii.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_dir_actions\')){document.getElementsByName(\'wfu_dir_actions\').item(i).style.visibility=\'hidden\';}">';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="30%" style="padding: 5px 5px 5px 10px; text-align:left;">';
-		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$enc_dir.'" title="'.$dir['name'].'">'.$dir['name'].'</a>';
+		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'" title="'.$dir['name'].'">'.$dir['name'].'</a>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_dir_actions_'.$ii.'" name="wfu_dir_actions" style="visibility:hidden;">';
-		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=rename_dir&file='.$enc_dir.'" title="Rename this folder">Rename</a>';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<span style="visibility:hidden;">';
+		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir=">Noaction</a>';
 		$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=delete_dir&file='.$enc_dir.'" title="Delete this folder">Delete</a>';
-		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
+//		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
+//		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=rename_dir&file='.$dir_code.'" title="Rename this folder">Rename</a>';
+//		$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
+//		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
+//		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
+//		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=delete_dir&file='.$dir_code.'" title="Delete this folder">Delete</a>';
+//		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
 		$echo_str .= "\n\t\t\t\t\t\t".'</div>';
 		$echo_str .= "\n\t\t\t\t\t".'</td>';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="10%" style="padding: 5px 5px 5px 10px; text-align:right;"> </td>';
@@ -159,31 +179,37 @@ function wfu_browse_files($basedir) {
 	}
 	//show contained files
 	foreach ( $filelist as $file ) {
-		$enc_file = wfu_plugin_encode_string($file['fullpath'].'[['.$sort.']]');
+		if ( $file['filedata'] != null ) $file_code = wfu_safe_store_filepath(substr($file['fullpath'], strlen(ABSPATH)).'[['.$sort.']]');
 		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_file_actions\')){document.getElementsByName(\'wfu_file_actions\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_file_actions_'.$ii.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_file_actions\')){document.getElementsByName(\'wfu_file_actions\').item(i).style.visibility=\'hidden\';}">';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="30%" style="padding: 5px 5px 5px 10px; text-align:left;">';
 		if ( $file['filedata'] != null )
-			$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_details&file='.$enc_file.'" title="View and edit file details" style="font-weight:normal;">'.$file['name'].'</a>';
+			$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_details&file='.$file_code.'" title="View and edit file details" style="font-weight:normal;">'.$file['name'].'</a>';
 		else
 			$echo_str .= "\n\t\t\t\t\t\t".'<span>'.$file['name'].'</span>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_file_actions_'.$ii.'" name="wfu_file_actions" style="visibility:hidden;">';
 		if ( $file['filedata'] != null ) {
 			$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
-			$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_details&file='.$enc_file.'" title="View and edit file details">Details</a>';
+			$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_details&file='.$file_code.'" title="View and edit file details">Details</a>';
+			$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
+			$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
+			$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
+			$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=rename_file&file='.$file_code.'" title="Rename this file">Rename</a>';
+			$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
+			$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
+			$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
+			$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=delete_file&file='.$file_code.'" title="Delete this file">Delete</a>';
+			$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
+			$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
+			$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
+			$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="javascript:wfu_download_file(\''.$file_code.'\', '.$ii.', \''.wp_create_nonce('wfu_download_file_invoker').'\');" title="Download this file">Download</a>';
+			$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
+		}
+		else {
+			$echo_str .= "\n\t\t\t\t\t\t\t".'<span style="visibility:hidden;">';
+			$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir=">Noaction</a>';
 			$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
 			$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
 		}
-		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=rename_file&file='.$enc_file.'" title="Rename this file">Rename</a>';
-		$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
-		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=delete_file&file='.$enc_file.'" title="Delete this file">Delete</a>';
-		$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
-		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="javascript:wfu_download_file(\''.wfu_plugin_encode_string($file['fullpath']).'\', '.$ii.', \''.wp_create_nonce('wfu_download_file_invoker').'\');" title="Download this file">Download</a>';
-		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
 		$echo_str .= "\n\t\t\t\t\t\t".'</div>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_file_download_container_'.$ii.'" style="display: block;"></div>';
 		$echo_str .= "\n\t\t\t\t\t".'</td>';
@@ -212,6 +238,19 @@ function wfu_browse_files($basedir) {
 	return $echo_str;
 }
 
+function wfu_current_user_owes_file($filepath) {
+	//first check if file is php; for security reasons php files cannot be owned
+	if ( preg_match("/\.php$/", $filepath) ) return false;
+	//then get file data from database, if exist
+	$filerec = wfu_get_file_rec($filepath, false);
+	if ( $filerec == null ) return false;
+
+	$user = wp_get_current_user();
+	if ( 0 == $user->ID ) return false;
+	if ( current_user_can('manage_options') ) return true;
+	return false;
+}
+
 function wfu_current_user_allowed_action($action, $filepath) {
 	//first get file data from database, if exist
 	$filerec = wfu_get_file_rec($filepath, false);
@@ -220,7 +259,7 @@ function wfu_current_user_allowed_action($action, $filepath) {
 	if ( 0 == $user->ID ) return null;
 	else $is_admin = current_user_can('manage_options');
 	if ( !$is_admin ) {
-		return null;
+			return null;
 	}
 	return $user;
 }
@@ -237,21 +276,31 @@ function wfu_current_user_allowed_action_remote($action, $filepath, $userid) {
 	return true;
 }
 
-function wfu_rename_file_prompt($file, $type, $error) {
+function wfu_rename_file_prompt($file_code, $type, $error) {
+	if ( $type == 'dir' ) return;
+	
 	$siteurl = site_url();
 
-	$dec_file = wfu_plugin_decode_string($file);
+	$is_admin = current_user_can( 'manage_options' );
+	//check if user is allowed to view file details
+	if ( !$is_admin ) {
+			return;
+	}
+	$file_code = wfu_sanitize_code($file_code);
+	$dec_file = wfu_get_filepath_from_safe($file_code);
+	if ( $dec_file === false ) return;
+	
 	//first extract sort info from dec_file
 	$ret = wfu_extract_sortdata_from_path($dec_file);
-	$dec_file = $ret['path'];
+	$dec_file = ABSPATH.$ret['path'];
 	if ( $type == 'dir' && substr($dec_file, -1) == '/' ) $dec_file = substr($dec_file, 0, -1);
 
 	//check if user is allowed to perform this action
-	if ( wfu_current_user_allowed_action('rename', $dec_file) == null ) return;
+	if ( !wfu_current_user_owes_file($dec_file) ) return;
 
 	$parts = pathinfo($dec_file);
 	$newname = $parts['basename'];
-	$enc_dir = wfu_plugin_encode_string($parts['dirname'].'[['.$ret['sort'].']]');
+	$dir_code = wfu_safe_store_filepath(substr($parts['dirname'], strlen(ABSPATH)).'[['.$ret['sort'].']]');
 
 	$echo_str = "\n".'<div class="wrap">';
 	if ( $error ) {
@@ -261,15 +310,15 @@ function wfu_rename_file_prompt($file, $type, $error) {
 		$echo_str .= "\n\t".'</div>';
 	}
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
-	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser&dir='.$enc_dir.'" class="button" title="go back">Go back</a>';
+	if ( $is_admin ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser&dir='.$dir_code.'" class="button" title="go back">Go back</a>';
 	$echo_str .= "\n\t".'</div>';
 	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px;">Rename '.( $type == 'dir' ? 'Folder' : 'File' ).'</h2>';
-	$echo_str .= "\n\t".'<form enctype="multipart/form-data" name="renamefile" id="renamefile" method="post" action="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload" class="validate">';
+	if ( $is_admin ) $echo_str .= "\n\t".'<form enctype="multipart/form-data" name="renamefile" id="renamefile" method="post" action="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload" class="validate">';
 	$echo_str .= "\n\t\t".'<input type="hidden" name="action" value="rename'.( $type == 'dir' ? 'dir' : 'file' ).'">';
-	$echo_str .= "\n\t\t".'<input type="hidden" name="dir" value="'.$enc_dir.'">';
-	$echo_str .= "\n\t\t".'<input type="hidden" name="file" value="'.$file.'">';
+	$echo_str .= "\n\t\t".'<input type="hidden" name="dir" value="'.$dir_code.'">';
+	$echo_str .= "\n\t\t".'<input type="hidden" name="file" value="'.$file_code.'">';
 	if ( $type == 'dir' ) $echo_str .= "\n\t\t".'<label>Enter new name for folder <strong>'.$dec_file.'</strong></label><br/>';
-	else $echo_str .= "\n\t\t".'<label>Enter new filename for file <strong>'.$dec_file.'</strong></label><br/>';
+	elseif ( $is_admin ) $echo_str .= "\n\t\t".'<label>Enter new filename for file <strong>'.$dec_file.'</strong></label><br/>';
 	$echo_str .= "\n\t\t".'<input name="wfu_newname" id="wfu_newname" type="text" value="'.$newname.'" style="width:50%;" />';
 	$echo_str .= "\n\t\t".'<p class="submit">';
 	$echo_str .= "\n\t\t\t".'<input type="submit" class="button-primary" name="submit" value="Rename">';
@@ -280,15 +329,25 @@ function wfu_rename_file_prompt($file, $type, $error) {
 	return $echo_str;
 }
 
-function wfu_rename_file($file, $type) {
-	$dec_file = wfu_plugin_decode_string($file);
-	$dec_file = wfu_flatten_path($dec_file);
+function wfu_rename_file($file_code, $type) {
+	if ( $type == 'dir' ) return;
+	
+	$user = wp_get_current_user();
+	$is_admin = current_user_can( 'manage_options' );
+	//check if user is allowed to view file details
+	if ( !$is_admin ) {
+			return;
+	}
+	$file_code = wfu_sanitize_code($file_code);
+	$dec_file = wfu_get_filepath_from_safe($file_code);
+	if ( $dec_file === false ) return;
+	
+	$dec_file = ABSPATH.wfu_flatten_path($dec_file);
 	if ( $type == 'dir' && substr($dec_file, -1) == '/' ) $dec_file = substr($dec_file, 0, -1);
-	if ( !file_exists($dec_file) ) return wfu_browse_files();
+	if ( !file_exists($dec_file) ) return;
 
 	//check if user is allowed to perform this action
-	$user = wfu_current_user_allowed_action('rename', $dec_file);
-	if ( $user == null ) return;
+	if ( !wfu_current_user_owes_file($dec_file) ) return;
 
 	$parts = pathinfo($dec_file);
 	$error = "";
@@ -298,7 +357,9 @@ function wfu_rename_file($file, $type) {
 			$relativepath = str_replace(ABSPATH, '', $new_file);
 			if ( substr($relativepath, 0, 1) != '/' ) $relativepath = '/'.$relativepath;
 			if ( $_POST['wfu_newname'] == "" ) $error = 'Error: New '.( $type == 'dir' ? 'folder ' : 'file' ).'name cannot be empty!';
-			elseif ( preg_match("/[^A-Za-z0-9.#\-$]/", $_POST['wfu_newname']) ) $error = 'Error: name contains invalid characters! Please correct.';
+			elseif ( preg_match("/[^A-Za-z0-9_.#\-$]/", $_POST['wfu_newname']) ) $error = 'Error: name contained invalid characters that were stripped off! Please try again.';
+			elseif ( substr($_POST['wfu_newname'], -1 - strlen($parts['extension'])) != '.'.$parts['extension'] ) $error = 'Error: new and old file name extensions must be identical! Please correct.';
+			elseif ( wfu_file_extension_restricted($_POST['wfu_newname']) ) $error = 'Error: the new file name has an extension that is forbidden for security reasons. Please correct.';
 			elseif ( file_exists($new_file) ) $error = 'Error: The '.( $type == 'dir' ? 'folder' : 'file' ).' <strong>'.$_POST['wfu_newname'].'</strong> already exists! Please choose another one.';
 			else {
 				//pre-log rename action
@@ -312,35 +373,45 @@ function wfu_rename_file($file, $type) {
 	}
 	if ( $error != "" ) {
 		$_SESSION['wfu_rename_file_error'] = $error;
-		$_SESSION['wfu_rename_file']['newname'] = $_POST['wfu_newname'];
+		$_SESSION['wfu_rename_file']['newname'] = preg_replace("/[^A-Za-z0-9_.#\-$]/", "", $_POST['wfu_newname']);
 	}
 	return ( $error == "" );
 }
 
-function wfu_delete_file_prompt($file, $type) {
+function wfu_delete_file_prompt($file_code, $type) {
+	if ( $type == 'dir' ) return;
+	
 	$siteurl = site_url();
 
-	$dec_file = wfu_plugin_decode_string($file);
+	$is_admin = current_user_can( 'manage_options' );
+	//check if user is allowed to view file details
+	if ( !$is_admin ) {
+			return;
+	}
+	$file_code = wfu_sanitize_code($file_code);
+	$dec_file = wfu_get_filepath_from_safe($file_code);
+	if ( $dec_file === false ) return;
+
 	//first extract sort info from dec_file
 	$ret = wfu_extract_sortdata_from_path($dec_file);
-	$dec_file = $ret['path'];
+	$dec_file = ABSPATH.$ret['path'];
 	if ( $type == 'dir' && substr($dec_file, -1) == '/' ) $dec_file = substr($dec_file, 0, -1);
 
 	//check if user is allowed to perform this action
-	if ( wfu_current_user_allowed_action('delete', $dec_file) == null ) return;
+	if ( !wfu_current_user_owes_file($dec_file) ) return;
 
 	$parts = pathinfo($dec_file);
-	$enc_dir = wfu_plugin_encode_string($parts['dirname'].'[['.$ret['sort'].']]');
+	$dir_code = wfu_safe_store_filepath(substr($parts['dirname'], strlen(ABSPATH)).'[['.$ret['sort'].']]');
 
 	$echo_str = "\n".'<div class="wrap">';
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
-	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser&dir='.$enc_dir.'" class="button" title="go back">Go back</a>';
+	if ( $is_admin ) $echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser&dir='.$dir_code.'" class="button" title="go back">Go back</a>';
 	$echo_str .= "\n\t".'</div>';
 	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px;">Delete '.( $type == 'dir' ? 'Folder' : 'File' ).'</h2>';
-	$echo_str .= "\n\t".'<form enctype="multipart/form-data" name="deletefile" id="deletefile" method="post" action="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload" class="validate">';
+	if ( $is_admin ) $echo_str .= "\n\t".'<form enctype="multipart/form-data" name="deletefile" id="deletefile" method="post" action="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload" class="validate">';
 	$echo_str .= "\n\t\t".'<input type="hidden" name="action" value="delete'.( $type == 'dir' ? 'dir' : 'file' ).'">';
-	$echo_str .= "\n\t\t".'<input type="hidden" name="dir" value="'.$enc_dir.'">';
-	$echo_str .= "\n\t\t".'<input type="hidden" name="file" value="'.$file.'">';
+	$echo_str .= "\n\t\t".'<input type="hidden" name="dir" value="'.$dir_code.'">';
+	$echo_str .= "\n\t\t".'<input type="hidden" name="file" value="'.$file_code.'">';
 	$echo_str .= "\n\t\t".'<label>Are you sure that you want to delete '.( $type == 'dir' ? 'folder' : 'file' ).' <strong>'.$parts['basename'].'</strong>?</label><br/>';
 	$echo_str .= "\n\t\t".'<p class="submit">';
 	$echo_str .= "\n\t\t\t".'<input type="submit" class="button-primary" name="submit" value="Delete">';
@@ -351,14 +422,24 @@ function wfu_delete_file_prompt($file, $type) {
 	return $echo_str;
 }
 
-function wfu_delete_file($file, $type) {
-	$dec_file = wfu_plugin_decode_string($file);
-	$dec_file = wfu_flatten_path($dec_file);
+function wfu_delete_file($file_code, $type) {
+	if ( $type == 'dir' ) return;
+	
+	$user = wp_get_current_user();
+	$is_admin = current_user_can( 'manage_options' );
+	//check if user is allowed to view file details
+	if ( !$is_admin ) {
+			return;
+	}
+	$file_code = wfu_sanitize_code($file_code);
+	$dec_file = wfu_get_filepath_from_safe($file_code);
+	if ( $dec_file === false ) return;
+
+	$dec_file = ABSPATH.wfu_flatten_path($dec_file);
 	if ( $type == 'dir' && substr($dec_file, -1) == '/' ) $dec_file = substr($dec_file, 0, -1);
 
 	//check if user is allowed to perform this action
-	$user = wfu_current_user_allowed_action('delete', $dec_file);
-	if ( $user == null ) return;
+	if ( !wfu_current_user_owes_file($dec_file) ) return;
 
 	if ( isset($_POST['submit']) ) {
 		if ( $_POST['submit'] == "Delete" ) {
@@ -373,15 +454,20 @@ function wfu_delete_file($file, $type) {
 	return true;
 }
 
-function wfu_create_dir_prompt($dir, $error) {
+function wfu_create_dir_prompt($dir_code, $error) {
+	return;
+	
 	$siteurl = site_url();
 
 	if ( !current_user_can( 'manage_options' ) ) return;
 
-	$dec_dir = wfu_plugin_decode_string($dir);
+	$dir_code = wfu_sanitize_code($dir_code);
+	$dec_dir = wfu_get_filepath_from_safe($dir_code);
+	if ( $dec_dir === false ) return;
+	
 	//first extract sort info from dec_dir
 	$ret = wfu_extract_sortdata_from_path($dec_dir);
-	$dec_dir = $ret['path'];
+	$dec_dir = ABSPATH.$ret['path'];
 	if ( substr($dec_dir, -1) != '/' ) $dec_dir .= '/';
 	$newname = '';
 
@@ -393,12 +479,12 @@ function wfu_create_dir_prompt($dir, $error) {
 		$echo_str .= "\n\t".'</div>';
 	}
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
-	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser&dir='.$dir.'" class="button" title="go back">Go back</a>';
+	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser&dir='.$dir_code.'" class="button" title="go back">Go back</a>';
 	$echo_str .= "\n\t".'</div>';
 	$echo_str .= "\n\t".'<h2 style="margin-bottom: 10px;">Create Folder</h2>';
 	$echo_str .= "\n\t".'<form enctype="multipart/form-data" name="createdir" id="createdir" method="post" action="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload" class="validate">';
 	$echo_str .= "\n\t\t".'<input type="hidden" name="action" value="createdir">';
-	$echo_str .= "\n\t\t".'<input type="hidden" name="dir" value="'.$dir.'">';
+	$echo_str .= "\n\t\t".'<input type="hidden" name="dir" value="'.$dir_code.'">';
 	$echo_str .= "\n\t\t".'<label>Enter the name of the new folder inside <strong>'.$dec_dir.'</strong></label><br/>';
 	$echo_str .= "\n\t\t".'<input name="wfu_newname" id="wfu_newname" type="text" value="'.$newname.'" style="width:50%;" />';
 	$echo_str .= "\n\t\t".'<p class="submit">';
@@ -410,54 +496,67 @@ function wfu_create_dir_prompt($dir, $error) {
 	return $echo_str;
 }
 
-function wfu_create_dir($dir) {
+function wfu_create_dir($dir_code) {
+	return;
+	
 	if ( !current_user_can( 'manage_options' ) ) return;
 
-	$dec_dir = wfu_plugin_decode_string($dir);
-	$dec_dir = wfu_flatten_path($dec_dir);
+	$dir_code = wfu_sanitize_code($dir_code);
+	$dec_dir = wfu_get_filepath_from_safe($dir_code);
+	if ( $dec_dir === false ) return;
+
+	$dec_dir = ABSPATH.wfu_flatten_path($dec_dir);
 	if ( substr($dec_dir, -1) != '/' ) $dec_dir .= '/';
-	if ( !file_exists($dec_dir) ) return wfu_browse_files();
+	if ( !file_exists($dec_dir) ) return;
 	$error = "";
 	if ( isset($_POST['wfu_newname'])  && isset($_POST['submit']) ) {
 		if ( $_POST['submit'] == "Create" ) {
 			$new_dir = $dec_dir.$_POST['wfu_newname'];
 			if ( $_POST['wfu_newname'] == "" ) $error = 'Error: New folder name cannot be empty!';
-			elseif ( preg_match("/[^A-Za-z0-9.#\-$]/", $_POST['wfu_newname']) ) $error = 'Error: name contains invalid characters! Please correct.';
+			elseif ( preg_match("/[^A-Za-z0-9_.#\-$]/", $_POST['wfu_newname']) ) $error = 'Error: name contained invalid characters that were stripped off! Please try again.';
 			elseif ( file_exists($new_dir) ) $error = 'Error: The folder <strong>'.$_POST['wfu_newname'].'</strong> already exists! Please choose another one.';
 			elseif ( mkdir($new_dir) == false ) $error = 'Error: Creation of folder <strong>'.$_POST['wfu_newname'].'</strong> failed!';
 		}
 	}
 	if ( $error != "" ) {
 		$_SESSION['wfu_create_dir_error'] = $error;
-		$_SESSION['wfu_create_dir']['newname'] = $_POST['wfu_newname'];
+		$_SESSION['wfu_create_dir']['newname'] = preg_replace("/[^A-Za-z0-9_.#\-$]/", "", $_POST['wfu_newname']);
 	}
 	return ( $error == "" );
 }
 
-function wfu_file_details($file, $errorstatus) {
+function wfu_file_details($file_code, $errorstatus) {
 	global $wpdb;
 	$table_name1 = $wpdb->prefix . "wfu_log";
 	$siteurl = site_url();
 
+	$user = wp_get_current_user();
+	$is_admin = current_user_can( 'manage_options' );
+	//check if user is allowed to view file details
+	if ( !$is_admin ) {
+			return;
+	}
+	$file_code = wfu_sanitize_code($file_code);
+	$dec_file = wfu_get_filepath_from_safe($file_code);
+	if ( $dec_file === false ) return;
+
 	//extract file browser data from $file variable
-	$dec_file = wfu_plugin_decode_string($file);
 	$ret = wfu_extract_sortdata_from_path($dec_file);
-	$filepath = $ret['path'];
+	$filepath = ABSPATH.$ret['path'];
+	
+	//check if user is allowed to perform this action
+	if ( !wfu_current_user_owes_file($filepath) ) return;
 
 	//get file data from database with user data
 	$filedata = wfu_get_file_rec($filepath, true);
 	if ( $filedata == null ) return;
-
-	//check if user is allowed to perform this action
-	$user = wfu_current_user_allowed_action('details', $filepath);
-	if ( $user == null ) return;
 
 	//get the username of the uploader
 	$uploadername = wfu_get_username_by_id($filedata->uploaduserid);
 
 	//extract sort info and construct contained dir
 	$parts = pathinfo($filepath);
-	$enc_dir = wfu_plugin_encode_string($parts['dirname'].'[['.$ret['sort'].']]');
+	$dir_code = wfu_safe_store_filepath(substr($parts['dirname'], strlen(ABSPATH)).'[['.$ret['sort'].']]');
 
 	$stat = stat($filepath);
 
@@ -470,30 +569,34 @@ function wfu_file_details($file, $errorstatus) {
 	//show file detais
 	$echo_str .= "\n\t".'<h2>Detais of File: '.$parts['basename'].'</h2>';
 	$echo_str .= "\n\t".'<div style="margin-top:10px;">';
-	$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser&dir='.$enc_dir.'" class="button" title="go back">Go back</a>';
-	$echo_str .= "\n\t\t".'<form enctype="multipart/form-data" name="editfiledetails" id="editfiledetails" method="post" action="/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=edit_filedetails" class="validate">';
+	if ( $is_admin ) {
+		$echo_str .= "\n\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=file_browser&dir='.$dir_code.'" class="button" title="go back">Go back</a>';
+		$echo_str .= "\n\t\t".'<form enctype="multipart/form-data" name="editfiledetails" id="editfiledetails" method="post" action="/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=edit_filedetails" class="validate">';
+	}
 	$echo_str .= "\n\t\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">Upload Details</h3>';
 	$echo_str .= "\n\t\t\t".'<input type="hidden" name="action" value="edit_filedetails" />';
-	$echo_str .= "\n\t\t\t".'<input type="hidden" name="dir" value="'.$enc_dir.'">';
-	$echo_str .= "\n\t\t\t".'<input type="hidden" name="file" value="'.$file.'">';
+	$echo_str .= "\n\t\t\t".'<input type="hidden" name="dir" value="'.$dir_code.'">';
+	$echo_str .= "\n\t\t\t".'<input type="hidden" name="file" value="'.$file_code.'">';
 	$echo_str .= "\n\t\t\t".'<table class="form-table">';
 	$echo_str .= "\n\t\t\t\t".'<tbody>';
-	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
-	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Full Path</label>';
-	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.$filepath.'" readonly="readonly" />';
-	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
-	$echo_str .= "\n\t\t\t\t\t".'</tr>';
-	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
-	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Uploaded From User</label>';
-	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.$uploadername.'" readonly="readonly" style="width:auto;" />';
-	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
-	$echo_str .= "\n\t\t\t\t\t".'</tr>';
+	if ( $is_admin ) {
+		$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+		$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Full Path</label>';
+		$echo_str .= "\n\t\t\t\t\t\t".'</th>';
+		$echo_str .= "\n\t\t\t\t\t\t".'<td>';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.$filepath.'" readonly="readonly" />';
+		$echo_str .= "\n\t\t\t\t\t\t".'</td>';
+		$echo_str .= "\n\t\t\t\t\t".'</tr>';
+		$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+		$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Uploaded From User</label>';
+		$echo_str .= "\n\t\t\t\t\t\t".'</th>';
+		$echo_str .= "\n\t\t\t\t\t\t".'<td>';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.$uploadername.'" readonly="readonly" style="width:auto;" />';
+		$echo_str .= "\n\t\t\t\t\t\t".'</td>';
+		$echo_str .= "\n\t\t\t\t\t".'</tr>';
+	}
 	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<label>File Size</label>';
@@ -518,59 +621,63 @@ function wfu_file_details($file, $errorstatus) {
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.get_the_title($filedata->pageid).' ('.$filedata->pageid.')'.'" readonly="readonly" style="width:50%;" />';
 	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'</tr>';
-	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
-	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Upload Plugin ID</label>';
-	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.$filedata->sid.'" readonly="readonly" style="width:auto;" />';
-	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
-	$echo_str .= "\n\t\t\t\t\t".'</tr>';
+	if ( $is_admin ) {
+		$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+		$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Upload Plugin ID</label>';
+		$echo_str .= "\n\t\t\t\t\t\t".'</th>';
+		$echo_str .= "\n\t\t\t\t\t\t".'<td>';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.$filedata->sid.'" readonly="readonly" style="width:auto;" />';
+		$echo_str .= "\n\t\t\t\t\t\t".'</td>';
+		$echo_str .= "\n\t\t\t\t\t".'</tr>';
+	}
 	$echo_str .= "\n\t\t\t\t".'</tbody>';
 	$echo_str .= "\n\t\t\t".'</table>';
-	//show history details
-	$echo_str .= "\n\t\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">File History</h3>';
-	$echo_str .= "\n\t\t\t".'<table class="form-table">';
-	$echo_str .= "\n\t\t\t\t".'<tbody>';
-	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
-	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<label></label>';
-	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
-	//read all linked records
-	$filerecs = array();
-	array_push($filerecs, $filedata);
-	$currec = $filedata;
-	while ( $currec->linkedto > 0 ) {
-		$currec = $wpdb->get_row('SELECT * FROM '.$table_name1.' WHERE idlog = '.$currec->linkedto);
-		if ( $currec != null ) array_push($filerecs, $currec);
-		else break;
+	if ( $is_admin ) {
+		//show history details
+		$echo_str .= "\n\t\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">File History</h3>';
+		$echo_str .= "\n\t\t\t".'<table class="form-table">';
+		$echo_str .= "\n\t\t\t\t".'<tbody>';
+		$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+		$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<label></label>';
+		$echo_str .= "\n\t\t\t\t\t\t".'</th>';
+		$echo_str .= "\n\t\t\t\t\t\t".'<td>';
+		//read all linked records
+		$filerecs = array();
+		array_push($filerecs, $filedata);
+		$currec = $filedata;
+		while ( $currec->linkedto > 0 ) {
+			$currec = $wpdb->get_row('SELECT * FROM '.$table_name1.' WHERE idlog = '.$currec->linkedto);
+			if ( $currec != null ) array_push($filerecs, $currec);
+			else break;
+		}
+		//construct report from db records
+		$rep = '';
+		foreach ( $filerecs as $filerec ) {
+			$username = wfu_get_username_by_id($filerec->userid);
+			$fileparts = pathinfo($filerec->filepath);
+			if ( $rep != '' ) $rep .= "<br />";
+			$rep .= '<strong>['.$filerec->date_from.']</strong> ';
+			if ( $filerec->action == 'upload' )
+				$rep .= 'File uploaded with name <strong>'.$fileparts['basename'].'</strong> by user <strong>'.$username.'</strong>';
+			elseif ( $filerec->action == 'download' )
+				$rep .= 'File downloaded by user <strong>'.$username.'</strong>';
+			elseif ( $filerec->action == 'rename' )
+				$rep .= 'File renamed to <strong>'.$fileparts['basename'].'</strong> by user <strong>'.$username.'</strong>';
+			elseif ( $filerec->action == 'delete' )
+				$rep .= 'File deleted by user <strong>'.$username.'</strong>';
+			elseif ( $filerec->action == 'modify' )
+				$rep .= 'File userdata modified by user <strong>'.$username.'</strong>';
+		}
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<div style="border:1px solid #dfdfdf; border-radius:3px; width:50%; overflow:scroll; padding:6px; height:100px; background-color:#eee;">';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'<span style="white-space:nowrap;">'.$rep.'</span>';
+		$echo_str .= "\n\t\t\t\t\t\t\t".'</div>';
+		$echo_str .= "\n\t\t\t\t\t\t".'</td>';
+		$echo_str .= "\n\t\t\t\t\t".'</tr>';
+		$echo_str .= "\n\t\t\t\t".'</tbody>';
+		$echo_str .= "\n\t\t\t".'</table>';
 	}
-	//construct report from db records
-	$rep = '';
-	foreach ( $filerecs as $filerec ) {
-		$username = wfu_get_username_by_id($filerec->userid);
-		$fileparts = pathinfo($filerec->filepath);
-		if ( $rep != '' ) $rep .= "<br />";
-		$rep .= '<strong>['.$filerec->date_from.']</strong> ';
-		if ( $filerec->action == 'upload' )
-			$rep .= 'File uploaded with name <strong>'.$fileparts['basename'].'</strong> by user <strong>'.$username.'</strong>';
-		elseif ( $filerec->action == 'download' )
-			$rep .= 'File downloaded by user <strong>'.$username.'</strong>';
-		elseif ( $filerec->action == 'rename' )
-			$rep .= 'File renamed to <strong>'.$fileparts['basename'].'</strong> by user <strong>'.$username.'</strong>';
-		elseif ( $filerec->action == 'delete' )
-			$rep .= 'File deleted by user <strong>'.$username.'</strong>';
-		elseif ( $filerec->action == 'modify' )
-			$rep .= 'File userdata modified by user <strong>'.$username.'</strong>';
-	}
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<div style="border:1px solid #dfdfdf; border-radius:3px; width:50%; overflow:scroll; padding:6px; height:100px; background-color:#eee;">';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<span style="white-space:nowrap;">'.$rep.'</span>';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'</div>';
-	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
-	$echo_str .= "\n\t\t\t\t\t".'</tr>';
-	$echo_str .= "\n\t\t\t\t".'</tbody>';
-	$echo_str .= "\n\t\t\t".'</table>';
 
 	$echo_str .= "\n\t\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">User Data Details</h3>';
 	$echo_str .= "\n\t\t\t".'<table class="form-table">';
@@ -582,7 +689,7 @@ function wfu_file_details($file, $errorstatus) {
 			$echo_str .= "\n\t\t\t\t\t\t\t".'<label>'.$userdata->property.'</label>';
 			$echo_str .= "\n\t\t\t\t\t\t".'</th>';
 			$echo_str .= "\n\t\t\t\t\t\t".'<td>';
-			$echo_str .= "\n\t\t\t\t\t\t\t".'<input id="wfu_filedetails_userdata_value_'.$userdata->propkey.'" name="wfu_filedetails_userdata" type="text" value="'.$userdata->propvalue.'" />';
+			$echo_str .= "\n\t\t\t\t\t\t\t".'<input id="wfu_filedetails_userdata_value_'.$userdata->propkey.'" name="wfu_filedetails_userdata" type="text"'.( $is_admin ? '' : ' readonly="readonly"' ).' value="'.$userdata->propvalue.'" />';
 			$echo_str .= "\n\t\t\t\t\t\t\t".'<input id="wfu_filedetails_userdata_default_'.$userdata->propkey.'" type="hidden" value="'.$userdata->propvalue.'" />';
 			$echo_str .= "\n\t\t\t\t\t\t\t".'<input id="wfu_filedetails_userdata_'.$userdata->propkey.'" name="wfu_filedetails_userdata_'.$userdata->propkey.'" type="hidden" value="'.$userdata->propvalue.'" />';
 			$echo_str .= "\n\t\t\t\t\t\t".'</td>';
@@ -599,9 +706,11 @@ function wfu_file_details($file, $errorstatus) {
 	}
 	$echo_str .= "\n\t\t\t\t".'</tbody>';
 	$echo_str .= "\n\t\t\t".'</table>';
-	$echo_str .= "\n\t\t\t".'<p class="submit">';
-	$echo_str .= "\n\t\t\t\t".'<input id="dp_filedetails_submit_fields" type="submit" class="button-primary" name="submit" value="Update" disabled="disabled" />';
-	$echo_str .= "\n\t\t\t".'</p>';
+	if ( $is_admin ) {
+		$echo_str .= "\n\t\t\t".'<p class="submit">';
+		$echo_str .= "\n\t\t\t\t".'<input id="dp_filedetails_submit_fields" type="submit" class="button-primary" name="submit" value="Update" disabled="disabled" />';
+		$echo_str .= "\n\t\t\t".'</p>';
+	}
 	$echo_str .= "\n\t\t".'</form>';
 	$echo_str .= "\n\t".'</div>';
 	$handler = 'function() { wfu_Attach_FileDetails_Admin_Events(); }';
@@ -611,16 +720,24 @@ function wfu_file_details($file, $errorstatus) {
 	return $echo_str;
 }
 
-function wfu_edit_filedetails($file) {
+function wfu_edit_filedetails($file_code) {
 	global $wpdb;
 	$table_name2 = $wpdb->prefix . "wfu_userdata";
 
-	$dec_file = wfu_plugin_decode_string($file);
-	$dec_file = wfu_flatten_path($dec_file);
+	$user = wp_get_current_user();
+	$is_admin = current_user_can( 'manage_options' );
+	//check if user is allowed to view file details
+	if ( !$is_admin ) {
+			return;
+	}
+	$file_code = wfu_sanitize_code($file_code);
+	$dec_file = wfu_get_filepath_from_safe($file_code);
+	if ( $dec_file === false ) return;
+
+	$dec_file = ABSPATH.wfu_flatten_path($dec_file);
 
 	//check if user is allowed to perform this action
-	$user = wfu_current_user_allowed_action('modify', $dec_file);
-	if ( $user == null ) return;
+	if ( !wfu_current_user_owes_file($dec_file) ) return;
 
 	//get file data from database with user data
 	$filedata = wfu_get_file_rec($dec_file, true);

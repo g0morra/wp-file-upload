@@ -37,7 +37,7 @@ The characteristics of the plugin are:
 * It supports filters and actions before and after file upload, so that programmers can extend the plugin and make it cooperate with other plugins.
 * It contains a visual editor for customizing the plugin easily and without any knowledge of shortcodes or programming
 * It supports logging of upload events or management of files, which can be viewed by admins through the Dashboard.
-* It includes a file browser in the Dashboard, from where admins can view the uploaded file and manage them.
+* It includes a file browser in the Dashboard, from where admins can view the uploaded files and manage them.
 
 The plugin is translated in the following languages:
 
@@ -126,6 +126,13 @@ In the free version the upload will fail. However in the Pro version the upload 
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 3.0.0 =
+* major version number has advanced because an important feature has been added in Pro version (logged users can browse their uploaded files through their Dashboard)
+* several code modifications in file browser to make the plugin more secure against hacking, some functionalities in file browser have slightly changed
+* new file browser cannot edit files that were not uploaded with the plugin and it cannot edit or create folders
+* upload path cannot be outside the wordpress installation root
+* files with extension php, js, pht, php3, php4, php5, phtml, htm, html and htaccess are forbidden for security reasons
 
 = 2.7.6 =
 * added functionality in Dashboard to add the plugin to a page automatically
@@ -436,6 +443,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 3.0.0 =
+Upgrade to increase protection against hacking.
 
 = 2.7.6 =
 Upgrade to add some new features and address some bugs.

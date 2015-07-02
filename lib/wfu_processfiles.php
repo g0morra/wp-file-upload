@@ -230,8 +230,8 @@ function wfu_process_files($params, $method) {
 					}
 				}
 
-				/* File name control, reject files with .php and .js extension for security reasons */
-				if ( strtolower(substr($only_filename, -4)) != ".php" && strtolower(substr($only_filename, -3)) != ".js" )
+				/* File name control, reject files with .php, .js (and other) extensions for security reasons */
+				if ( !wfu_file_extension_restricted(strtolower($only_filename)) )
 					foreach ($allowed_patterns as $allowed_pattern) {
 						if ( wfu_upload_plugin_wildcard_match( $allowed_pattern, $only_filename) ) {
 							$allowed_file_ok = true;

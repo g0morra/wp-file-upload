@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wordpress File Upload\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-05 18:46+0200\n"
-"PO-Revision-Date: 2015-06-05 18:46+0200\n"
+"POT-Creation-Date: 2015-07-01 20:13+0200\n"
+"PO-Revision-Date: 2015-07-01 20:13+0200\n"
 "Last-Translator: Borisa Djuraskovic <borisad@webhostinghub.com>\n"
 "Language-Team: Iptanus Team <info@iptanus.com>\n"
 "Language: sr\n"
@@ -414,13 +414,19 @@ msgstr "Datoteka testfile 2 poruka administratora"
 
 #: lib/wfu_constants.php:131
 msgid ""
+"Failed to add the shortcode to the page/post. Please try again. If the "
+"message persists, contact administrator."
+msgstr ""
+
+#: lib/wfu_constants.php:132
+msgid ""
 "Failed to edit the shortcode because the contents of the page changed. Try "
 "again to edit the shortcode."
 msgstr ""
 "Neuspešno uređivanje shortcode-a zbog izmene sadržaja stranice. Pokušajte "
 "ponovo da uredite shortcode."
 
-#: lib/wfu_constants.php:132
+#: lib/wfu_constants.php:133
 msgid ""
 "Failed to delete the shortcode because the contents of the page changed. Try "
 "again to delete it."
@@ -428,7 +434,7 @@ msgstr ""
 "Neuspešno brisanje shortcode-a zbog izmene sadržaja stranice. Pokušajte "
 "ponovo da ga obrišete."
 
-#: lib/wfu_constants.php:133
+#: lib/wfu_constants.php:134
 msgid ""
 "The page containing the shortcode has been modified and it is no longer "
 "valid. Please go back to reload the shortcode."
@@ -436,7 +442,7 @@ msgstr ""
 "Stranica koja sadrži shortcode je izmenjena i više nije validna. Vratite se "
 "da ponovo učitate shortcode."
 
-#: lib/wfu_constants.php:134
+#: lib/wfu_constants.php:135
 msgid ""
 "Failed to update the shortcode because the contents of the page changed. Go "
 "back to reload the shortcode."
@@ -444,7 +450,7 @@ msgstr ""
 "Neuspešno ažuriranje shortcode-a zbog izmene sadržaja stranice. Vratite se "
 "da ponovo učitate shortcode."
 
-#: lib/wfu_constants.php:135
+#: lib/wfu_constants.php:136
 msgid ""
 "Failed to update the shortcode. Please try again. If the problem persists, "
 "go back and reload the shortcode."
@@ -452,7 +458,7 @@ msgstr ""
 "Neuspešno ažuriranje shortcode-a. Pokušajte ponovo. Ako se problem ne reši, "
 "vratite se i opet učitajte shortcode."
 
-#: lib/wfu_constants.php:138
+#: lib/wfu_constants.php:139
 msgid ""
 "Insert variable %userid% inside text. It will be replaced by the id of the "
 "current user."
@@ -460,7 +466,7 @@ msgstr ""
 "Unesite promenljivu %idkorisnika% u tekst. Biće zamenjena id-jem tekućeg "
 "korisnika."
 
-#: lib/wfu_constants.php:139
+#: lib/wfu_constants.php:140
 msgid ""
 "Insert variable %username% inside text. It will be replaced by the username "
 "of the current user."
@@ -468,7 +474,7 @@ msgstr ""
 "Unesite promenljivu %korisničko ime% u tekst. Biće zamenjena korisničkim "
 "imenom tekućeg korisnika."
 
-#: lib/wfu_constants.php:140
+#: lib/wfu_constants.php:141
 msgid ""
 "Insert variable %useremail% inside text. It will be replaced by the email of "
 "the current user."
@@ -476,7 +482,7 @@ msgstr ""
 "Unesite promenljivu %mailkorisnika% u tekst. Biće zamenjena mail-om tekućeg "
 "korisnika."
 
-#: lib/wfu_constants.php:141
+#: lib/wfu_constants.php:142
 msgid ""
 "Insert variable %filename% inside text. It will be replaced by the filename "
 "of the uploaded file."
@@ -484,7 +490,7 @@ msgstr ""
 "Unesite promenljivu %nazivdatoteke% u tekst. Biće zamenjena nazivom "
 "otpremljene datoteke."
 
-#: lib/wfu_constants.php:142
+#: lib/wfu_constants.php:143
 msgid ""
 "Insert variable %filepath% inside text. It will be replaced by the full "
 "filepath of the uploaded file."
@@ -492,7 +498,7 @@ msgstr ""
 "Unesite promenljivu %putanjadatoteke% u tekst. Biće zamenjena celom putanjom "
 "otpremljene datoteke."
 
-#: lib/wfu_constants.php:143
+#: lib/wfu_constants.php:144
 msgid ""
 "Insert variable %blogid% inside text. It will be replaced by the blog id of "
 "the website."
@@ -500,7 +506,7 @@ msgstr ""
 "Unesite promenljivu %idbloga% u tekst. Biće zamenjena id-jem bloga web site-"
 "a."
 
-#: lib/wfu_constants.php:144
+#: lib/wfu_constants.php:145
 msgid ""
 "Insert variable %pageid% inside text. It will be replaced by the id of the "
 "current page."
@@ -508,7 +514,7 @@ msgstr ""
 "Unesite promenljivu %idstranice% u tekst. Biće zamenjena id-jem tekuće "
 "stranice."
 
-#: lib/wfu_constants.php:145
+#: lib/wfu_constants.php:146
 msgid ""
 "Insert variable %pagetitle% inside text. It will be replaced by the title of "
 "the current page."
@@ -516,7 +522,7 @@ msgstr ""
 "Unesite promenljivu %naslovstranice% u tekst. Biće zamenjena naslovom tekuće "
 "stranice."
 
-#: lib/wfu_constants.php:146
+#: lib/wfu_constants.php:147
 msgid ""
 "Insert variable %userdataXXX% inside text. Select the user field from the "
 "drop-down list. It will be replaced by the value that the user entered in "
@@ -525,70 +531,174 @@ msgstr ""
 "Unesite promenljivu %korisnički podaciXXX%. Odaberite korisničko polje iz "
 "opadajuće liste. Biće zamenjena vrednošću koju je korisnik uneo u ovo polje."
 
-#: lib/wfu_constants.php:147
+#: lib/wfu_constants.php:148
 msgid "Insert variable %n% inside text to denote a line change."
 msgstr "Unesite promenljivu %n% u tekst kako biste označili promenu reda."
 
-#: lib/wfu_constants.php:150
+#: lib/wfu_constants.php:151
 msgid "Upload in progress"
 msgstr "Otpremanje u toku"
 
-#: lib/wfu_constants.php:151
+#: lib/wfu_constants.php:152
 msgid "Upload in progress with warnings!"
 msgstr "Otpremanje sa upozorenjima u toku!"
 
-#: lib/wfu_constants.php:152
+#: lib/wfu_constants.php:153
 msgid "Upload in progress but some files already failed!"
 msgstr "Otpremanje u toku, ali neke datoteke već nisu uspešno otpremljene!"
 
-#: lib/wfu_constants.php:153
+#: lib/wfu_constants.php:154
 msgid "Upload in progress but no files uploaded so far!"
 msgstr "Otpremanje u toku, ali do sada nisu otpremljene nikakve datoteke!"
 
-#: lib/wfu_constants.php:154
+#: lib/wfu_constants.php:155
 msgid "All files uploaded successfully"
 msgstr "Sve datoteke uspešno su otpremljene"
 
-#: lib/wfu_constants.php:155
+#: lib/wfu_constants.php:156
 msgid "All files uploaded successfully but there are warnings!"
 msgstr "Sve datoteke uspešno su otpremljene, ali postoje upozorenja!"
 
-#: lib/wfu_constants.php:156
+#: lib/wfu_constants.php:157
 msgid "File uploaded successfully but there are warnings!"
 msgstr "Datoteka je uspešno otpremljena, ali postoje upozorenja!"
 
-#: lib/wfu_constants.php:157
+#: lib/wfu_constants.php:158
 msgid "Some files failed to upload!"
 msgstr "Neke datoteke nisu otpremljene!"
 
-#: lib/wfu_constants.php:158
+#: lib/wfu_constants.php:159
 msgid "All files failed to upload"
 msgstr "Nijedna datoteka nije otpremljena"
 
-#: lib/wfu_constants.php:159
+#: lib/wfu_constants.php:160
 msgid "File failed to upload"
 msgstr "Datoteka nije uspešno otpremljena"
 
-#: lib/wfu_constants.php:160
+#: lib/wfu_constants.php:161
 msgid "There are no files to upload!"
 msgstr "Nema datoteka za otpremanje"
 
-#: lib/wfu_constants.php:161
+#: lib/wfu_constants.php:162
 msgid "Test upload message"
 msgstr "Testiraj poruku za otpremanje"
 
-#: lib/wfu_constants.php:162
+#: lib/wfu_constants.php:163
 msgid "JSON parse warning!"
 msgstr "Upozorenje za JSON parsiranje!"
 
-#: lib/wfu_constants.php:163
+#: lib/wfu_constants.php:164
 msgid "please wait while redirecting..."
 msgstr "Molimo sačekajte preusmeravanje..."
 
-#: lib/wfu_constants.php:164
+#: lib/wfu_constants.php:165
 msgid "Open visual shortcode editor in new window"
 msgstr "Otvori vizuelni shortcode uređivač u novom prozoru"
 
-#: lib/wfu_constants.php:165
+#: lib/wfu_constants.php:166
 msgid "loading visual editor"
 msgstr "učitavanje vizuelnog uređivača"
+
+#~ msgid "Please fill in the above words: "
+#~ msgstr "Popunite sledećim rečima:"
+
+#~ msgid ""
+#~ "ERROR: Captcha not supported! You have an old PHP version. Upgrade your "
+#~ "PHP or use RecaptchaV2 (no account)."
+#~ msgstr ""
+#~ "GREŠKA: Captcha nije podržana! Imate staru PHP verziju. Nadogradite svoj "
+#~ "PHP ili koristite RecaptchaV2 (bez naloga)."
+
+#~ msgid "ERROR: No site key. Please contact administrator!"
+#~ msgstr "GREŠKA: Nema ključa site-a. Obratite se administratoru."
+
+#~ msgid ""
+#~ "ERROR: No site key defined! Please go to the plugin settings in Dashboard "
+#~ "to define Google Recaptcha keys."
+#~ msgstr ""
+#~ "GREŠKA: Ključ site-a nije određen. Idite na kontrolnu tablu podešavanja "
+#~ "plugin-a da biste odredili Google Recaptcha ključeve."
+
+#~ msgid "Bad captcha image!"
+#~ msgstr "Loša captcha slika!"
+
+#~ msgid "No input!"
+#~ msgstr "Nema unosa!"
+
+#~ msgid "Captcha not completed!"
+#~ msgstr "Captcha nije kompletan!"
+
+#~ msgid "Wrong captcha!"
+#~ msgstr "Pogrešan captcha!"
+
+#~ msgid "Error refreshing captcha!"
+#~ msgstr "Greška u osvežavanju captcha!"
+
+#~ msgid "Unknown captcha error!"
+#~ msgstr "Nepoznata captcha greška!"
+
+#~ msgid "Captcha not supported by your browser!"
+#~ msgstr "Vaš pretraživač ne podržava captcha!"
+
+#~ msgid "the secret parameter is missing"
+#~ msgstr "nedostaje tajni parametar"
+
+#~ msgid "the secret parameter is invalid or malformed"
+#~ msgstr "tajni parametar je nevažeći ili loše formulisan"
+
+#~ msgid "the response parameter is missing"
+#~ msgstr "nedostaje parametar odgovora "
+
+#~ msgid "the response parameter is invalid or malformed"
+#~ msgstr "parametar odgovora je nevažeći ili loše formulisan"
+
+#~ msgid "Please do not use drag drop due to an internal problem."
+#~ msgstr ""
+#~ "Molimo vas da ne koristite prevlačenje i pozicioniranje zbog internog "
+#~ "problema."
+
+#~ msgid "Error during chunked upload. Unique ID empty in chunk %d"
+#~ msgstr ""
+#~ "Došlo je do greške prilikom parcijalnog otpremanja. Jedinstveni ID u "
+#~ "jedinici memorije %d"
+
+#~ msgid "Chunked upload is not allowed!"
+#~ msgstr "Parcijalno otpremanje nije dozvoljeno!"
+
+#~ msgid "Chunked upload aborted due to error in previous chunk!"
+#~ msgstr ""
+#~ "Parcijalno otpremanje prekinuto je zbog greške u prethodnoj jedinici "
+#~ "memorije!"
+
+#~ msgid "Chunked upload failed, final file could not be created!"
+#~ msgstr ""
+#~ "Otpremanje u jedinici memorije neuspelo, konačna datoteka ne može se "
+#~ "kreirati!"
+
+#~ msgid "Could not write file chuck to destination on chunk %d"
+#~ msgstr ""
+#~ "Ne može se napisati jedinica memorije datoteke u jedinici memorije %d.  "
+
+#~ msgid "Could not enlarge destination file on chunk %d"
+#~ msgstr "Ne može se uvećati odredišna datoteka u jedinici memorije %d."
+
+#~ msgid "Could not open file handles on chunk %d"
+#~ msgstr "Ne mogu se otvoriti opisi datoteke u jedinici memorije %d"
+
+#~ msgid "checking captcha..."
+#~ msgstr "captcha se proverava..."
+
+#~ msgid "refreshing..."
+#~ msgstr "osvežava se..."
+
+#~ msgid "correct captcha"
+#~ msgstr "ispravi captcha"
+
+#~ msgid "click to continue the upload"
+#~ msgstr "kliknite da biste nastavili otpremanje"
+
+#~ msgid "Clear file list?"
+#~ msgstr "Obriši listu datoteke?"
+
+#~ msgid "DROP HERE"
+#~ msgstr "POZICIONIRAJ OVDE"

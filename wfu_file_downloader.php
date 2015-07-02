@@ -4,15 +4,23 @@ include_once( dirname(__FILE__).'/lib/wfu_functions.php' );
 wfu_download_file();
 
 function wfu_download_file() {
-	$file_enc = (isset($_POST['file']) ? $_POST['file'] : (isset($_GET['file']) ? $_GET['file'] : ''));
+	$file_code = (isset($_POST['file']) ? $_POST['file'] : (isset($_GET['file']) ? $_GET['file'] : ''));
 	$ticket = (isset($_POST['ticket']) ? $_POST['ticket'] : (isset($_GET['ticket']) ? $_GET['ticket'] : ''));
-	if ( $file_enc == '' || $ticket == '' ) die();
+	if ( $file_code == '' || $ticket == '' ) die();
 	//if download ticket does not exist or is expired die
 	if ( !isset($_SESSION['wfu_download_ticket_'.$ticket]) || time() > $_SESSION['wfu_download_ticket_'.$ticket] ) die();
 	//destroy ticket so it cannot be used again
 	unset($_SESSION['wfu_download_ticket_'.$ticket]);
 	
-	$filepath = wfu_plugin_decode_string($file_enc);
+//	$filepath = wfu_plugin_decode_string($file_code);
+	$filepath = wfu_get_filepath_from_safe($file_code);
+	if ( $filepath === false ) die();
+	$filepath = $_SESSION['wfu_ABSPATH'].wfu_flatten_path($filepath);
+	//reject download of php files for security reasons
+	if ( preg_match("/\.php$/", $filepath) ) {
+		$_SESSION['wfu_download_status_'.$ticket] = 'failed';
+		die('<script language="javascript">alert("Error! File is forbidden for security reasons.");</script>');
+	}
 	//check that file exists
 	if ( !file_exists($filepath) ) {
 		$_SESSION['wfu_download_status_'.$ticket] = 'failed';

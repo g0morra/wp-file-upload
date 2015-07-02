@@ -4,7 +4,7 @@ if( !session_id() ) { session_start(); }
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 2.7.6
+Version: 3.0.0
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -39,6 +39,7 @@ if ( strpos($uri, 'wp-login.php') !== false ) return;
 DEFINE("WPFILEUPLOAD_PLUGINFILE", __FILE__);
 DEFINE("WPFILEUPLOAD_DIR", '/'.PLUGINDIR .'/'.dirname(plugin_basename (__FILE__)).'/');
 DEFINE("ABSWPFILEUPLOAD_DIR", ABSPATH.WPFILEUPLOAD_DIR);
+$_SESSION['wfu_ABSPATH'] = ABSPATH;
 add_shortcode("wordpress_file_upload", "wordpress_file_upload_handler");
 load_plugin_textdomain('wordpress-file-upload', false, dirname(plugin_basename (__FILE__)).'/languages');
 /* load styles and scripts for front pages */

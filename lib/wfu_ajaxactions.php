@@ -276,18 +276,26 @@ function wfu_ajax_action_read_subfolders() {
 }
 
 function wfu_ajax_action_download_file_invoker() {
-	$file_enc = (isset($_POST['file']) ? $_POST['file'] : (isset($_GET['file']) ? $_GET['file'] : ''));
+	$file_code = (isset($_POST['file']) ? $_POST['file'] : (isset($_GET['file']) ? $_GET['file'] : ''));
 	$nonce = (isset($_POST['nonce']) ? $_POST['nonce'] : (isset($_GET['nonce']) ? $_GET['nonce'] : ''));
-	if ( $file_enc == '' || $nonce == '' ) die();
+	if ( $file_code == '' || $nonce == '' ) die();
 	
 	//security check to avoid CSRF attacks
 	if ( !wp_verify_nonce($nonce, 'wfu_download_file_invoker') ) die();
 	
-	$filepath = wfu_plugin_decode_string($file_enc);
+	//check if user is allowed to download files
+	if ( !current_user_can( 'manage_options' ) ) {
+			die();
+	}
+	
+//	$filepath = wfu_plugin_decode_string($file_code);
+	$file_code = wfu_sanitize_code($file_code);
+	$filepath = wfu_get_filepath_from_safe($file_code);
+	if ( $filepath === false ) die();
+	$filepath = ABSPATH.wfu_flatten_path($filepath);
 
-	//check if user is allowed to perform this action
-	$user_allowed = wfu_current_user_allowed_action('download', $filepath);
-	if ( $user_allowed == null ) die();
+	//check if user is allowed to perform this action on this file
+	if ( !wfu_current_user_owes_file($filepath) ) die();
 	
 	//generate download unique id to monitor this download
 	$download_id = wfu_create_random_string(16);
@@ -305,18 +313,18 @@ function wfu_ajax_action_download_file_invoker() {
 	//or echo from other plugins is generated, that could scramble the downloaded file;
 	//a ticket, similar to nonces, is passed to the download script to check that it is not a CSRF attack; moreover,the ticket is destroyed
 	//by the time it is consumed by the download script, so it cannot be used again
-	$response = '<iframe src="'.WFU_DOWNLOADER_URL.'?file='.$file_enc.'&ticket='.$download_id.'" style="display: none;"></iframe>';
+	$response = '<iframe src="'.WFU_DOWNLOADER_URL.'?file='.$file_code.'&ticket='.$download_id.'" style="display: none;"></iframe>';
 
 	die('wfu_ajax_action_download_file_invoker:wfu_download_id;'.$download_id.':'.$response);
 }
 
 function wfu_ajax_action_download_file_monitor() {
-	$file_enc = (isset($_POST['file']) ? $_POST['file'] : (isset($_GET['file']) ? $_GET['file'] : ''));
+	$file_code = (isset($_POST['file']) ? $_POST['file'] : (isset($_GET['file']) ? $_GET['file'] : ''));
 	$id = (isset($_POST['id']) ? $_POST['id'] : (isset($_GET['id']) ? $_GET['id'] : ''));
 	if ( $file_enc == '' || $id == '' ) die();
 	
 	//ensure that this is not a CSRF attack by checking validity of a security ticket
-	if ( !isset($_SESSION['wfu_download_monitor_ticket_'.$id]) || time() > $_SESSION['wfu_download_monitor_ticket_'.$id] ) die('pass');
+	if ( !isset($_SESSION['wfu_download_monitor_ticket_'.$id]) || time() > $_SESSION['wfu_download_monitor_ticket_'.$id] ) die();
 	//destroy monitor ticket so it cannot be used again
 	unset($_SESSION['wfu_download_monitor_ticket_'.$id]);
 	
@@ -335,7 +343,10 @@ function wfu_ajax_action_download_file_monitor() {
 	
 	if ( $upload_ended ) {
 		$user = wp_get_current_user();
-		$filepath = wfu_plugin_decode_string($file_enc);
+//		$filepath = wfu_plugin_decode_string($file_code);
+		$filepath = wfu_get_filepath_from_safe($file_code);
+		if ( $filepath === false ) die();
+		$filepath = wfu_flatten_path($filepath);
 		wfu_log_action('download', $filepath, $user->ID, '', 0, '', null);
 		die('wfu_ajax_action_download_file_monitor:'.$_SESSION['wfu_download_status_'.$id].':');
 	}
