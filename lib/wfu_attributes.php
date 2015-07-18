@@ -820,4 +820,5 @@ function wfu_attribute_definitions() {
 	return $defs;
 }
 
+
 ?>

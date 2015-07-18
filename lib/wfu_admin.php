@@ -42,6 +42,7 @@ function wordpress_file_upload_install() {
 			idlog mediumint(9) NOT NULL AUTO_INCREMENT,
 			userid mediumint(9) NOT NULL,
 			uploaduserid mediumint(9) NOT NULL,
+			sessionid VARCHAR(40),
 			filepath TEXT NOT NULL,
 			filehash VARCHAR(100) NOT NULL,
 			filesize bigint NOT NULL,
@@ -98,6 +99,7 @@ function wordpress_file_upload_manage_dashboard() {
 	$data_enc = (!empty($_POST['data']) ? $_POST['data'] : (!empty($_GET['data']) ? $_GET['data'] : ''));
 	$postid = (!empty($_POST['postid']) ? $_POST['postid'] : (!empty($_GET['postid']) ? $_GET['postid'] : ''));
 	$nonce = (!empty($_POST['nonce']) ? $_POST['nonce'] : (!empty($_GET['nonce']) ? $_GET['nonce'] : ''));
+	$tag = (!empty($_POST['tag']) ? $_POST['tag'] : (!empty($_GET['tag']) ? $_GET['tag'] : ''));
 	$echo_str = "";
 
 	if ( $action == 'edit_settings' ) {
@@ -162,15 +164,15 @@ function wordpress_file_upload_manage_dashboard() {
 	elseif ( $action == 'plugin_settings' ) {
 		$echo_str = wfu_manage_settings();	
 	}
-	elseif ( $action == 'add_shortcode' && $postid != "" && $nonce != "" ) {
+	elseif ( $action == 'add_shortcode' && $postid != "" && $nonce != "" && $tag != "" ) {
 		if ( $_SESSION['wfu_add_shortcode_ticket'] != $nonce ) $echo_str = wfu_manage_mainmenu();
-		elseif ( wfu_add_shortcode($postid) ) $echo_str = wfu_manage_mainmenu();
+		elseif ( wfu_add_shortcode($postid, $tag) ) $echo_str = wfu_manage_mainmenu();
 		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_ADD_SHORTCODE_REJECTED);
 		$_SESSION['wfu_add_shortcode_ticket'] = 'noticket';
 	}
-	elseif ( $action == 'edit_shortcode' && $data_enc != "" ) {
+	elseif ( $action == 'edit_shortcode' && $data_enc != "" && $tag != "" ) {
 		$data = wfu_decode_array_from_string($data_enc);
-		if ( wfu_check_edit_shortcode($data) ) wfu_shortcode_composer($data);
+		if ( wfu_check_edit_shortcode($data) ) wfu_shortcode_composer($data, $tag);
 		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_EDIT_SHORTCODE_REJECTED);
 	}
 	elseif ( $action == 'delete_shortcode' && $data_enc != "" ) {
@@ -223,7 +225,7 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Edition</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
-	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px;">';
+	$echo_str .= "\n\t\t\t\t\t".'<td style="width:100px; vertical-align:top;">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">Free</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'<td>';
@@ -232,7 +234,7 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<button onclick="if (this.innerText == \'See why >>\') {this.innerText = \'<< Close\'; document.getElementById(\'wfu_version_comparison\').style.display = \'block\';} else {this.innerText = \'See why >>\'; document.getElementById(\'wfu_version_comparison\').style.display = \'none\';}">See why >></button>';
 	$echo_str .= "\n\t\t\t\t\t\t".'</div>';
 	$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_version_comparison" style="display:none; background-color:lightyellow; border:1px solid yellow; margin:10px 0; padding:10px;">';
-	$echo_str .= "\n\t\t\t\t\t\t\t".'<img src="'.WFU_IMAGE_VERSION_COMPARISON.'" width="65%" style="display:block; margin-bottom:6px;" />';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<img src="'.WFU_IMAGE_VERSION_COMPARISON.'" style="display:block; margin-bottom:6px;" />';
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<a class="button-primary" href="'.WFU_PRO_VERSION_URL.'">Go for the PRO version</a>';
 	$echo_str .= "\n\t\t\t\t\t\t".'</div>';
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
@@ -375,6 +377,7 @@ function wfu_construct_post_list($posts) {
 
 function wfu_flatten_post_list($list) {
 	$flat = array();
+	if ( !is_array($list) ) return $flat;
 	foreach( $list as $item ) {
 		$flat_item = array(
 			'id'		=> $item['id'],
@@ -389,44 +392,49 @@ function wfu_flatten_post_list($list) {
 }
 
 function wfu_manage_instances() {
+	$echo_str = wfu_manage_instances_of_shortcode('wordpress_file_upload', 'Uploader Instances', 'uploader', 1);
+	
+	return $echo_str;
+}
+
+function wfu_manage_instances_of_shortcode($tag, $title, $slug, $inc) {
 	$siteurl = site_url();
 	$args = array( 'post_type' => array( "post", "page" ), 'post_status' => "publish,private,draft", 'posts_per_page' => -1 );
 	$posts = get_posts($args);
 	$wfu_shortcodes = array();
 	foreach ( $posts as $post ) {
-		$ret = wfu_get_content_shortcodes($post, 'wordpress_file_upload');
+		$ret = wfu_get_content_shortcodes($post, $tag);
 		if ( $ret !== false ) $wfu_shortcodes = array_merge($wfu_shortcodes, $ret);
 	}
 
 	$list = wfu_construct_post_list($posts);
 	$pagelist = wfu_flatten_post_list($list["page"]);
 	$postlist = wfu_flatten_post_list($list["post"]);
-//	echo '<pre>'; print_r ($list); echo '</pre>';
 
-	$echo_str = "\n\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">Plugin Instances</h3>';
-	$onchange_js = 'document.getElementById(\'wfu_add_plugin_ok\').disabled = !((document.getElementById(\'wfu_page_type\').value == \'page\' && document.getElementById(\'wfu_page_list\').value != \'\') || (document.getElementById(\'wfu_page_type\').value == \'post\' && document.getElementById(\'wfu_post_list\').value != \'\'));';
+	$echo_str = "\n\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">'.$title.'</h3>';
+	$onchange_js = 'document.getElementById(\'wfu_add_plugin_ok_'.$inc.'\').disabled = !((document.getElementById(\'wfu_page_type_'.$inc.'\').value == \'page\' && document.getElementById(\'wfu_page_list_'.$inc.'\').value != \'\') || (document.getElementById(\'wfu_page_type_'.$inc.'\').value == \'post\' && document.getElementById(\'wfu_post_list_'.$inc.'\').value != \'\'));';
 	$no_shortcodes = ( count($wfu_shortcodes) == 0 );
-	$echo_str .= "\n\t\t".'<div id="wfu_add_plugin_button" style="'. ( !$no_shortcodes ? '' : 'color:blue; font-weight:bold; font-size:larger;' ).'margin-bottom: 20px; margin-top: 10px;">';
+	$echo_str .= "\n\t\t".'<div id="wfu_add_plugin_button_'.$inc.'" style="'. ( !$no_shortcodes ? '' : 'color:blue; font-weight:bold; font-size:larger;' ).'margin-bottom: 20px; margin-top: 10px;">';
 	$addbutton_pre = ( !$no_shortcodes ? '' : '<label>Press </label>');
-	$addbutton_post = ( !$no_shortcodes ? '' : '<label> to get started and add the plugin in a page</label>');
-	$echo_str .= "\n\t\t\t".$addbutton_pre.'<button onclick="document.getElementById(\'wfu_add_plugin_button\').style.display = \'none\'; document.getElementById(\'wfu_add_plugin\').style.display = \'inline-block\'; '.$onchange_js.'">'.( !$no_shortcodes ? 'Add Plugin Instance' : 'here' ).'</button>'.$addbutton_post;
+	$addbutton_post = ( !$no_shortcodes ? '' : '<label> to get started and add the '.$slug.' in a page</label>');
+	$echo_str .= "\n\t\t\t".$addbutton_pre.'<button onclick="document.getElementById(\'wfu_add_plugin_button_'.$inc.'\').style.display = \'none\'; document.getElementById(\'wfu_add_plugin_'.$inc.'\').style.display = \'inline-block\'; '.$onchange_js.'">'.( !$no_shortcodes ? 'Add Plugin Instance' : 'here' ).'</button>'.$addbutton_post;
 	$echo_str .= "\n\t\t".'</div>';
-	$echo_str .= "\n\t\t".'<div id="wfu_add_plugin" style="margin-bottom: 20px; margin-top: 10px; display:none;">';
-	$echo_str .= "\n\t\t\t".'<label>Add plugin to </label><select id="wfu_page_type" onchange="document.getElementById(\'wfu_page_list\').style.display = (this.value == \'page\' ? \'inline-block\' : \'none\'); document.getElementById(\'wfu_post_list\').style.display = (this.value == \'post\' ? \'inline-block\' : \'none\'); '.$onchange_js.'"><option value="page" selected="selected">Page</option><option value="post">Post</option></select>';
-	$echo_str .= "\n\t\t\t".'<select id="wfu_page_list" style="margin-bottom:6px;" onchange="'.$onchange_js.'">';
+	$echo_str .= "\n\t\t".'<div id="wfu_add_plugin_'.$inc.'" style="margin-bottom: 20px; margin-top: 10px; display:none;">';
+	$echo_str .= "\n\t\t\t".'<label>Add '.$slug.' to </label><select id="wfu_page_type_'.$inc.'" onchange="document.getElementById(\'wfu_page_list_'.$inc.'\').style.display = (this.value == \'page\' ? \'inline-block\' : \'none\'); document.getElementById(\'wfu_post_list_'.$inc.'\').style.display = (this.value == \'post\' ? \'inline-block\' : \'none\'); '.$onchange_js.'"><option value="page" selected="selected">Page</option><option value="post">Post</option></select>';
+	$echo_str .= "\n\t\t\t".'<select id="wfu_page_list_'.$inc.'" style="margin-bottom:6px;" onchange="'.$onchange_js.'">';
 	$echo_str .= "\n\t\t\t\t".'<option value=""></option>';
 	foreach ( $pagelist as $item )
 		$echo_str .= "\n\t\t\t\t".'<option value="'.$item['id'].'">'.str_repeat('&nbsp;', 4 * $item['level']).( $item['status'] == 1 ? '[Private]' : ( $item['status'] == 2 ? '[Draft]' : '' ) ).$item['title'].'</option>';
 	$echo_str .= "\n\t\t\t".'</select>';
-	$echo_str .= "\n\t\t\t".'<select id="wfu_post_list" style="display:none; margin-bottom:6px;" onchange="'.$onchange_js.'">';
+	$echo_str .= "\n\t\t\t".'<select id="wfu_post_list_'.$inc.'" style="display:none; margin-bottom:6px;" onchange="'.$onchange_js.'">';
 	$echo_str .= "\n\t\t\t\t".'<option value=""></option>';
 	foreach ( $postlist as $item )
 		$echo_str .= "\n\t\t\t\t".'<option value="'.$item['id'].'">'.str_repeat('&nbsp;', 4 * $item['level']).( $item['status'] == 1 ? '[Private]' : ( $item['status'] == 2 ? '[Draft]' : '' ) ).$item['title'].'</option>';
 	$echo_str .= "\n\t\t\t".'</select><br />';
 	$add_shortcode_ticket = wfu_create_random_string(16);
 	$_SESSION['wfu_add_shortcode_ticket'] = $add_shortcode_ticket;
-	$echo_str .= "\n\t\t".'<button id="wfu_add_plugin_ok" style="float:right; margin: 0 2px 0 4px;" disabled="disabled" onclick="document.getElementById(\'wfu_add_plugin\').style.display = \'none\'; window.location = \''.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=add_shortcode&amp;postid=\' + (document.getElementById(\'wfu_page_type\').value == \'page\' ? document.getElementById(\'wfu_page_list\').value : document.getElementById(\'wfu_post_list\').value) + \'&amp;nonce='.$add_shortcode_ticket.'\';">Ok</button>';
-	$echo_str .= "\n\t\t".'<button style="float:right;" onclick="document.getElementById(\'wfu_page_type\').value = \'page\'; document.getElementById(\'wfu_page_list\').value = \'\'; document.getElementById(\'wfu_post_list\').value = \'\'; document.getElementById(\'wfu_add_plugin\').style.display = \'none\'; document.getElementById(\'wfu_add_plugin_button\').style.display = \'inline-block\';">Cancel</button>';
+	$echo_str .= "\n\t\t".'<button id="wfu_add_plugin_ok_'.$inc.'" style="float:right; margin: 0 2px 0 4px;" disabled="disabled" onclick="document.getElementById(\'wfu_add_plugin_'.$inc.'\').style.display = \'none\'; window.location = \''.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=add_shortcode&amp;tag='.$tag.'&amp;postid=\' + (document.getElementById(\'wfu_page_type_'.$inc.'\').value == \'page\' ? document.getElementById(\'wfu_page_list_'.$inc.'\').value : document.getElementById(\'wfu_post_list_'.$inc.'\').value) + \'&amp;nonce='.$add_shortcode_ticket.'\';">Ok</button>';
+	$echo_str .= "\n\t\t".'<button style="float:right;" onclick="document.getElementById(\'wfu_page_type_'.$inc.'\').value = \'page\'; document.getElementById(\'wfu_page_list_'.$inc.'\').value = \'\'; document.getElementById(\'wfu_post_list_'.$inc.'\').value = \'\'; document.getElementById(\'wfu_add_plugin_'.$inc.'\').style.display = \'none\'; document.getElementById(\'wfu_add_plugin_button_'.$inc.'\').style.display = \'inline-block\';">Cancel</button>';
 	$echo_str .= "\n\t\t".'</div>';
 	$echo_str .= "\n\t\t".'<table class="widefat">';
 	$echo_str .= "\n\t\t\t".'<thead>';
@@ -453,12 +461,12 @@ function wfu_manage_instances() {
 	foreach ( $wfu_shortcodes as $key => $data ) {
 		$id = $data['post_id'];
 		$data_enc = wfu_encode_array_to_string($data);
-		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_shortcode_actions\')){document.getElementsByName(\'wfu_shortcode_actions\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_shortcode_actions_'.$i.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_shortcode_actions\')){document.getElementsByName(\'wfu_shortcode_actions\').item(i).style.visibility=\'hidden\';}">';
+		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\')){document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_shortcode_actions_'.$inc.'_'.$i.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\')){document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\').item(i).style.visibility=\'hidden\';}">';
 		$echo_str .= "\n\t\t\t\t\t".'<td style="padding: 5px 5px 5px 10px; text-align:center;">';
-		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=edit_shortcode&data='.$data_enc.'" title="Plugin #'.$i.'">Plugin '.$i.'</a>';
-		$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_shortcode_actions_'.$i.'" name="wfu_shortcode_actions" style="visibility:hidden;">';
+		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=edit_shortcode&tag='.$tag.'&data='.$data_enc.'" title="Plugin #'.$i.'">Plugin '.$i.'</a>';
+		$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_shortcode_actions_'.$inc.'_'.$i.'" name="wfu_shortcode_actions_'.$inc.'" style="visibility:hidden;">';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
-		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=edit_shortcode&data='.$data_enc.'" title="Edit this shortcode">Edit</a>';
+		$echo_str .= "\n\t\t\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=edit_shortcode&tag='.$tag.'&data='.$data_enc.'" title="Edit this shortcode">Edit</a>';
 		$echo_str .= "\n\t\t\t\t\t\t\t\t".' | ';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'</span>';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'<span>';
@@ -518,9 +526,9 @@ function wfu_check_edit_shortcode($data) {
 	return ( $hash == $data['post_hash'] );
 }
 
-function wfu_add_shortcode($postid) {
+function wfu_add_shortcode($postid, $tag) {
 	$post = get_post($postid);
-	$new_content = '[wordpress_file_upload]'.$post->post_content;
+	$new_content = '['.$tag.']'.$post->post_content;
 	$new_post = array( 'ID' => $postid, 'post_content' => $new_content );
 	return ( wp_update_post( $new_post ) === 0 ? false : true );
 }

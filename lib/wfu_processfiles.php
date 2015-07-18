@@ -135,6 +135,7 @@ function wfu_process_files($params, $method) {
 		$file_output['message'] = "";
 		$file_output['message_type'] = "";
 		$file_output['admin_messages'] = "";
+		$file_output['uploaded_file_props'] = "";
 
 		// determine if file data have been saved to session variables, due to a previous pass of this file
 		$file_map = "filedata_".$unique_id."_".$single_file_index;
@@ -644,6 +645,7 @@ function wfu_process_files($params, $method) {
 		$sout .= ",".wfu_plugin_encode_string($file_output['header']);
 		$sout .= ",".wfu_plugin_encode_string($file_output['message']);
 		$sout .= ",".wfu_plugin_encode_string($file_output['admin_messages']);
+		$sout .= ",".$file_output['uploaded_file_props'];
 	}
 	$params_output_array["general"]['safe_output'] = $sout;
 

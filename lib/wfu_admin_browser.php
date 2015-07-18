@@ -14,6 +14,7 @@ function wfu_browse_files($basedir_code) {
 	if ( isset($_SESSION['wfu_filepath_safe_storage']) && count($_SESSION['wfu_filepath_safe_storage']) > WFU_PHP_ARRAY_MAXLEN ) $_SESSION['wfu_filepath_safe_storage'] = array();
 	
 	//extract sort info from basedir
+	$sort = "";
 	if ( $basedir !== false ) {
 		$ret = wfu_extract_sortdata_from_path($basedir);
 		$basedir = $ret['path'];
@@ -28,7 +29,7 @@ function wfu_browse_files($basedir_code) {
 		if ( substr($basedir, -1) != '/' ) $basedir .= '/';
 		if ( substr($basedir, 0, 1) == '/' ) $basedir = substr($basedir, 1);
 		//calculate the absolute path of basedir knowing that basedir is relative to website root
-		$basedir = ABSPATH.$basedir;
+		$basedir = wfu_path_rel2abs($basedir);
 		if ( !file_exists($basedir) ) $basedir = false;
 	}
 	//set basedit to default value if empty
@@ -74,26 +75,26 @@ function wfu_browse_files($basedir_code) {
 	}
 	//file browser header
 	$echo_str .= "\n\t".'</div>';
-//	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.$sort.']]');
+//	$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($basedir).'[['.$sort.']]');
 //	$echo_str .= "\n\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=create_dir&dir='.$dir_code.'" class="button" title="create folder" style="margin-top:6px">Create folder</a>';
 	$echo_str .= "\n\t".'<div style="margin-top:10px;">';
 	$echo_str .= "\n\t\t".'<table class="widefat">';
 	$echo_str .= "\n\t\t\t".'<thead>';
 	$echo_str .= "\n\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="30%" style="text-align:left;">';
-	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.( substr($sort, -4) == 'name' ? ( $order == SORT_ASC ? '-name' : 'name' ) : 'name' ).']]');
+	$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($basedir).'[['.( substr($sort, -4) == 'name' ? ( $order == SORT_ASC ? '-name' : 'name' ) : 'name' ).']]');
 	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'">Name'.( substr($sort, -4) == 'name' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="10%" style="text-align:right;">';
-	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.( substr($sort, -4) == 'size' ? ( $order == SORT_ASC ? '-size' : 'size' ) : 'size' ).']]');
+	$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($basedir).'[['.( substr($sort, -4) == 'size' ? ( $order == SORT_ASC ? '-size' : 'size' ) : 'size' ).']]');
 	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'">Size'.( substr($sort, -4) == 'size' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="20%" style="text-align:left;">';
-	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.( substr($sort, -4) == 'date' ? ( $order == SORT_ASC ? '-date' : 'date' ) : 'date' ).']]');
+	$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($basedir).'[['.( substr($sort, -4) == 'date' ? ( $order == SORT_ASC ? '-date' : 'date' ) : 'date' ).']]');
 	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'">Date'.( substr($sort, -4) == 'date' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="10%" style="text-align:center;">';
-	$dir_code = wfu_safe_store_filepath(substr($basedir, strlen(ABSPATH)).'[['.( substr($sort, -4) == 'user' ? ( $order == SORT_ASC ? '-user' : 'user' ) : 'user' ).']]');
+	$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($basedir).'[['.( substr($sort, -4) == 'user' ? ( $order == SORT_ASC ? '-user' : 'user' ) : 'user' ).']]');
 	$echo_str .= "\n\t\t\t\t\t\t".'<a href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'">Uploaded By'.( substr($sort, -4) == 'user' ? ( $order == SORT_ASC ? ' &uarr;' : ' &darr;' ) : '' ).'</a>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="col" width="30%" style="text-align:left;">';
@@ -139,7 +140,7 @@ function wfu_browse_files($basedir_code) {
 
 	//show subfolders first
 	if ( $reldir != "root/" ) {
-		$dir_code = wfu_safe_store_filepath(substr($updir, strlen(ABSPATH)));
+		$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($updir));
 		$echo_str .= "\n\t\t\t\t".'<tr>';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="30%" style="padding: 5px 5px 5px 10px; text-align:left;">';
 		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'" title="go up">..</a>';
@@ -152,7 +153,7 @@ function wfu_browse_files($basedir_code) {
 	}
 	$ii = 1;
 	foreach ( $dirlist as $dir ) {
-		$dir_code = wfu_safe_store_filepath(substr($dir['fullpath'], strlen(ABSPATH)).'[['.$sort.']]');
+		$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($dir['fullpath']).'[['.$sort.']]');
 		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_dir_actions\')){document.getElementsByName(\'wfu_dir_actions\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_dir_actions_'.$ii.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_dir_actions\')){document.getElementsByName(\'wfu_dir_actions\').item(i).style.visibility=\'hidden\';}">';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="30%" style="padding: 5px 5px 5px 10px; text-align:left;">';
 		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'" title="'.$dir['name'].'">'.$dir['name'].'</a>';
@@ -179,7 +180,7 @@ function wfu_browse_files($basedir_code) {
 	}
 	//show contained files
 	foreach ( $filelist as $file ) {
-		if ( $file['filedata'] != null ) $file_code = wfu_safe_store_filepath(substr($file['fullpath'], strlen(ABSPATH)).'[['.$sort.']]');
+		if ( $file['filedata'] != null ) $file_code = wfu_safe_store_filepath(wfu_path_abs2rel($file['fullpath']).'[['.$sort.']]');
 		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_file_actions\')){document.getElementsByName(\'wfu_file_actions\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_file_actions_'.$ii.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_file_actions\')){document.getElementsByName(\'wfu_file_actions\').item(i).style.visibility=\'hidden\';}">';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="30%" style="padding: 5px 5px 5px 10px; text-align:left;">';
 		if ( $file['filedata'] != null )
@@ -239,14 +240,15 @@ function wfu_browse_files($basedir_code) {
 }
 
 function wfu_current_user_owes_file($filepath) {
-	//first check if file is php; for security reasons php files cannot be owned
-	if ( preg_match("/\.php$/", $filepath) ) return false;
+	//first check if file has a restricted extension; for security reasons some file extensions cannot be owned
+	if ( wfu_file_extension_restricted($filepath) ) return false;
 	//then get file data from database, if exist
 	$filerec = wfu_get_file_rec($filepath, false);
 	if ( $filerec == null ) return false;
 
 	$user = wp_get_current_user();
-	if ( 0 == $user->ID ) return false;
+	if ( 0 == $user->ID )
+		return false;
 	if ( current_user_can('manage_options') ) return true;
 	return false;
 }
@@ -292,7 +294,7 @@ function wfu_rename_file_prompt($file_code, $type, $error) {
 	
 	//first extract sort info from dec_file
 	$ret = wfu_extract_sortdata_from_path($dec_file);
-	$dec_file = ABSPATH.$ret['path'];
+	$dec_file = wfu_path_rel2abs($ret['path']);
 	if ( $type == 'dir' && substr($dec_file, -1) == '/' ) $dec_file = substr($dec_file, 0, -1);
 
 	//check if user is allowed to perform this action
@@ -300,7 +302,7 @@ function wfu_rename_file_prompt($file_code, $type, $error) {
 
 	$parts = pathinfo($dec_file);
 	$newname = $parts['basename'];
-	$dir_code = wfu_safe_store_filepath(substr($parts['dirname'], strlen(ABSPATH)).'[['.$ret['sort'].']]');
+	$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($parts['dirname']).'[['.$ret['sort'].']]');
 
 	$echo_str = "\n".'<div class="wrap">';
 	if ( $error ) {
@@ -342,7 +344,7 @@ function wfu_rename_file($file_code, $type) {
 	$dec_file = wfu_get_filepath_from_safe($file_code);
 	if ( $dec_file === false ) return;
 	
-	$dec_file = ABSPATH.wfu_flatten_path($dec_file);
+	$dec_file = wfu_path_rel2abs(wfu_flatten_path($dec_file));
 	if ( $type == 'dir' && substr($dec_file, -1) == '/' ) $dec_file = substr($dec_file, 0, -1);
 	if ( !file_exists($dec_file) ) return;
 
@@ -354,8 +356,6 @@ function wfu_rename_file($file_code, $type) {
 	if ( isset($_POST['wfu_newname'])  && isset($_POST['submit']) ) {
 		if ( $_POST['submit'] == "Rename" && $_POST['wfu_newname'] != $parts['basename'] ) {
 			$new_file = $parts['dirname'].'/'.$_POST['wfu_newname'];
-			$relativepath = str_replace(ABSPATH, '', $new_file);
-			if ( substr($relativepath, 0, 1) != '/' ) $relativepath = '/'.$relativepath;
 			if ( $_POST['wfu_newname'] == "" ) $error = 'Error: New '.( $type == 'dir' ? 'folder ' : 'file' ).'name cannot be empty!';
 			elseif ( preg_match("/[^A-Za-z0-9_.#\-$]/", $_POST['wfu_newname']) ) $error = 'Error: name contained invalid characters that were stripped off! Please try again.';
 			elseif ( substr($_POST['wfu_newname'], -1 - strlen($parts['extension'])) != '.'.$parts['extension'] ) $error = 'Error: new and old file name extensions must be identical! Please correct.';
@@ -394,14 +394,14 @@ function wfu_delete_file_prompt($file_code, $type) {
 
 	//first extract sort info from dec_file
 	$ret = wfu_extract_sortdata_from_path($dec_file);
-	$dec_file = ABSPATH.$ret['path'];
+	$dec_file = wfu_path_rel2abs($ret['path']);
 	if ( $type == 'dir' && substr($dec_file, -1) == '/' ) $dec_file = substr($dec_file, 0, -1);
 
 	//check if user is allowed to perform this action
 	if ( !wfu_current_user_owes_file($dec_file) ) return;
 
 	$parts = pathinfo($dec_file);
-	$dir_code = wfu_safe_store_filepath(substr($parts['dirname'], strlen(ABSPATH)).'[['.$ret['sort'].']]');
+	$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($parts['dirname']).'[['.$ret['sort'].']]');
 
 	$echo_str = "\n".'<div class="wrap">';
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
@@ -435,7 +435,7 @@ function wfu_delete_file($file_code, $type) {
 	$dec_file = wfu_get_filepath_from_safe($file_code);
 	if ( $dec_file === false ) return;
 
-	$dec_file = ABSPATH.wfu_flatten_path($dec_file);
+	$dec_file = wfu_path_rel2abs(wfu_flatten_path($dec_file));
 	if ( $type == 'dir' && substr($dec_file, -1) == '/' ) $dec_file = substr($dec_file, 0, -1);
 
 	//check if user is allowed to perform this action
@@ -467,7 +467,7 @@ function wfu_create_dir_prompt($dir_code, $error) {
 	
 	//first extract sort info from dec_dir
 	$ret = wfu_extract_sortdata_from_path($dec_dir);
-	$dec_dir = ABSPATH.$ret['path'];
+	$dec_dir = wfu_path_rel2abs($ret['path']);
 	if ( substr($dec_dir, -1) != '/' ) $dec_dir .= '/';
 	$newname = '';
 
@@ -505,7 +505,7 @@ function wfu_create_dir($dir_code) {
 	$dec_dir = wfu_get_filepath_from_safe($dir_code);
 	if ( $dec_dir === false ) return;
 
-	$dec_dir = ABSPATH.wfu_flatten_path($dec_dir);
+	$dec_dir = wfu_path_rel2abs(wfu_flatten_path($dec_dir));
 	if ( substr($dec_dir, -1) != '/' ) $dec_dir .= '/';
 	if ( !file_exists($dec_dir) ) return;
 	$error = "";
@@ -542,7 +542,7 @@ function wfu_file_details($file_code, $errorstatus) {
 
 	//extract file browser data from $file variable
 	$ret = wfu_extract_sortdata_from_path($dec_file);
-	$filepath = ABSPATH.$ret['path'];
+	$filepath = wfu_path_rel2abs($ret['path']);
 	
 	//check if user is allowed to perform this action
 	if ( !wfu_current_user_owes_file($filepath) ) return;
@@ -556,7 +556,7 @@ function wfu_file_details($file_code, $errorstatus) {
 
 	//extract sort info and construct contained dir
 	$parts = pathinfo($filepath);
-	$dir_code = wfu_safe_store_filepath(substr($parts['dirname'], strlen(ABSPATH)).'[['.$ret['sort'].']]');
+	$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($parts['dirname']).'[['.$ret['sort'].']]');
 
 	$stat = stat($filepath);
 
@@ -734,7 +734,7 @@ function wfu_edit_filedetails($file_code) {
 	$dec_file = wfu_get_filepath_from_safe($file_code);
 	if ( $dec_file === false ) return;
 
-	$dec_file = ABSPATH.wfu_flatten_path($dec_file);
+	$dec_file = wfu_path_rel2abs(wfu_flatten_path($dec_file));
 
 	//check if user is allowed to perform this action
 	if ( !wfu_current_user_owes_file($dec_file) ) return;

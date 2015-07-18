@@ -26,13 +26,13 @@ The characteristics of the plugin are:
 
 * It does not use flash and handles uploads using various technologies (HTML5, AJAX, classic HTML forms) depending on browser's capabilities, which detects automatically. As a result it can work in any browser, including mobiles phones (even old ones).
 * You can have more than one instances of the shortcode in the same page.
-* It includes an overall upload progress bar.
 * It supports multilingual characters and localization.
 * Uploaded files can be added to Media or be attached to the current page.
 * It is highly customizable with many (more than 50) options.
 * It produces notification messages and e-mails.
 * You can create additional fields that the user must fill in along with the uploaded file.
 * You can select from a list of subfolders.
+* Upload progress can be monitored with a progress bar.
 * It supports redirection to another url after successful upload.
 * It supports filters and actions before and after file upload, so that programmers can extend the plugin and make it cooperate with other plugins.
 * It contains a visual editor for customizing the plugin easily and without any knowledge of shortcodes or programming
@@ -48,7 +48,7 @@ The plugin is translated in the following languages:
 
 Please note that old desktop browsers or mobile browsers may not support all of the above functionalities. In order to get full functionality use the latest versions browsers, supporting HTML5, AJAX and CSS3.
 
-For additional features, such as multiple file upload, very large file upload, drag and drop of files, captcha, detailed upload progress bars, image gallery and custom css please consider [Wordpress File Upload Professional](http://www.iptanus.com/support/wordpress-file-upload/ "Wordpress File Upload support page").
+For additional features, such as multiple file upload, very large file upload, drag and drop of files, captcha, detailed upload progress bars, list of uploaded files, image gallery and custom css please consider [Wordpress File Upload Professional](http://www.iptanus.com/support/wordpress-file-upload/ "Wordpress File Upload support page").
 
 Please visit the **Other Notes** section for customization options of this plugin.
 
@@ -60,6 +60,8 @@ Please visit the **Other Notes** section for customization options of this plugi
 1. Open the page on your browser and you will see the upload form.
 1. You can change the upload directory or any other settings easily by pressing the small edit button found at the left-top corner of the upload form. A new window (or tab) with pop up with plugin options. If you do not see the new window, adjust your browser settings to allow pop-up windows.
 1. Full documentation about the plugin options can be found at https://wordpress.org/plugins/wp-file-upload/other_notes/ or at http://www.iptanus.com/wordpress-plugins/wordpress-file-upload/ (including the Pro version)
+
+A getting started guide can be found at http://www.iptanus.com/getting-started-with-wordpress-file-upload-plugin/
 
 == Frequently Asked Questions ==
 
@@ -89,7 +91,7 @@ Files by default are uploaded inside wp-content directory of your Wordpress webs
 
 = Can I see and download the uploaded files? =
 
-Administrators can view all uploaded files together with associated field data from the plugin's Settings in Dashboard. There is also an article in www.iptanus.com for enabling a front-end file browser for logged users or guests. Better browsing capabilities under currently under development.
+Administrators can view all uploaded files together with associated field data from the plugin's Settings in Dashboard. The [Professional](http://www.iptanus.com/support/wordpress-file-upload/ "Wordpress File Upload support page") version of the plugin allows users to view their uploaded files, either from the Dashboard, or from a page or post.
 
 = Are there filters to restrict uploaded content? =
 
@@ -101,15 +103,11 @@ Yes, there are file size limitations imposed by the web server or the host. If y
 
 = Who can upload files? =
 
-By default only administrators can upload files. However you can define which user roles are allowed to upload files, beyond administrators. Even guests can be allowed to upload files, however use this option with care.
+By default all users can upload files. You can define which user roles are allowed to upload files. Even guests can be allowed to upload files. If you want to allow only specific users to upload files, then please consider the [Professional](http://www.iptanus.com/support/wordpress-file-upload/ "Wordpress File Upload support page") version of the plugin.
 
 = What security is used for uploading files? =
 
-The plugin is designed not to expose website information by using sessions. Parameters passing from server to client side are encoded. For higher protection, like use of captcha, please consider the [Professional](http://www.iptanus.com/support/wordpress-file-upload/ "Wordpress File Upload support page") version of the plugin.
-
-= How can I view the uploaded files? =
-
-Administrators can view and manage the uploaded files from the File Browser that exists inside the plugin's Settings inside Dashboard, or use an FTP client. Other users can view their uploaded files by combining this plugin with WP-Filebase plugin. If you want to show the uploaded files as an image gallery please consider the [Professional](http://www.iptanus.com/support/wordpress-file-upload/ "Wordpress File Upload support page") version of the plugin.
+The plugin is designed not to expose website sensitive information. It has been tested by experts and verified that protects against CSRF and XSS attacks. All parameters passing from server to client side are encoded and sanitized. For higher protection, like use of captcha, please consider the [Professional](http://www.iptanus.com/support/wordpress-file-upload/ "Wordpress File Upload support page") version of the plugin.
 
 = What happens if connection is lost during a file upload? =
 
@@ -126,6 +124,15 @@ In the free version the upload will fail. However in the Pro version the upload 
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 3.1.0 =
+* an important feature (front-end file browser) has been added in professional version 3.1.0
+* added port number support for uploads using ftp mode
+* corrected bug that was not showing correctly in file browser files that were uploaded using ftp mode
+* eliminated confirmbox warning showing in page when website's DEBUG mode is ON
+* eliminated warning: "Invalid argument supplied for foreach() in ...plugins/wordpress-file-upload-pro/lib/wfu_admin.php on line 384"
+* eliminated warning: "Notice: Undefined index: postmethod in /var/www/wordpress/wp-content/plugins/wordpress-file-upload-pro/lib/wfu_functions.php on line 1348"
+* eliminated warnings in plugin's settings in Dashboard
 
 = 3.0.0 =
 * major version number has advanced because an important feature has been added in Pro version (logged users can browse their uploaded files through their Dashboard)
@@ -443,6 +450,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 3.1.0 =
+Upgrade to fix some minor bugs.
 
 = 3.0.0 =
 Upgrade to increase protection against hacking.

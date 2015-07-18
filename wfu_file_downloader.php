@@ -15,16 +15,18 @@ function wfu_download_file() {
 //	$filepath = wfu_plugin_decode_string($file_code);
 	$filepath = wfu_get_filepath_from_safe($file_code);
 	if ( $filepath === false ) die();
-	$filepath = $_SESSION['wfu_ABSPATH'].wfu_flatten_path($filepath);
+	$filepath = wfu_flatten_path($filepath);
+	if ( substr($filepath, 0, 1) == "/" ) $filepath = substr($filepath, 1);
+	$filepath = ( substr($filepath, 0, 6) == 'ftp://' || substr($filepath, 0, 7) == 'ftps://' || substr($filepath, 0, 7) == 'sftp://' ? $filepath : $_SESSION['wfu_ABSPATH'].$filepath );
 	//reject download of php files for security reasons
-	if ( preg_match("/\.php$/", $filepath) ) {
+	if ( wfu_file_extension_restricted($filepath) ) {
 		$_SESSION['wfu_download_status_'.$ticket] = 'failed';
 		die('<script language="javascript">alert("Error! File is forbidden for security reasons.");</script>');
 	}
 	//check that file exists
 	if ( !file_exists($filepath) ) {
 		$_SESSION['wfu_download_status_'.$ticket] = 'failed';
-		die('<script language="javascript">alert("Error! File does not exist.");</script>');
+		die('<script language="javascript">alert("Error! File does not exist.'.$filepath.'");</script>');
 	}
 
 	set_time_limit(0); // disable the time limit for this script

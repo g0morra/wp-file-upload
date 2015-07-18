@@ -85,6 +85,14 @@ function wfu_sanitize_code($code) {
 	return preg_replace("/[^A-Za-z0-9]/", "", $code);
 }
 
+function wfu_sanitize_int($code) {
+	return preg_replace("/[^0-9]/", "", $code);
+}
+
+function wfu_sanitize_tag($code) {
+	return preg_replace("/[^A-Za-z_]/", "", $code);
+}
+
 //********************* Array Functions ****************************************************************************************************
 
 function wfu_encode_array_to_string($arr) {
@@ -336,6 +344,16 @@ function wfu_basename($path) {
 function wfu_basedir($path) {
 	if ( !$path || $path == "" ) return "";
 	return substr($path, 0, strlen($path) - strlen(wfu_basename($path)));
+}
+
+function wfu_path_abs2rel($path) {
+	$abspath_notrailing_slash = substr(ABSPATH, 0, -1);
+	return ( substr($path, 0, 6) == 'ftp://' || substr($path, 0, 7) == 'ftps://' || substr($path, 0, 7) == 'sftp://' ? $path : str_replace($abspath_notrailing_slash, "", $path) );
+}
+
+function wfu_path_rel2abs($path) {
+	if ( substr($path, 0, 1) == "/" ) $path = substr($path, 1);
+	return ( substr($path, 0, 6) == 'ftp://' || substr($path, 0, 7) == 'ftps://' || substr($path, 0, 7) == 'sftp://' ? $path : ABSPATH.$path );
 }
 
 function wfu_upload_plugin_full_path( $params ) {
@@ -594,6 +612,7 @@ function wfu_safe_store_filepath($path) {
 function wfu_get_filepath_from_safe($code) {
 	//sanitize $code
 	$code = wfu_sanitize_code($code);
+	if ( $code == "" ) return false;
 	//return filepath from session variable, if exists
 	if ( !isset($_SESSION['wfu_filepath_safe_storage'][$code]) ) return false;
 	return $_SESSION['wfu_filepath_safe_storage'][$code];
@@ -612,6 +631,16 @@ function wfu_file_extension_restricted($filename) {
 		substr($filename, -5) == ".html" ||
 		substr($filename, -9) == ".htaccess" 
 		);
+}
+
+function wfu_human_filesize($size, $unit = "") {
+	if ( ( !$unit && $size >= 1<<30 ) || $unit == "GB" )
+		return number_format($size / (1<<30), 2)."GB";
+	if( ( !$unit && $size >= 1<<20 ) || $unit == "MB" )
+		return number_format($size / (1<<20), 2)."MB";
+	if( ( !$unit && $size >= 1<<10 ) || $unit == "KB" )
+		return number_format($size / (1<<10), 2)."KB";
+	return number_format($size)." bytes";
 }
 
 //********************* User Functions *****************************************************************************************************
@@ -668,8 +697,8 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 
 	if ( !file_exists($filepath) && substr($action, 0, 5) != 'other' ) return;
 	$parts = pathinfo($filepath);
-	$relativepath = str_replace(ABSPATH, '', $filepath);
-	if ( substr($relativepath, 0, 1) != '/' ) $relativepath = '/'.$relativepath;
+	$relativepath = wfu_path_abs2rel($filepath);
+//	if ( substr($relativepath, 0, 1) != '/' ) $relativepath = '/'.$relativepath;
 	
 	$retid = 0;
 	if ( $action == 'upload' ) {
@@ -691,6 +720,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 			array(
 				'userid' 	=> $userid,
 				'uploaduserid' 	=> $userid,
+				'sessionid' => session_id(),
 				'filepath' 	=> $relativepath,
 				'filehash' 	=> $filehash,
 				'filesize' 	=> $filesize,
@@ -704,6 +734,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 			array(
 				'%d',
 				'%d',
+				'%s',
 				'%s',
 				'%s',
 				'%d',
@@ -746,8 +777,8 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 	elseif ( substr($action, 0, 6) == 'rename' ) {
 		//get new filepath
 		$newfilepath = substr($action, 7);
-		$relativepath = str_replace(ABSPATH, '', $newfilepath);
-		if ( substr($relativepath, 0, 1) != '/' ) $relativepath = '/'.$relativepath;
+		$relativepath = wfu_path_abs2rel($newfilepath);
+//		if ( substr($relativepath, 0, 1) != '/' ) $relativepath = '/'.$relativepath;
 		//get stored file data from database without user data
 		$filerec = wfu_get_file_rec($filepath, false);
 		//log action only if there are previous stored file data
@@ -765,6 +796,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 				array(
 					'userid' 	=> $userid,
 					'uploaduserid' 	=> $filerec->uploaduserid,
+					'sessionid' => $filerec->sessionid,
 					'filepath' 	=> $relativepath,
 					'filehash' 	=> $filerec->filehash,
 					'filesize' 	=> $filerec->filesize,
@@ -776,7 +808,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 					'action' 	=> 'rename',
 					'linkedto' 	=> $filerec->idlog
 				),
-				array( '%d','%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' ) ) !== false )
+				array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' ) ) !== false )
 				$retid = $wpdb->insert_id;
 		}
 	}
@@ -798,6 +830,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 				array(
 					'userid' 	=> $userid,
 					'uploaduserid' 	=> $filerec->uploaduserid,
+					'sessionid' => $filerec->sessionid,
 					'filepath' 	=> $filerec->filepath,
 					'filehash' 	=> $filerec->filehash,
 					'filesize' 	=> $filerec->filesize,
@@ -809,7 +842,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 					'action' 	=> 'delete',
 					'linkedto' 	=> $filerec->idlog
 				),
-				array( '%d','%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
+				array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
 				$retid = $wpdb->insert_id;
 		}
 	}
@@ -831,6 +864,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 				array(
 					'userid' 	=> $userid,
 					'uploaduserid' 	=> $filerec->uploaduserid,
+					'sessionid' => $filerec->sessionid,
 					'filepath' 	=> $filerec->filepath,
 					'filehash' 	=> $filerec->filehash,
 					'filesize' 	=> $filerec->filesize,
@@ -842,7 +876,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 					'action' 	=> 'download',
 					'linkedto' 	=> $filerec->idlog
 				),
-				array( '%d','%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
+				array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
 				$retid = $wpdb->insert_id;
 		}
 	}
@@ -865,6 +899,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 				array(
 					'userid' 	=> $userid,
 					'uploaduserid' 	=> $filerec->uploaduserid,
+					'sessionid' => $filerec->sessionid,
 					'filepath' 	=> $filerec->filepath,
 					'filehash' 	=> $filerec->filehash,
 					'filesize' 	=> $filerec->filesize,
@@ -876,18 +911,19 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 					'action' 	=> 'modify',
 					'linkedto' 	=> $filerec->idlog
 				),
-				array( '%d','%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
+				array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
 				$retid = $wpdb->insert_id;
 		}
 	}
 	elseif ( substr($action, 0, 5) == 'other' ) {
 		$info = substr($action, 6);
 		$now_date = date('Y-m-d H:i:s');
-		//insert new download record
+		//insert new other type record
 		if ( $wpdb->insert($table_name1,
 			array(
 				'userid' 	=> $userid,
 				'uploaduserid' 	=> -1,
+				'sessionid'	=> '',
 				'filepath' 	=> $info,
 				'filehash' 	=> '',
 				'filesize' 	=> 0,
@@ -899,7 +935,7 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 				'action' 	=> 'other',
 				'linkedto' 	=> -1
 			),
-			array( '%d','%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
+			array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
 			$retid = $wpdb->insert_id;
 	}
 	return $retid;
@@ -948,8 +984,8 @@ function wfu_get_file_rec($filepath, $include_userdata) {
 
 	if ( !file_exists($filepath) ) return null;
 
-	$relativepath = str_replace(ABSPATH, '', $filepath);
-	if ( substr($relativepath, 0, 1) != '/' ) $relativepath = '/'.$relativepath;
+	$relativepath = wfu_path_abs2rel($filepath);
+//	if ( substr($relativepath, 0, 1) != '/' ) $relativepath = '/'.$relativepath;
 	//if file hash is enabled, then search file based on its path and hash, otherwise find file based on its path and size
 	if ( isset($plugin_options['hashfiles']) && $plugin_options['hashfiles'] == '1' ) {
 		$filehash = md5_file($filepath);
@@ -978,9 +1014,7 @@ function wfu_reassign_hashes() {
 		$filerecs = $wpdb->get_results('SELECT * FROM '.$table_name1.' WHERE filehash = \'\' AND date_to = 0');
 		foreach( $filerecs as $filerec ) {
 			//calculate full file path
-			$filepath = ABSPATH;
-			if ( substr($filepath, -1) == '/' ) $filepath = substr($filepath, 0, -1);
-			$filepath .= $filerec->filepath;
+			$filepath = wfu_path_rel2abs($filerec->filepath);
 			if ( file_exists($filepath) ) {
 				$filehash = md5_file($filepath);
 				$wpdb->update($table_name1,
@@ -1005,9 +1039,7 @@ function wfu_sync_database() {
 	foreach( $filerecs as $filerec ) {
 		$obsolete = true;
 		//calculate full file path
-		$filepath = ABSPATH;
-		if ( substr($filepath, -1) == '/' ) $filepath = substr($filepath, 0, -1);
-		$filepath .= $filerec->filepath;
+		$filepath = wfu_path_rel2abs($filerec->filepath);
 		if ( file_exists($filepath) ) {
 			if ( $plugin_options['hashfiles'] == '1' ) {
 				$filehash = md5_file($filepath);
@@ -1039,14 +1071,16 @@ function wfu_get_recs_of_user($userid) {
 	$table_name2 = $wpdb->prefix . "wfu_userdata";
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
 
-	$filerecs = $wpdb->get_results('SELECT * FROM '.$table_name1.' WHERE action <> \'other\' AND uploaduserid = '.$userid.' AND date_to = 0');
+	//if $userid starts with 'guest' then retrieval of records is done using sessionid and uploaduserid is zero (for guests)
+	if ( substr($userid, 0, 5) == 'guest' )
+		$filerecs = $wpdb->get_results('SELECT * FROM '.$table_name1.' WHERE action <> \'other\' AND uploaduserid = 0 AND sessionid = \''.substr($userid, 5).'\' AND date_to = 0');
+	else
+		$filerecs = $wpdb->get_results('SELECT * FROM '.$table_name1.' WHERE action <> \'other\' AND uploaduserid = '.$userid.' AND date_to = 0');
 	$out = array();
 	foreach( $filerecs as $filerec ) {
 		$obsolete = true;
 		//calculate full file path
-		$filepath = ABSPATH;
-		if ( substr($filepath, -1) == '/' ) $filepath = substr($filepath, 0, -1);
-		$filepath .= $filerec->filepath;
+		$filepath = wfu_path_rel2abs($filerec->filepath);
 		if ( file_exists($filepath) ) {
 			if ( $plugin_options['hashfiles'] == '1' ) {
 				$filehash = md5_file($filepath);
@@ -1282,11 +1316,28 @@ function wfu_process_media_insert($file_path, $page_id){
 	return $attach_id;	
 }
 
+//********************* Media Functions ****************************************************************************************************
+
+function wfu_safe_store_browser_actions($action_list) {
+	$code = wfu_create_random_string(16);
+	$_SESSION['wfu_browser_actions_safe_storage'][$code] = $action_list;
+	return $code;
+}
+
+function wfu_get_browser_actions_from_safe($code) {
+	//sanitize $code
+	$code = wfu_sanitize_code($code);
+	if ( $code == "" ) return false;
+	//return actions from session variable, if exists
+	if ( !isset($_SESSION['wfu_browser_actions_safe_storage'][$code]) ) return false;
+	return $_SESSION['wfu_browser_actions_safe_storage'][$code];
+}
+
 //********************* POST/GET Requests Functions ****************************************************************************************************
 
 function wfu_post_request($url, $params, $verifypeer = false) {
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
-	if ( $plugin_options['postmethod'] == 'curl' ) {
+	if ( isset($plugin_options['postmethod']) && $plugin_options['postmethod'] == 'curl' ) {
 		// POST request using CURL
 		$ch = curl_init($url);
 		$options = array(
@@ -1305,7 +1356,7 @@ function wfu_post_request($url, $params, $verifypeer = false) {
 		curl_close ($ch);
 		return $result;
 	}
-	elseif ( $plugin_options['postmethod'] == 'socket' ) {
+	elseif ( isset($plugin_options['postmethod']) && $plugin_options['postmethod'] == 'socket' ) {
 		// POST request using sockets
 		$scheme = "";
 		$port = 80;

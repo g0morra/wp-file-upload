@@ -4,7 +4,7 @@ if( !session_id() ) { session_start(); }
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 3.0.0
+Version: 3.1.0
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -29,7 +29,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 //set global db variables
-$wfu_tb_log_version = "1.0";
+//wfu_tb_log_version v2.0 changes:
+//  sessionid field added
+$wfu_tb_log_version = "2.0";
 $wfu_tb_userdata_version = "1.0";
 
 /* do not load plugin if this is the login page */
@@ -103,9 +105,22 @@ function wordpress_file_upload_handler($incomingfrompost) {
 	return $wordpress_file_upload_output;
 }
 
+function wordpress_file_upload_browser_handler($incomingfrompost) {
+	//process incoming attributes assigning defaults if required
+	$defs = wfu_browser_attribute_definitions();
+	$defs_indexed = array();
+	foreach ( $defs as $def ) $defs_indexed[$def["attribute"]] = $def["value"];
+	$incomingfrompost = shortcode_atts($defs_indexed, $incomingfrompost);
+	//run function that actually does the work of the plugin
+	$wordpress_file_upload_browser_output = wordpress_file_upload_browser_function($incomingfrompost);
+	//send back text to replace shortcode in post
+	return $wordpress_file_upload_browser_output;
+}
+
 function wordpress_file_upload_function($incomingfromhandler) {
 	global $post;
 	global $blog_id;
+	$shortcode_tag = 'wordpress_file_upload';
 	$params = wfu_plugin_parse_array($incomingfromhandler);
 	$sid = $params["uploadid"];
 	// store current page id in params array
@@ -228,16 +243,10 @@ function wordpress_file_upload_function($incomingfromhandler) {
 
 	/* Compose the html code for the plugin */
 	$wordpress_file_upload_output = "";
-	$wordpress_file_upload_output .= '<div id="wordpress_file_upload_block_'.$sid.'" class="file_div_clean wfu_container">';
+	$wordpress_file_upload_output .= '<div id="'.$shortcode_tag.'_block_'.$sid.'" class="file_div_clean wfu_container">';
 	//add visual editor overlay if the current user is administrator
 	if ( current_user_can( 'manage_options' ) ) {
-		$wordpress_file_upload_output .= "\n\t".'<div id="wordpress_file_upload_editor_'.$sid.'" class="wfu_overlay_editor">';
-		$wordpress_file_upload_output .= "\n\t\t".'<button class="wfu_overlay_editor_button" title="'.WFU_PAGE_PLUGINEDITOR_BUTTONTITLE.'" onclick="wfu_invoke_shortcode_editor('.$sid.', '.$post->ID.', \''.hash('md5', $post->post_content).'\');"><img src="'.WFU_IMAGE_OVERLAY_EDITOR.'" width="20px" height="20px" /></button>';
-		$wordpress_file_upload_output .= "\n\t".'</div>';
-		$wordpress_file_upload_output .= "\n\t".'<div id="wordpress_file_upload_overlay_'.$sid.'" class="wfu_overlay_container">';
-		$wordpress_file_upload_output .= "\n\t\t".'<table class="wfu_overlay_table"><tbody><tr><td><img src="'.WFU_IMAGE_OVERLAY_LOADING.'" /><label>'.WFU_PAGE_PLUGINEDITOR_LOADING.'</label></td></tr></tbody></table>';
-		$wordpress_file_upload_output .= "\n\t\t".'<div class="wfu_overlay_container_inner"></div>';
-		$wordpress_file_upload_output .= "\n\t".'</div>';
+		$wordpress_file_upload_output .= wfu_add_visual_editor_button($shortcode_tag, $sid);
 	}
 	$itemplaces = explode("/", $params["placements"]);
 	foreach ( $itemplaces as $section ) {
@@ -248,7 +257,6 @@ function wordpress_file_upload_function($incomingfromhandler) {
 			if ( $item_in_section == "title" ) array_push($section_array, $title_item);
 			elseif ( $item_in_section == "filename" ) array_push($section_array, $textbox_item);
 			elseif ( $item_in_section == "selectbutton" ) array_push($section_array, $uploadform_item);
-			elseif ( $item_in_section == "confirmbox" && preg_match("/(^|,)\s*checkbox\s*(,|$)/", $params['security_active']) && $params["singlebutton"] != "true" ) array_push($section_array, $confirmbox_item);
 			elseif ( $item_in_section == "uploadbutton" && $params["singlebutton"] != "true" ) array_push($section_array, $submit_item);
 			elseif ( $item_in_section == "subfolders" ) array_push($section_array, $subfolders_item);
 			elseif ( $item_in_section == "progressbar" ) array_push($section_array, $progressbar_item);
@@ -329,6 +337,19 @@ function wordpress_file_upload_function($incomingfromhandler) {
 	
 	$wordpress_file_upload_output .= wfu_post_plugin_actions($params);
 	return $wordpress_file_upload_output."\n";
+}
+
+function wfu_add_visual_editor_button($shortcode_tag, $sid) {
+	global $post;
+	$echo_str = "\n\t".'<div id="'.$shortcode_tag.'_editor_'.$sid.'" class="wfu_overlay_editor">';
+	$echo_str .= "\n\t\t".'<button class="wfu_overlay_editor_button" title="'.WFU_PAGE_PLUGINEDITOR_BUTTONTITLE.'" onclick="wfu_invoke_shortcode_editor('.$sid.', '.$post->ID.', \''.hash('md5', $post->post_content).'\', \''.$shortcode_tag.'\');"><img src="'.WFU_IMAGE_OVERLAY_EDITOR.'" width="20px" height="20px" /></button>';
+	$echo_str .= "\n\t".'</div>';
+	$echo_str .= "\n\t".'<div id="'.$shortcode_tag.'_overlay_'.$sid.'" class="wfu_overlay_container">';
+	$echo_str .= "\n\t\t".'<table class="wfu_overlay_table"><tbody><tr><td><img src="'.WFU_IMAGE_OVERLAY_LOADING.'" /><label>'.WFU_PAGE_PLUGINEDITOR_LOADING.'</label></td></tr></tbody></table>';
+	$echo_str .= "\n\t\t".'<div class="wfu_overlay_container_inner"></div>';
+	$echo_str .= "\n\t".'</div>';
+	
+	return $echo_str;
 }
 
 function wfu_post_plugin_actions($params) {

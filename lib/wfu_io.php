@@ -13,7 +13,10 @@ function wfu_create_directory($path, $method, $ftpdata) {
 			$ftp_username = substr($ftpdata, 0, $pos1);
 			$ftp_password = substr($ftpdata, $pos1 + 1, $pos2 - $pos1 - 1);
 			$ftp_host = substr($ftpdata, $pos2 + 1);
-			$conn_id = ftp_connect($ftp_host);
+			$ftp_port = preg_replace("/^[^:]*:?/", "", $ftp_host);
+			$ftp_host_clean = preg_replace("/:.*/", "", $ftp_host);
+			if ( $ftp_port != "" ) $conn_id = ftp_connect($ftp_host_clean, $ftp_port);
+			else $conn_id = ftp_connect($ftp_host_clean);
 			$login_result = ftp_login($conn_id, $ftp_username, $ftp_password);
 			if ( $conn_id && $login_result ) {
 				$flat_host = preg_replace("/^(.*\.)?([^.]*\..*)$/", "$2", $ftp_host);
@@ -66,7 +69,10 @@ function wfu_upload_file($source, $target, $method, $ftpdata, $passive, $fileper
 			$ftp_username = substr($ftpdata, 0, $pos1);
 			$ftp_password = substr($ftpdata, $pos1 + 1, $pos2 - $pos1 - 1);
 			$ftp_host = substr($ftpdata, $pos2 + 1);
-			$conn_id = ftp_connect($ftp_host);
+			$ftp_port = preg_replace("/^[^:]*:?/", "", $ftp_host);
+			$ftp_host_clean = preg_replace("/:.*/", "", $ftp_host);
+			if ( $ftp_port != "" ) $conn_id = ftp_connect($ftp_host_clean, $ftp_port);
+			else $conn_id = ftp_connect($ftp_host_clean);
 			$login_result = ftp_login($conn_id, $ftp_username, $ftp_password);
 			if ( $conn_id && $login_result ) {
 				$flat_host = preg_replace("/^(.*\.)?([^.]*\..*)$/", "$2", $ftp_host);

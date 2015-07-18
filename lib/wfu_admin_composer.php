@@ -1,18 +1,24 @@
 <?php
 
-function wfu_shortcode_composer($data = '') {
+function wfu_shortcode_composer($data = '', $shortcode_tag = 'wordpress_file_upload') {
 	global $wpdb;
 	global $wp_roles;
 	$siteurl = site_url();
  
 	$components = wfu_component_definitions();
-	$cats = wfu_category_definitions();
-	$defs = wfu_attribute_definitions();
+	if ( $shortcode_tag == 'wordpress_file_upload' ) {
+		$cats = wfu_category_definitions();
+		$defs = wfu_attribute_definitions();
+	}
+	else {
+		$cats = wfu_browser_category_definitions();
+		$defs = wfu_browser_attribute_definitions();
+	}
 	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
 	
 	if ( $data == "" ) {
 		$shortcode = $plugin_options['shortcode'];
-		$shortcode_full = '[wordpress_file_upload '.$shortcode.']';
+		$shortcode_full = '['.$shortcode_tag.' '.$shortcode.']';
 		$postid = "";
 		$postname = "";
 		$posttype = "";
@@ -21,7 +27,7 @@ function wfu_shortcode_composer($data = '') {
 		$autosave = true;
 	}
 	else {
-		$shortcode = trim(substr($data['shortcode'], strlen('[wordpress_file_upload'), -1));
+		$shortcode = trim(substr($data['shortcode'], strlen('['.$shortcode_tag), -1));
 		$shortcode_full = $data['shortcode'];
 		$postid = $data['post_id'];
 		$postname = get_the_title($postid);
@@ -38,7 +44,7 @@ function wfu_shortcode_composer($data = '') {
 		if ( array_key_exists($def['attribute'], $shortcode_attrs) ) {
 			$defs[$key]['value'] = $shortcode_attrs[$def['attribute']];
 		}
-		if ( $def['attribute'] == 'uploadid' ) $shortcode_id = $defs[$key]['value'];
+		if ( $def['attribute'] == 'uploadid' || $def['attribute'] == 'browserid' ) $shortcode_id = $defs[$key]['value'];
 	}
 
 	// index $components
@@ -65,6 +71,7 @@ function wfu_shortcode_composer($data = '') {
 	$echo_str .= "\n\t".'<div style="margin-top:10px; display:inline-block;">';
 	if ( $data != "") $echo_str .= "\n\t\t".'<input id="wfu_update_shortcode" type="button" value="Update" class="button-primary" disabled="disabled" onclick="wfu_save_shortcode()" /><span id="wfu_update_shortcode_wait" class="spinner" style="float:right; display:none;"></span>';
 	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_original_enc" type="hidden" value="'.wfu_plugin_encode_string($shortcode_full).'" />';
+	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_tag" type="hidden" value="'.$shortcode_tag.'" />';
 	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_postid" type="hidden" value="'.$postid.'" />';
 	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_posthash" type="hidden" value="'.$posthash.'" />';
 	$echo_str .= "\n\t\t".'<input id="wfu_shortcode_position" type="hidden" value="'.$shortcode_position.'" />';
@@ -73,7 +80,7 @@ function wfu_shortcode_composer($data = '') {
 	$echo_str .= "\n\t\t".'<div class="wfu_shortcode_container">';
 	$echo_str .= "\n\t\t\t".'<span><strong>Generated Shortcode</strong></span>';
 	$echo_str .= "\n\t\t\t".'<span id="wfu_save_label" class="wfu_save_label">saved</span>';
-	$echo_str .= "\n\t\t\t".'<textarea id="wfu_shortcode" class="wfu_shortcode" rows="5">[wordpress_file_upload]</textarea>';
+	$echo_str .= "\n\t\t\t".'<textarea id="wfu_shortcode" class="wfu_shortcode" rows="5">['.$shortcode_tag.']</textarea>';
 	$echo_str .= "\n\t\t\t".'<div id="wfu_attribute_defaults" style="display:none;">';
 	foreach ( $defs as $def )
 		$echo_str .= "\n\t\t\t\t".'<input id="wfu_attribute_default_'.$def['attribute'].'" type="hidden" value="'.$def['default'].'" />';
@@ -392,7 +399,7 @@ function wfu_shortcode_composer($data = '') {
 			if ( $def['value'] == "all" ) $selected = array($users[0]->user_login);
 			else $selected = explode(",", $def['value']);
 			$echo_str .= $dlp."\t\t".'<table class="wfu_userlist_container"><tbody><tr><td>';
-			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.count($users).'" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' disabled="disabled"' : '' ).'>';
+			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.min(count($users), 10).'" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' disabled="disabled"' : '' ).'>';
 			foreach ( $users as $userid => $user )
 				$echo_str .= $dlp."\t\t\t".'<option value="'.$user->user_login.'"'.( in_array($user->user_login, $selected) ? ' selected="selected"' : '' ).'>'.$user->display_name.' ('.$user->user_login.')</option>';
 			$echo_str .= $dlp."\t\t".'</select>';
@@ -400,6 +407,54 @@ function wfu_shortcode_composer($data = '') {
 			$echo_str .= $dlp."\t\t".'<div class="wfu_userlist_checkall"><input id="wfu_attribute_'.$attr.'_guests" type="checkbox" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" || in_array("guests", $selected) ? ' checked="checked"' : '' ).( strtolower($def['value']) == "all" ? ' disabled="disabled"' : '' ).' /><label for="wfu_attribute_'.$attr.'_guests"> Include guests</label></div><br />';
 			$echo_str .= $dlp."\t\t".'<div class="wfu_userlist_checkall"><input id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_all"> Select all (including guests)</label></div>';
 			$echo_str .= $dlp."\t\t".'</td></tr></tbody></table>';
+		}
+		elseif ( $def['type'] == "columns" ) {
+			$selected = explode(",", $def['value']);
+			if ( count($selected) == 1 && $selected[0] == "" ) $selected = array();
+			$echo_str .= $dlp."\t".'<table class="wfu_columns_container"><tbody><tr>';
+			$echo_str .= $dlp."\t\t".'<td>';
+			$echo_str .= $dlp."\t\t\t".'<label class="wfu_columns_listtitle">Available Columns</label><br />';
+			$echo_str .= $dlp."\t\t\t".'<select id="wfu_attribute_'.$attr.'_sourcelist" multiple="multiple" size="'.min(count($def['listitems']), 10).'">';
+			foreach ( $def['listitems'] as $item ) {
+				$item_required = ( substr($item, 0, 1) == "*" );
+				if ( $item_required ) $item = substr($item, 1);
+				$item_parts = explode("/", $item, 2);
+				if ( count($item_parts) == 1 ) {
+					$item_name = $item;
+					$item_label = $item.( $item_required ? ' (required)' : '' );
+				}
+				else {
+					$item_name = $item_parts[0];
+					$item_label = $item_parts[1];
+				}
+				$itemprops[$item_name] = array( 'label' => $item_label, 'required' => $item_required );
+				$echo_str .= $dlp."\t\t\t\t".'<option value="'.$item_name.'"'.( $item_required ? ' class="wfu_columns_item_required"' : '' ).' onclick="wfu_columns_itemclicked(this);">'.$item_label.'</option>';
+			}
+			$echo_str .= $dlp."\t\t\t".'</select>';
+			$echo_str .= $dlp."\t\t".'</td>';
+			foreach ( $itemprops as $item_name => $prop )
+				if ( $prop['required'] && !in_array($item_name, $selected) )
+					array_splice($selected, 0, 0, array( $item_name ));
+			$echo_str .= $dlp."\t\t".'<td align="center">';
+			$echo_str .= $dlp."\t\t\t".'<label class="wfu_columns_listtitle"></label><br />';
+			$echo_str .= $dlp."\t\t\t".'<button class="wfu_columns_addbutton" onclick="wfu_columns_buttonaction(\''.$attr.'\', \'add\');">Add &gt;&gt;</button><br />';
+			$echo_str .= $dlp."\t\t\t".'<button class="wfu_columns_addbutton" onclick="wfu_columns_buttonaction(\''.$attr.'\', \'del\');">&lt;&lt; Remove</button>';
+			$echo_str .= $dlp."\t\t".'</td>';
+			$echo_str .= $dlp."\t\t".'<td>';
+			$echo_str .= $dlp."\t\t\t".'<label class="wfu_columns_listtitle">Displayed Columns</label><br />';
+			$echo_str .= $dlp."\t\t\t".'<select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.min(count($def['listitems']), 10).'" onchange="wfu_update_columns(\''.$attr.'\');">';
+			foreach ( $selected as $item_name ) {
+				$echo_str .= $dlp."\t\t\t\t".'<option value="'.$item_name.'"'.( $itemprops[$item_name]['required'] ? ' class="wfu_columns_item_required"' : '' ).' onclick="wfu_columns_itemclicked(this);">'.$itemprops[$item_name]['label'].'</option>';
+			}
+			$echo_str .= $dlp."\t\t\t".'</select>';
+			$echo_str .= $dlp."\t\t".'</td>';
+			$echo_str .= $dlp."\t\t".'<td align="center">';
+			$echo_str .= $dlp."\t\t\t".'<label class="wfu_columns_listtitle"></label><br />';
+			$echo_str .= $dlp."\t\t\t".'<button class="wfu_columns_addbutton" onclick="wfu_columns_buttonaction(\''.$attr.'\', \'up\');">&#8593;</button><br />';
+			$echo_str .= $dlp."\t\t\t".'<button class="wfu_columns_addbutton" onclick="wfu_columns_buttonaction(\''.$attr.'\', \'down\');">&#8595;</button>';
+			$echo_str .= $dlp."\t\t".'</td>';
+			$echo_str .= $dlp."\t".'</tr></tbody></table>';
+			
 		}
 		elseif ( $def['type'] == "dimensions" ) {
 			$vals_arr = explode(",", $def['value']);

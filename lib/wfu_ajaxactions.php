@@ -151,30 +151,29 @@ function wfu_ajax_action_callback() {
 
 function wfu_ajax_action_save_shortcode() {
 	if ( !current_user_can( 'manage_options' ) ) die();
-	if ( !isset($_POST['shortcode']) || !isset($_POST['shortcode_original']) || !isset($_POST['post_id']) || !isset($_POST['post_hash']) || !isset($_POST['shortcode_position']) ) die();
+	if ( !isset($_POST['shortcode']) || !isset($_POST['shortcode_original']) || !isset($_POST['post_id']) || !isset($_POST['post_hash']) || !isset($_POST['shortcode_position']) || !isset($_POST['shortcode_tag']) ) die();
+
+	//sanitize parameters
+	$shortcode = wfu_sanitize_code($_POST['shortcode']);
+	$shortcode_original = wfu_sanitize_code($_POST['shortcode_original']);
+	$post_id = wfu_sanitize_int($_POST['post_id']);
+	$post_hash = wfu_sanitize_code($_POST['post_hash']);
+	$shortcode_position = wfu_sanitize_int($_POST['shortcode_position']);
+	$shortcode_tag = wfu_sanitize_tag($_POST['shortcode_tag']);
 	
 	if ( $_POST['post_id'] == "" ) {
-		$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
-		$new_plugin_options['version'] = '1.0';
-		$new_plugin_options['shortcode'] = $plugin_options['shortcode'];
-		$new_plugin_options['hashfiles'] = $plugin_options['hashfiles'];
-		$new_plugin_options['basedir'] = $plugin_options['basedir'];
-		$new_plugin_options['postmethod'] = $plugin_options['postmethod'];
-		$encoded_options = wfu_encode_plugin_options($new_plugin_options);
-		update_option( "wordpress_file_upload_options", $encoded_options );
-
-		die("wfu_save_shortcode:success:");
+		die();
 	}
 	else {
-		$data['post_id'] = $_POST['post_id'];
-		$data['post_hash'] = $_POST['post_hash'];
-		$data['shortcode'] = wfu_plugin_decode_string($_POST['shortcode_original']);
-		$data['position'] = $_POST['shortcode_position'];
+		$data['post_id'] = $post_id;
+		$data['post_hash'] = $post_hash;
+		$data['shortcode'] = wfu_plugin_decode_string($shortcode_original);
+		$data['position'] = $shortcode_position;
 		if ( !wfu_check_edit_shortcode($data) ) die("wfu_save_shortcode:fail:post_modified");
 		else {
-			$new_shortcode = "[wordpress_file_upload ".wfu_plugin_decode_string($_POST['shortcode'])."]";
+			$new_shortcode = "[".$shortcode_tag." ".wfu_plugin_decode_string($shortcode)."]";
 			if ( wfu_replace_shortcode($data, $new_shortcode) ) {
-				$post = get_post($_POST['post_id']);
+				$post = get_post($post_id);
 				$hash = hash('md5', $post->post_content);
 				die("wfu_save_shortcode:success:".$hash);
 			}
@@ -196,10 +195,16 @@ function wfu_ajax_action_check_page_contents() {
 
 function wfu_ajax_action_edit_shortcode() {
 	if ( !current_user_can( 'manage_options' ) ) die();
-	if ( !isset($_POST['upload_id']) || !isset($_POST['post_id']) || !isset($_POST['post_hash']) ) die();
+	if ( !isset($_POST['upload_id']) || !isset($_POST['post_id']) || !isset($_POST['post_hash']) || !isset($_POST['shortcode_tag']) ) die();
 	
-	$data['post_id'] = $_POST['post_id'];
-	$data['post_hash'] = $_POST['post_hash'];
+	//sanitize parameters
+	$upload_id = sanitize_text_field($_POST['upload_id']);
+	$post_id = wfu_sanitize_int($_POST['post_id']);
+	$post_hash = wfu_sanitize_code($_POST['post_hash']);
+	$shortcode_tag = wfu_sanitize_tag($_POST['shortcode_tag']);
+
+	$data['post_id'] = $post_id;
+	$data['post_hash'] = $post_hash;
 	if ( wfu_check_edit_shortcode($data) ) {
 		$post = get_post($data['post_id']);
 		//get default value for uploadid
@@ -212,22 +217,22 @@ function wfu_ajax_action_edit_shortcode() {
 			}
 		}
 		//get page shortcodes
-		$wfu_shortcodes = wfu_get_content_shortcodes($post, 'wordpress_file_upload');
+		$wfu_shortcodes = wfu_get_content_shortcodes($post, $shortcode_tag);
 		//find the shortcodes' uploadid and the correct one
 		$validkey = -1;
 		foreach ( $wfu_shortcodes as $key => $data ) {
-			$shortcode = trim(substr($data['shortcode'], strlen('[wordpress_file_upload'), -1));
+			$shortcode = trim(substr($data['shortcode'], strlen('['.$shortcode_tag), -1));
 			$shortcode_attrs = wfu_shortcode_string_to_array($shortcode);
 			if ( array_key_exists('uploadid', $shortcode_attrs) ) $uploadid = $shortcode_attrs['uploadid'];
 			else $uploadid = $default;
-			if ( $uploadid == $_POST['upload_id'] ) {
+			if ( $uploadid == $upload_id ) {
 				$validkey = $key;
 				break;
 			}
 		}
 		if ( $validkey == -1 ) die();
 		$data_enc = wfu_encode_array_to_string($wfu_shortcodes[$validkey]);
-		$url = site_url().'/wp-admin/options-general.php?page=wordpress_file_upload&action=edit_shortcode&data='.$data_enc;
+		$url = site_url().'/wp-admin/options-general.php?page=wordpress_file_upload&tag='.$shortcode_tag.'&action=edit_shortcode&data='.$data_enc;
 		die("wfu_edit_shortcode:success:".wfu_plugin_encode_string($url));
 	}
 	else die("wfu_edit_shortcode:check_page_obsolete:".WFU_ERROR_PAGE_OBSOLETE);
@@ -279,20 +284,20 @@ function wfu_ajax_action_download_file_invoker() {
 	$file_code = (isset($_POST['file']) ? $_POST['file'] : (isset($_GET['file']) ? $_GET['file'] : ''));
 	$nonce = (isset($_POST['nonce']) ? $_POST['nonce'] : (isset($_GET['nonce']) ? $_GET['nonce'] : ''));
 	if ( $file_code == '' || $nonce == '' ) die();
-	
+
 	//security check to avoid CSRF attacks
 	if ( !wp_verify_nonce($nonce, 'wfu_download_file_invoker') ) die();
 	
 	//check if user is allowed to download files
 	if ( !current_user_can( 'manage_options' ) ) {
-			die();
+		die();
 	}
 	
 //	$filepath = wfu_plugin_decode_string($file_code);
 	$file_code = wfu_sanitize_code($file_code);
 	$filepath = wfu_get_filepath_from_safe($file_code);
 	if ( $filepath === false ) die();
-	$filepath = ABSPATH.wfu_flatten_path($filepath);
+	$filepath = wfu_path_rel2abs(wfu_flatten_path($filepath));
 
 	//check if user is allowed to perform this action on this file
 	if ( !wfu_current_user_owes_file($filepath) ) die();
@@ -346,7 +351,7 @@ function wfu_ajax_action_download_file_monitor() {
 //		$filepath = wfu_plugin_decode_string($file_code);
 		$filepath = wfu_get_filepath_from_safe($file_code);
 		if ( $filepath === false ) die();
-		$filepath = wfu_flatten_path($filepath);
+		$filepath = wfu_path_rel2abs(wfu_flatten_path($filepath));
 		wfu_log_action('download', $filepath, $user->ID, '', 0, '', null);
 		die('wfu_ajax_action_download_file_monitor:'.$_SESSION['wfu_download_status_'.$id].':');
 	}
@@ -356,6 +361,7 @@ function wfu_ajax_action_download_file_monitor() {
 		die('wfu_ajax_action_download_file_monitor:repeat:'.$id);
 	}
 }
+
 
 function wfu_ajax_action_notify_wpfilebase() {
 	$params_index = (isset($_POST['params_index']) ? $_POST['params_index'] : (isset($_GET['params_index']) ? $_GET['params_index'] : ''));
