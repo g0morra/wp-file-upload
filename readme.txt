@@ -125,6 +125,9 @@ In the free version the upload will fail. However in the Pro version the upload 
 
 == Changelog ==
 
+= 3.1.1 =
+* the previous version broke the easy creation of shortcodes through the plugin's settings in Dashboard and it has been corrected, together with some improvements
+
 = 3.1.0 =
 * an important feature (front-end file browser) has been added in professional version 3.1.0
 * added port number support for uploads using ftp mode
@@ -450,6 +453,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 3.1.1 =
+Upgrade to fix a minor bug.
 
 = 3.1.0 =
 Upgrade to fix some minor bugs.

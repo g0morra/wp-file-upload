@@ -165,7 +165,7 @@ function wordpress_file_upload_manage_dashboard() {
 		$echo_str = wfu_manage_settings();	
 	}
 	elseif ( $action == 'add_shortcode' && $postid != "" && $nonce != "" && $tag != "" ) {
-		if ( $_SESSION['wfu_add_shortcode_ticket'] != $nonce ) $echo_str = wfu_manage_mainmenu();
+		if ( $_SESSION['wfu_add_shortcode_ticket_for_'.$tag] != $nonce ) $echo_str = wfu_manage_mainmenu();
 		elseif ( wfu_add_shortcode($postid, $tag) ) $echo_str = wfu_manage_mainmenu();
 		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_ADD_SHORTCODE_REJECTED);
 		$_SESSION['wfu_add_shortcode_ticket'] = 'noticket';
@@ -419,7 +419,10 @@ function wfu_manage_instances_of_shortcode($tag, $title, $slug, $inc) {
 	$addbutton_post = ( !$no_shortcodes ? '' : '<label> to get started and add the '.$slug.' in a page</label>');
 	$echo_str .= "\n\t\t\t".$addbutton_pre.'<button onclick="document.getElementById(\'wfu_add_plugin_button_'.$inc.'\').style.display = \'none\'; document.getElementById(\'wfu_add_plugin_'.$inc.'\').style.display = \'inline-block\'; '.$onchange_js.'">'.( !$no_shortcodes ? 'Add Plugin Instance' : 'here' ).'</button>'.$addbutton_post;
 	$echo_str .= "\n\t\t".'</div>';
-	$echo_str .= "\n\t\t".'<div id="wfu_add_plugin_'.$inc.'" style="margin-bottom: 20px; margin-top: 10px; display:none;">';
+	$echo_str .= "\n\t\t".'<div id="wfu_add_plugin_'.$inc.'" style="margin-bottom: 20px; margin-top: 10px; position:relative; display:none;">';
+	$echo_str .= "\n\t\t\t".'<div id="wfu_add_plugin_'.$inc.'_overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:rgba(255,255,255,0.8); border:none; display:none;">';
+	$echo_str .= "\n\t\t\t\t".'<table style="background:none; border:none; margin:0; padding:0; line-height:1; border-spacing:0; width:100%; height:100%; table-layout:fixed;"><tbody><tr><td style="text-align:center; vertical-align:middle;"><div style="display:inline-block;"><span class="spinner" style="opacity:1; float:left; margin:0; display:inline;"></span><label style="margin-left:4px;">please wait...</label></div></td></tr></tbody></table>';
+	$echo_str .= "\n\t\t\t".'</div>';
 	$echo_str .= "\n\t\t\t".'<label>Add '.$slug.' to </label><select id="wfu_page_type_'.$inc.'" onchange="document.getElementById(\'wfu_page_list_'.$inc.'\').style.display = (this.value == \'page\' ? \'inline-block\' : \'none\'); document.getElementById(\'wfu_post_list_'.$inc.'\').style.display = (this.value == \'post\' ? \'inline-block\' : \'none\'); '.$onchange_js.'"><option value="page" selected="selected">Page</option><option value="post">Post</option></select>';
 	$echo_str .= "\n\t\t\t".'<select id="wfu_page_list_'.$inc.'" style="margin-bottom:6px;" onchange="'.$onchange_js.'">';
 	$echo_str .= "\n\t\t\t\t".'<option value=""></option>';
@@ -432,8 +435,8 @@ function wfu_manage_instances_of_shortcode($tag, $title, $slug, $inc) {
 		$echo_str .= "\n\t\t\t\t".'<option value="'.$item['id'].'">'.str_repeat('&nbsp;', 4 * $item['level']).( $item['status'] == 1 ? '[Private]' : ( $item['status'] == 2 ? '[Draft]' : '' ) ).$item['title'].'</option>';
 	$echo_str .= "\n\t\t\t".'</select><br />';
 	$add_shortcode_ticket = wfu_create_random_string(16);
-	$_SESSION['wfu_add_shortcode_ticket'] = $add_shortcode_ticket;
-	$echo_str .= "\n\t\t".'<button id="wfu_add_plugin_ok_'.$inc.'" style="float:right; margin: 0 2px 0 4px;" disabled="disabled" onclick="document.getElementById(\'wfu_add_plugin_'.$inc.'\').style.display = \'none\'; window.location = \''.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=add_shortcode&amp;tag='.$tag.'&amp;postid=\' + (document.getElementById(\'wfu_page_type_'.$inc.'\').value == \'page\' ? document.getElementById(\'wfu_page_list_'.$inc.'\').value : document.getElementById(\'wfu_post_list_'.$inc.'\').value) + \'&amp;nonce='.$add_shortcode_ticket.'\';">Ok</button>';
+	$_SESSION['wfu_add_shortcode_ticket_for_'.$tag] = $add_shortcode_ticket;
+	$echo_str .= "\n\t\t".'<button id="wfu_add_plugin_ok_'.$inc.'" style="float:right; margin: 0 2px 0 4px;" disabled="disabled" onclick="document.getElementById(\'wfu_add_plugin_'.$inc.'_overlay\').style.display = \'block\'; window.location = \''.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&amp;action=add_shortcode&amp;tag='.$tag.'&amp;postid=\' + (document.getElementById(\'wfu_page_type_'.$inc.'\').value == \'page\' ? document.getElementById(\'wfu_page_list_'.$inc.'\').value : document.getElementById(\'wfu_post_list_'.$inc.'\').value) + \'&amp;nonce='.$add_shortcode_ticket.'\';">Ok</button>';
 	$echo_str .= "\n\t\t".'<button style="float:right;" onclick="document.getElementById(\'wfu_page_type_'.$inc.'\').value = \'page\'; document.getElementById(\'wfu_page_list_'.$inc.'\').value = \'\'; document.getElementById(\'wfu_post_list_'.$inc.'\').value = \'\'; document.getElementById(\'wfu_add_plugin_'.$inc.'\').style.display = \'none\'; document.getElementById(\'wfu_add_plugin_button_'.$inc.'\').style.display = \'inline-block\';">Cancel</button>';
 	$echo_str .= "\n\t\t".'</div>';
 	$echo_str .= "\n\t\t".'<table class="widefat">';
