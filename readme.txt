@@ -125,6 +125,9 @@ In the free version the upload will fail. However in the Pro version the upload 
 
 == Changelog ==
 
+= 3.1.2 =
+* important bug detected and fixed that was stripping slashes from post or page content when updating the shortcode using the shortcode composer
+
 = 3.1.1 =
 * the previous version broke the easy creation of shortcodes through the plugin's settings in Dashboard and it has been corrected, together with some improvements
 
@@ -453,6 +456,9 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 3.1.2 =
+Upgrade to fix an important bug.
 
 = 3.1.1 =
 Upgrade to fix a minor bug.

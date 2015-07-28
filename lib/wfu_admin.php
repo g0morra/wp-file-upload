@@ -533,14 +533,14 @@ function wfu_add_shortcode($postid, $tag) {
 	$post = get_post($postid);
 	$new_content = '['.$tag.']'.$post->post_content;
 	$new_post = array( 'ID' => $postid, 'post_content' => $new_content );
-	return ( wp_update_post( $new_post ) === 0 ? false : true );
+	return ( wp_update_post( wp_slash($new_post) ) === 0 ? false : true );
 }
 
 function wfu_replace_shortcode($data, $new_shortcode) {
 	$post = get_post($data['post_id']);
 	$new_content = substr($post->post_content, 0, $data['position']).$new_shortcode.substr($post->post_content, (int)$data['position'] + strlen($data['shortcode']));
 	$new_post = array( 'ID' => $data['post_id'], 'post_content' => $new_content );
-	return ( wp_update_post( $new_post ) === 0 ? false : true );
+	return ( wp_update_post( wp_slash($new_post) ) === 0 ? false : true );
 }
 
 function wfu_delete_shortcode_prompt($data) {
