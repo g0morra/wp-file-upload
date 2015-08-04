@@ -2,6 +2,10 @@
 
 /* Prepare information about directory or selection of target subdirectory */
 function wfu_prepare_subfolders_block($params, $widths, $heights) {
+	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
+	$relaxcss = false;
+	if ( isset($plugin_options['relaxcss']) ) $relaxcss = ( $plugin_options['relaxcss'] == "1" );
+	
 	$sid = $params["uploadid"];
 	$selectsubdir = 'selectsubdir_'.$sid;
 	$editbox = 'selectsubdiredit_'.$sid;
@@ -20,7 +24,7 @@ function wfu_prepare_subfolders_block($params, $widths, $heights) {
 	$styles4 = "";
 	if ( $widths["subfolders_select"] != "" ) $styles4 .= 'width: '.$widths["subfolders_select"].'; ';
 	if ( $heights["subfolders_select"] != "" ) $styles4 .= 'height: '.$heights["subfolders_select"].'; ';
-	$styles3 = ' style="'.$styles3.$styles4.'"';
+	$styles3 = ' style="'.( $relaxcss ? '' : $styles3 ).$styles4.'"';
 	if ( $styles4 != "" ) $styles4 = ' style="'.$styles4.'"';
 	$subfolder_paths = array ( );
 	$linebr = "";
@@ -32,15 +36,17 @@ function wfu_prepare_subfolders_block($params, $widths, $heights) {
 	$i = 1;
 	if ( $params["showtargetfolder"] == "true" ) {
 		$upload_directory = wfu_upload_plugin_directory($params["uploadpath"]);
-		$subfolders_item["line".$i++] = '<span'.$styles1.'>'.$params["targetfolderlabel"].': <strong>'.$upload_directory.'</strong></span>'.$linebr;
+		$subfolders_item["line".$i++] = '<span class="subfolder_dir"'.$styles1.'>'.$params["targetfolderlabel"].': <strong>'.$upload_directory.'</strong></span>'.$linebr;
 	}
 	if ( $params["askforsubfolders"] == "true" ) {
-		$subfolders_item["line".$i++] = '<span class="file_item_clean"'.$styles2.'>'.$params["subfolderlabel"].' </span>';
-		$subfolders_item["line".$i++] = '<div class="file_item_clean"'.$styles4.'>';
-		$subfolders_item["line".$i++] = '<div class="file_item_clean_inner"'.( substr($params["subfoldertree"], 0, 5) == "auto+" ? '' : ' style="display:none;"' ).'>';
-		$subfolders_item["line".$i++] = '<input type="text" id="'.$editbox.'" class="file_item_clean_empty" value="'.WFU_SUBDIR_TYPEDIR.'"'.( substr($params["subfoldertree"], 0, 5) == "auto+" ? '' : ' style="display:none;"' ).' onchange="wfu_selectsubdiredit_change('.$sid.');" onfocus="wfu_selectsubdiredit_enter('.$sid.');" onblur="wfu_selectsubdiredit_exit('.$sid.');" />';
+		$subfolders_item["line".$i++] = '<span class="file_item_clean subfolder_label"'.$styles2.'>'.$params["subfolderlabel"].' </span>';
+		$subfolders_item["line".$i++] = '<div class="file_item_clean subfolder_container"'.$styles4.'>';
+		$autoplus = ( substr($params["subfoldertree"], 0, 5) == "auto+" );
+		$subfolders_item["line".$i++] = '<div class="file_item_clean_inner subfolder_autoplus_container"'.( $autoplus ? '' : ' style="display:none;"' ).'>';
+		$subfolders_item["line".$i++] = '<input type="text" id="'.$editbox.'" class="file_item_clean_empty subfolder_autoplus_empty" value="'.WFU_SUBDIR_TYPEDIR.'"'.( $autoplus ? '' : ' style="display:none;"' ).' onchange="wfu_selectsubdiredit_change('.$sid.');" onfocus="wfu_selectsubdiredit_enter('.$sid.');" onblur="wfu_selectsubdiredit_exit('.$sid.');" />';
 		$subfolders_item["line".$i++] = '</div>';
-		$subfolders_item["line".$i++] = '<select class="file_item_clean"'.$styles3.' id="'.$selectsubdir.'" onchange="wfu_selectsubdir_check('.$sid.');">';
+		if ( $autoplus ) $subfolders_item["line".$i++] = '<div class="subfolder_autoplus_select_container">';
+		$subfolders_item["line".$i++] = '<select class="'.( $autoplus ? 'subfolder_autoplus_dropdown' : 'file_item_clean subfolder_dropdown' ).'"'.$styles3.' id="'.$selectsubdir.'" onchange="wfu_selectsubdir_check('.$sid.');">';
 		if ( $params["testmode"] == "true" ) {
 			$subfolders_item["line".$i++] = "\t".'<option>'.WFU_NOTIFY_TESTMODE.'</option>';
 		}
@@ -70,6 +76,7 @@ function wfu_prepare_subfolders_block($params, $widths, $heights) {
 			if ( $default != -1 ) $subfolders_item["line".$zeroind] = "\t".'<option style="display:none;">'.WFU_SUBDIR_SELECTDIR.'</option>';
 		}
 		$subfolders_item["line".$i++] = '</select>';
+		if ( $autoplus ) $subfolders_item["line".$i++] = '</div>';
 		$subfolders_item["line".$i++] = '</div>';
 		$subfolders_item["line".$i++] = '<input id="'.$defaultvalue.'" type="hidden" value="'.$default.'" />';
 	}
@@ -236,7 +243,8 @@ function wfu_prepare_userdata_block($params, $widths, $heights) {
 		if ( $params["testmode"] == "true" )
 			$userdata_item["line".$i++] = "\t".'<input type="text" id="'.$userdata.'_message_'.$userdata_key.'" class="'.$userdata_item_class.'" value="Test message" readonly="readonly"'.$styles3.' />';
 		else
-			$userdata_item["line".$i++] = "\t".'<input type="text" id="'.$userdata.'_message_'.$userdata_key.'" class="'.$userdata_item_class.'" value=""'.$styles3.' onchange="javascript: document.getElementById(\''.$hiddeninput.'_userdata_'.$userdata_key.'\').value = this.value;" onfocus="javascript: if (this.className == \'file_userdata_message_required_empty\') {this.value = \'\'; this.className = \'file_userdata_message_required\';}" />';
+			$userdata_item["line".$i++] = "\t".'<input type="text" id="'.$userdata.'_message_'.$userdata_key.'" class="'.$userdata_item_class.'" value=""'.$styles3.' onchange="javascript: document.getElementById(\''.$hiddeninput.'_userdata_'.$userdata_key.'\').value = this.value;" onfocus="wfu_userdata_focused(this);" />';
+		$userdata_item["line".$i++] = "\t".'<div id="'.$userdata.'_hint_'.$userdata_key.'" class="file_userdata_hint" style="display:none;">empty</div>';
 		$userdata_item["line".$i++] = '</div>';
 	} 
 

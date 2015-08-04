@@ -231,7 +231,7 @@ function wfu_ajax_action_edit_shortcode() {
 			}
 		}
 		if ( $validkey == -1 ) die();
-		$data_enc = wfu_encode_array_to_string($wfu_shortcodes[$validkey]);
+		$data_enc = wfu_safe_store_shortcode_data(wfu_encode_array_to_string($wfu_shortcodes[$validkey]));
 		$url = site_url().'/wp-admin/options-general.php?page=wordpress_file_upload&tag='.$shortcode_tag.'&action=edit_shortcode&data='.$data_enc;
 		die("wfu_edit_shortcode:success:".wfu_plugin_encode_string($url));
 	}

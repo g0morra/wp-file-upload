@@ -253,6 +253,7 @@ function wfu_encode_plugin_options($plugin_options) {
 	$encoded_options .= 'hashfiles='.$plugin_options['hashfiles'].';';
 	$encoded_options .= 'basedir='.wfu_plugin_encode_string($plugin_options['basedir']).';';
 	$encoded_options .= 'postmethod='.$plugin_options['postmethod'].';';
+	$encoded_options .= 'relaxcss='.$plugin_options['relaxcss'].';';
 	$encoded_options .= 'captcha_sitekey='.wfu_plugin_encode_string($plugin_options['captcha_sitekey']).';';
 	$encoded_options .= 'captcha_secretkey='.wfu_plugin_encode_string($plugin_options['captcha_secretkey']).';';
 	$encoded_options .= 'browser_permissions='.wfu_encode_array_to_string($plugin_options['browser_permissions']);
@@ -471,7 +472,7 @@ function wfu_parse_folderlist($subfoldertree) {
 			}
 			//split item in folder path and folder name
 			$subfolder_items = explode('/', $subfolder);
-			if ( $subfolder_items[1] != "" ) {
+			if ( count($subfolder_items) > 1 && $subfolder_items[1] != "" ) {
 				$subfolder_dir = $subfolder_items[0];
 				$subfolder_label = $subfolder_items[1];
 			}
@@ -1160,6 +1161,30 @@ function wfu_get_params_fields_from_index($params_index) {
 		list($fields['unique_id'], $fields['page_id'], $fields['shortcode_id'], $fields['user_login']) = explode("||", current($index_match));
 	}
 	return $fields; 
+}
+
+function wfu_safe_store_shortcode_data($data) {
+	$code = wfu_create_random_string(16);
+	$_SESSION['wfu_shortcode_data_safe_storage'][$code] = $data;
+	return $code;
+}
+
+function wfu_get_shortcode_data_from_safe($code) {
+	//sanitize $code
+	$code = wfu_sanitize_code($code);
+	if ( $code == "" ) return '';
+	//return shortcode data from session variable, if exists
+	if ( !isset($_SESSION['wfu_shortcode_data_safe_storage'][$code]) ) return '';
+	return $_SESSION['wfu_shortcode_data_safe_storage'][$code];
+}
+
+function wfu_clear_shortcode_data_from_safe($code) {
+	//sanitize $code
+	$code = wfu_sanitize_code($code);
+	if ( $code == "" ) return;
+	//clear shortcode data from session variable, if exists
+	if ( !isset($_SESSION['wfu_shortcode_data_safe_storage'][$code]) ) return;
+	unset($_SESSION['wfu_shortcode_data_safe_storage'][$code]);
 }
 
 function wfu_decode_dimensions($dimensions_str) {

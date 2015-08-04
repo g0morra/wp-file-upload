@@ -50,6 +50,15 @@ function wfu_manage_settings($message = '') {
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.( $plugin_options['postmethod'] == 'fopen' || $plugin_options['postmethod'] == '' ? 'Using fopen' : ( $plugin_options['postmethod'] == 'curl' ? 'Using cURL' : 'Using Sockets' ) ).'</strong></p>';
 	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'</tr>';
+	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<label for="wfu_relaxcss">Relax CSS Rules</label>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
+	$echo_str .= "\n\t\t\t\t\t\t".'<td>';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<input name="wfu_relaxcss" id="wfu_relaxcss" type="checkbox"'.($plugin_options['relaxcss'] == '1' ? ' checked="checked"' : '' ).' style="width:auto;" /> If enabled then the textboxes and the buttons of the plugin will inherit the theme\'s styling';
+	$echo_str .= "\n\t\t\t\t\t\t\t".'<p style="cursor: text; font-size:9px; padding: 0px; margin: 0px; width: 95%; color: #AAAAAA;">Current value: <strong>'.($plugin_options['relaxcss'] == '1' ? 'Yes' : 'No' ).'</strong></p>';
+	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
+	$echo_str .= "\n\t\t\t\t\t".'</tr>';
 	$echo_str .= "\n\t\t\t\t".'</tbody>';
 	$echo_str .= "\n\t\t\t".'</table>';
 	$echo_str .= "\n\t\t\t".'<p class="submit">';
@@ -70,6 +79,7 @@ function wfu_update_settings() {
 
 //	$enabled = ( isset($_POST['wfu_enabled']) ? ( $_POST['wfu_enabled'] == "on" ? 1 : 0 ) : 0 ); 
 	$hashfiles = ( isset($_POST['wfu_hashfiles']) ? ( $_POST['wfu_hashfiles'] == "on" ? 1 : 0 ) : 0 ); 
+	$relaxcss = ( isset($_POST['wfu_relaxcss']) ? ( $_POST['wfu_relaxcss'] == "on" ? 1 : 0 ) : 0 ); 
 	if ( isset($_POST['wfu_basedir']) && isset($_POST['wfu_postmethod']) && isset($_POST['submit']) ) {
 		if ( $_POST['submit'] == "Update" ) {
 			$new_plugin_options['version'] = '1.0';
@@ -77,6 +87,7 @@ function wfu_update_settings() {
 			$new_plugin_options['hashfiles'] = $hashfiles;
 			$new_plugin_options['basedir'] = $_POST['wfu_basedir'];
 			$new_plugin_options['postmethod'] = $_POST['wfu_postmethod'];
+			$new_plugin_options['relaxcss'] = $relaxcss;
 			$encoded_options = wfu_encode_plugin_options($new_plugin_options);
 			update_option( "wordpress_file_upload_options", $encoded_options );
 			if ( $new_plugin_options['hashfiles'] == '1' && $plugin_options['hashfiles'] != '1' )
@@ -86,5 +97,6 @@ function wfu_update_settings() {
 
 	return true;
 }
+
 
 ?>

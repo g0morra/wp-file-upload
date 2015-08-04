@@ -4,7 +4,7 @@ if( !session_id() ) { session_start(); }
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 3.1.2
+Version: 3.2.0
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -39,8 +39,8 @@ $uri = $_SERVER['REQUEST_URI'];
 if ( strpos($uri, 'wp-login.php') !== false ) return;
 
 DEFINE("WPFILEUPLOAD_PLUGINFILE", __FILE__);
-DEFINE("WPFILEUPLOAD_DIR", '/'.PLUGINDIR .'/'.dirname(plugin_basename (__FILE__)).'/');
-DEFINE("ABSWPFILEUPLOAD_DIR", ABSPATH.WPFILEUPLOAD_DIR);
+DEFINE("WPFILEUPLOAD_DIR", '/'.substr(WP_PLUGIN_DIR, strlen(ABSPATH)) .'/'.dirname(plugin_basename (__FILE__)).'/');
+DEFINE("ABSWPFILEUPLOAD_DIR", ( substr(ABSPATH, -1) == "/" ? substr(ABSPATH, 0, -1) : ABSPATH ).WPFILEUPLOAD_DIR);
 $_SESSION['wfu_ABSPATH'] = ABSPATH;
 add_shortcode("wordpress_file_upload", "wordpress_file_upload_handler");
 load_plugin_textdomain('wordpress-file-upload', false, dirname(plugin_basename (__FILE__)).'/languages');
@@ -70,9 +70,18 @@ add_action('wp_ajax_wfu_ajax_action_edit_shortcode', 'wfu_ajax_action_edit_short
 wfu_include_lib();
 
 function wfu_enqueue_frontpage_scripts() {
-//	wp_enqueue_style('wordpress-file-upload-reset', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_reset.css',false,'1.0','all');
-	wp_enqueue_style('wordpress-file-upload-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style.css',false,'1.0','all');
-	wp_enqueue_style('wordpress-file-upload-style-safe', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style_safe.css',false,'1.0','all');
+	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
+	$relaxcss = false;
+	if ( isset($plugin_options['relaxcss']) ) $relaxcss = ( $plugin_options['relaxcss'] == '1' );
+
+	if ( $relaxcss ) {
+		wp_enqueue_style('wordpress-file-upload-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style_relaxed.css',false,'1.0','all');
+		wp_enqueue_style('wordpress-file-upload-style-safe', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style_safe_relaxed.css',false,'1.0','all');
+	}
+	else {
+		wp_enqueue_style('wordpress-file-upload-style', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style.css',false,'1.0','all');
+		wp_enqueue_style('wordpress-file-upload-style-safe', WPFILEUPLOAD_DIR.'css/wordpress_file_upload_style_safe.css',false,'1.0','all');
+	}
 	wp_enqueue_script('json_class', WPFILEUPLOAD_DIR.'js/json2.js');
 	wp_enqueue_script('wordpress_file_upload_script', WPFILEUPLOAD_DIR.'js/wordpress_file_upload_functions.js');
 }

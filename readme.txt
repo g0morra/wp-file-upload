@@ -113,6 +113,10 @@ The plugin is designed not to expose website sensitive information. It has been 
 
 In the free version the upload will fail. However in the Pro version the upload will resume and will continue until the file is fully uploaded. This is especially useful when uploading very large files.
 
+= The plugin does not look nice with my theme. What can I do? =
+
+There is an option in plugin's settings in Dashboard to relax the CSS rules, so that buttons and text boxes inherit the theme's styles. If additional styling is required, this can be done using CSS. The Professional version of the plugin allows CSS rules to be embed in the shortcode.
+
 == Screenshots ==
 
 1. A screenshot of the plugin in its most simple form.
@@ -124,6 +128,14 @@ In the free version the upload will fail. However in the Pro version the upload 
 7. A screenshot of the file browser.
 
 == Changelog ==
+
+= 3.2.0 =
+* added option in plugin's settings to relax CSS rules so that plugin inherits theme styling
+* modifications in html and css of editable subfolders feature to look better
+* modifications in html and css of prompt message when a required userdata field is empty
+* PLUGINDIR was replaced by WP_PLUGIN_DIR so that the plugin can work for websites where the contents dir is other than wp-content
+* fixed bug that was not allowing Shortcode Composer to launch when the shortcode was too big
+* fixed bug that was causing front-end file list not to work properly when no instance of the plugin existed in the same page / post
 
 = 3.1.2 =
 * important bug detected and fixed that was stripping slashes from post or page content when updating the shortcode using the shortcode composer

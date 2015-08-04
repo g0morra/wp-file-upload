@@ -171,19 +171,19 @@ function wordpress_file_upload_manage_dashboard() {
 		$_SESSION['wfu_add_shortcode_ticket'] = 'noticket';
 	}
 	elseif ( $action == 'edit_shortcode' && $data_enc != "" && $tag != "" ) {
-		$data = wfu_decode_array_from_string($data_enc);
+		$data = wfu_decode_array_from_string(wfu_get_shortcode_data_from_safe($data_enc));
 		if ( wfu_check_edit_shortcode($data) ) wfu_shortcode_composer($data, $tag);
 		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_EDIT_SHORTCODE_REJECTED);
 	}
 	elseif ( $action == 'delete_shortcode' && $data_enc != "" ) {
-		$data = wfu_decode_array_from_string($data_enc);
-		if ( wfu_check_edit_shortcode($data) ) $echo_str = wfu_delete_shortcode_prompt($data);
+		$data = wfu_decode_array_from_string(wfu_get_shortcode_data_from_safe($data_enc));
+		if ( wfu_check_edit_shortcode($data) ) $echo_str = wfu_delete_shortcode_prompt($data_enc);
 		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_DELETE_SHORTCODE_REJECTED);
 	}
 	elseif ( $action == 'deleteshortcode' && $data_enc != "" ) {
-		$data = wfu_decode_array_from_string($data_enc);
+		$data = wfu_decode_array_from_string(wfu_get_shortcode_data_from_safe($data_enc));
 		if ( wfu_check_edit_shortcode($data) ) {
-			wfu_delete_shortcode($data);
+			if ( wfu_delete_shortcode($data) ) wfu_clear_shortcode_data_from_safe($data_enc);
 			$echo_str = wfu_manage_mainmenu();
 		}
 		else $echo_str = wfu_manage_mainmenu(WFU_DASHBOARD_DELETE_SHORTCODE_REJECTED);
@@ -463,7 +463,7 @@ function wfu_manage_instances_of_shortcode($tag, $title, $slug, $inc) {
 	$i = 1;
 	foreach ( $wfu_shortcodes as $key => $data ) {
 		$id = $data['post_id'];
-		$data_enc = wfu_encode_array_to_string($data);
+		$data_enc = wfu_safe_store_shortcode_data(wfu_encode_array_to_string($data));
 		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\')){document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_shortcode_actions_'.$inc.'_'.$i.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\')){document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\').item(i).style.visibility=\'hidden\';}">';
 		$echo_str .= "\n\t\t\t\t\t".'<td style="padding: 5px 5px 5px 10px; text-align:center;">';
 		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=edit_shortcode&tag='.$tag.'&data='.$data_enc.'" title="Plugin #'.$i.'">Plugin '.$i.'</a>';
@@ -543,10 +543,10 @@ function wfu_replace_shortcode($data, $new_shortcode) {
 	return ( wp_update_post( wp_slash($new_post) ) === 0 ? false : true );
 }
 
-function wfu_delete_shortcode_prompt($data) {
+function wfu_delete_shortcode_prompt($data_enc) {
 	$siteurl = site_url();
+	$data = wfu_decode_array_from_string(wfu_get_shortcode_data_from_safe($data_enc));
 	$postid = $data['post_id'];
-	$data_enc = wfu_encode_array_to_string($data);
 	$echo_str = "\n".'<div class="wrap">';
 	$echo_str .= "\n\t".'<h2>Wordpress File Upload Control Panel</h2>';
 	$echo_str .= "\n\t".'<div style="margin-top:20px;">';
