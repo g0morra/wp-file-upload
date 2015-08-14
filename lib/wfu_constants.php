@@ -8,7 +8,7 @@ DEFINE("WFU_UPLOADTITLE", __('Upload files', 'wordpress-file-upload'));
 DEFINE("WFU_SELECTBUTTON", __('Select File', 'wordpress-file-upload'));
 DEFINE("WFU_UPLOADBUTTON", __('Upload File', 'wordpress-file-upload'));
 DEFINE("WFU_SINGLEBUTTON", "false");
-DEFINE("WFU_UPLOADROLE", "all");
+DEFINE("WFU_UPLOADROLE", "all,guests");
 DEFINE("WFU_UPLOADPATH", 'uploads');
 DEFINE("WFU_CREATEPATH", "false");
 DEFINE("WFU_FORCEFILENAME", "false");

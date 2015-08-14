@@ -42,12 +42,14 @@ function wordpress_file_upload_install() {
 			idlog mediumint(9) NOT NULL AUTO_INCREMENT,
 			userid mediumint(9) NOT NULL,
 			uploaduserid mediumint(9) NOT NULL,
+			uploadtime bigint,
 			sessionid VARCHAR(40),
 			filepath TEXT NOT NULL,
 			filehash VARCHAR(100) NOT NULL,
 			filesize bigint NOT NULL,
 			uploadid VARCHAR(20) NOT NULL,
 			pageid mediumint(9),
+			blogid mediumint(9),
 			sid VARCHAR(10),
 			date_from DATETIME,
 			date_to DATETIME,
@@ -221,7 +223,7 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t".'<table class="form-table">';
 	$echo_str .= "\n\t\t\t".'<tbody>';
 	//plugin edition
-	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Edition</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
@@ -240,7 +242,7 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t".'</tr>';
 	//plugin version
-	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Version</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
@@ -267,7 +269,7 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t\t\t".'</tr>';
 	//server environment
 	$php_env = wfu_get_server_environment();
-	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Server Environment</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
@@ -277,7 +279,7 @@ function wfu_manage_mainmenu($message = '') {
 	if ( $php_env == '' ) $echo_str .= "\n\t\t\t\t\t\t".'<label style="font-weight:bold; cursor:default;">Unknown</label></td><td><label style="font-weight:normal; font-style:italic; cursor:default;">(The maximum file size supported by the server cannot be determined)</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t".'</tr>';
-	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">PHP Version</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
@@ -288,7 +290,7 @@ function wfu_manage_mainmenu($message = '') {
 	$echo_str .= "\n\t\t\t\t\t".'<td>';
 	$echo_str .= "\n\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t".'</tr>';
-	$echo_str .= "\n\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t".'<label style="cursor:default;">Release Notes</label>';
 	$echo_str .= "\n\t\t\t\t\t".'</th>';
@@ -464,7 +466,7 @@ function wfu_manage_instances_of_shortcode($tag, $title, $slug, $inc) {
 	foreach ( $wfu_shortcodes as $key => $data ) {
 		$id = $data['post_id'];
 		$data_enc = wfu_safe_store_shortcode_data(wfu_encode_array_to_string($data));
-		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\')){document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_shortcode_actions_'.$inc.'_'.$i.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\')){document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\').item(i).style.visibility=\'hidden\';}">';
+		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="var actions=document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\'); for (var i=0; i<actions.length; i++) {actions[i].style.visibility=\'hidden\';} document.getElementById(\'wfu_shortcode_actions_'.$inc.'_'.$i.'\').style.visibility=\'visible\'" onmouseout="var actions=document.getElementsByName(\'wfu_shortcode_actions_'.$inc.'\'); for (var i=0; i<actions.length; i++) {actions[i].style.visibility=\'hidden\';}">';
 		$echo_str .= "\n\t\t\t\t\t".'<td style="padding: 5px 5px 5px 10px; text-align:center;">';
 		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=edit_shortcode&tag='.$tag.'&data='.$data_enc.'" title="Plugin #'.$i.'">Plugin '.$i.'</a>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_shortcode_actions_'.$inc.'_'.$i.'" name="wfu_shortcode_actions_'.$inc.'" style="visibility:hidden;">';

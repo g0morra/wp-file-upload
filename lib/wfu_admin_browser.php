@@ -154,7 +154,7 @@ function wfu_browse_files($basedir_code) {
 	$ii = 1;
 	foreach ( $dirlist as $dir ) {
 		$dir_code = wfu_safe_store_filepath(wfu_path_abs2rel($dir['fullpath']).'[['.$sort.']]');
-		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_dir_actions\')){document.getElementsByName(\'wfu_dir_actions\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_dir_actions_'.$ii.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_dir_actions\')){document.getElementsByName(\'wfu_dir_actions\').item(i).style.visibility=\'hidden\';}">';
+		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="var actions=document.getElementsByName(\'wfu_dir_actions\'); for (var i=0; i<actions.length; i++) {actions[i].style.visibility=\'hidden\';} document.getElementById(\'wfu_dir_actions_'.$ii.'\').style.visibility=\'visible\'" onmouseout="var actions=document.getElementsByName(\'wfu_dir_actions\'); for (var i=0; i<actions.length; i++) {actions[i].style.visibility=\'hidden\';}">';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="30%" style="padding: 5px 5px 5px 10px; text-align:left;">';
 		$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_browser&dir='.$dir_code.'" title="'.$dir['name'].'">'.$dir['name'].'</a>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<div id="wfu_dir_actions_'.$ii.'" name="wfu_dir_actions" style="visibility:hidden;">';
@@ -181,7 +181,7 @@ function wfu_browse_files($basedir_code) {
 	//show contained files
 	foreach ( $filelist as $file ) {
 		if ( $file['filedata'] != null ) $file_code = wfu_safe_store_filepath(wfu_path_abs2rel($file['fullpath']).'[['.$sort.']]');
-		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="for (i in document.getElementsByName(\'wfu_file_actions\')){document.getElementsByName(\'wfu_file_actions\').item(i).style.visibility=\'hidden\';} document.getElementById(\'wfu_file_actions_'.$ii.'\').style.visibility=\'visible\'" onmouseout="for (i in document.getElementsByName(\'wfu_file_actions\')){document.getElementsByName(\'wfu_file_actions\').item(i).style.visibility=\'hidden\';}">';
+		$echo_str .= "\n\t\t\t\t".'<tr onmouseover="var actions=document.getElementsByName(\'wfu_file_actions\'); for (var i=0; i<actions.length; i++) {actions[i].style.visibility=\'hidden\';} document.getElementById(\'wfu_file_actions_'.$ii.'\').style.visibility=\'visible\'" onmouseout="var actions=document.getElementsByName(\'wfu_file_actions\'); for (var i=0; i<actions.length; i++) {actions[i].style.visibility=\'hidden\';}">';
 		$echo_str .= "\n\t\t\t\t\t".'<td width="30%" style="padding: 5px 5px 5px 10px; text-align:left;">';
 		if ( $file['filedata'] != null )
 			$echo_str .= "\n\t\t\t\t\t\t".'<a class="row-title" href="'.$siteurl.'/wp-admin/options-general.php?page=wordpress_file_upload&action=file_details&file='.$file_code.'" title="View and edit file details" style="font-weight:normal;">'.$file['name'].'</a>';
@@ -363,7 +363,7 @@ function wfu_rename_file($file_code, $type) {
 			elseif ( file_exists($new_file) ) $error = 'Error: The '.( $type == 'dir' ? 'folder' : 'file' ).' <strong>'.$_POST['wfu_newname'].'</strong> already exists! Please choose another one.';
 			else {
 				//pre-log rename action
-				if ( $type == 'file' ) $retid = wfu_log_action('rename:'.$new_file, $dec_file, $user->ID, '', 0, '', null);
+				if ( $type == 'file' ) $retid = wfu_log_action('rename:'.$new_file, $dec_file, $user->ID, '', 0, 0, '', null);
 				//perform rename action
 				if ( rename($dec_file, $new_file) == false ) $error = 'Error: Rename of '.( $type == 'dir' ? 'folder' : 'file' ).' <strong>'.$parts['basename'].'</strong> failed!';
 				//revert log action if file was not renamed
@@ -444,7 +444,7 @@ function wfu_delete_file($file_code, $type) {
 	if ( isset($_POST['submit']) ) {
 		if ( $_POST['submit'] == "Delete" ) {
 			//pre-log delete action
-			if ( $type == 'file' ) $retid = wfu_log_action('delete', $dec_file, $user->ID, '', 0, '', null);
+			if ( $type == 'file' ) $retid = wfu_log_action('delete', $dec_file, $user->ID, '', 0, 0, '', null);
 			if ( $type == 'dir' && $dec_file != "" ) wfu_delTree($dec_file);
 			else unlink($dec_file);
 			//revert log action if file has not been deleted
@@ -580,7 +580,7 @@ function wfu_file_details($file_code, $errorstatus) {
 	$echo_str .= "\n\t\t\t".'<table class="form-table">';
 	$echo_str .= "\n\t\t\t\t".'<tbody>';
 	if ( $is_admin ) {
-		$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+		$echo_str .= "\n\t\t\t\t\t".'<tr>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Full Path</label>';
 		$echo_str .= "\n\t\t\t\t\t\t".'</th>';
@@ -588,7 +588,7 @@ function wfu_file_details($file_code, $errorstatus) {
 		$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.$filepath.'" readonly="readonly" />';
 		$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 		$echo_str .= "\n\t\t\t\t\t".'</tr>';
-		$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+		$echo_str .= "\n\t\t\t\t\t".'<tr>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Uploaded From User</label>';
 		$echo_str .= "\n\t\t\t\t\t\t".'</th>';
@@ -597,7 +597,7 @@ function wfu_file_details($file_code, $errorstatus) {
 		$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 		$echo_str .= "\n\t\t\t\t\t".'</tr>';
 	}
-	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<label>File Size</label>';
 	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
@@ -605,7 +605,7 @@ function wfu_file_details($file_code, $errorstatus) {
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.$filedata->filesize.'" readonly="readonly" style="width:auto;" />';
 	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'</tr>';
-	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<label>File Date</label>';
 	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
@@ -613,7 +613,7 @@ function wfu_file_details($file_code, $errorstatus) {
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<input type="text" value="'.date("d/m/Y H:i:s", $stat['mtime']).'" readonly="readonly" style="width:auto;" />';
 	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'</tr>';
-	$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+	$echo_str .= "\n\t\t\t\t\t".'<tr>';
 	$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 	$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Uploaded From Page</label>';
 	$echo_str .= "\n\t\t\t\t\t\t".'</th>';
@@ -622,7 +622,7 @@ function wfu_file_details($file_code, $errorstatus) {
 	$echo_str .= "\n\t\t\t\t\t\t".'</td>';
 	$echo_str .= "\n\t\t\t\t\t".'</tr>';
 	if ( $is_admin ) {
-		$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+		$echo_str .= "\n\t\t\t\t\t".'<tr>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'<label>Upload Plugin ID</label>';
 		$echo_str .= "\n\t\t\t\t\t\t".'</th>';
@@ -638,7 +638,7 @@ function wfu_file_details($file_code, $errorstatus) {
 		$echo_str .= "\n\t\t\t".'<h3 style="margin-bottom: 10px; margin-top: 40px;">File History</h3>';
 		$echo_str .= "\n\t\t\t".'<table class="form-table">';
 		$echo_str .= "\n\t\t\t\t".'<tbody>';
-		$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+		$echo_str .= "\n\t\t\t\t\t".'<tr>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'<label></label>';
 		$echo_str .= "\n\t\t\t\t\t\t".'</th>';
@@ -684,7 +684,7 @@ function wfu_file_details($file_code, $errorstatus) {
 	$echo_str .= "\n\t\t\t\t".'<tbody>';
 	if ( count($filedata->userdata) > 0 ) {
 		foreach ( $filedata->userdata as $userdata ) {
-			$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+			$echo_str .= "\n\t\t\t\t\t".'<tr>';
 			$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 			$echo_str .= "\n\t\t\t\t\t\t\t".'<label>'.$userdata->property.'</label>';
 			$echo_str .= "\n\t\t\t\t\t\t".'</th>';
@@ -697,7 +697,7 @@ function wfu_file_details($file_code, $errorstatus) {
 		}
 	}
 	else {
-		$echo_str .= "\n\t\t\t\t\t".'<tr class="form-field">';
+		$echo_str .= "\n\t\t\t\t\t".'<tr>';
 		$echo_str .= "\n\t\t\t\t\t\t".'<th scope="row">';
 		$echo_str .= "\n\t\t\t\t\t\t\t".'<label>No user data</label>';
 		$echo_str .= "\n\t\t\t\t\t\t".'</th>';
@@ -785,7 +785,7 @@ function wfu_edit_filedetails($file_code) {
 						)
 					);
 				}
-				if ( $userdata_count > 0 ) wfu_log_action('modify:'.$now_date, $dec_file, $user->ID, '', 0, '', null);
+				if ( $userdata_count > 0 ) wfu_log_action('modify:'.$now_date, $dec_file, $user->ID, '', 0, 0, '', null);
 			}
 		}
 	}

@@ -28,29 +28,26 @@ function wfu_download_file() {
 		$_SESSION['wfu_download_status_'.$ticket] = 'failed';
 		die('<script language="javascript">alert("Error! File does not exist.'.$filepath.'");</script>');
 	}
+	//get mime type
 
 	set_time_limit(0); // disable the time limit for this script
-	if ( $fd = fopen ($filepath, "r") ) {
-		$fsize = filesize($filepath);
-		$path_parts = pathinfo($filepath);
-		$ext = strtolower($path_parts["extension"]);
-		switch ($ext) {
-			case "pdf":
-			header("Content-type: application/pdf");
-			header("Content-Disposition: attachment; filename=\"".$path_parts["basename"]."\""); // use 'attachment' to force a file download
-			break;
-			// add more headers for other content types here
-			default;
-			header("Content-type: application/octet-stream");
-			header("Content-Disposition: filename=\"".$path_parts["basename"]."\"");
-			break;
-		}
+	$fsize = filesize($filepath);
+	$path_parts = pathinfo($filepath);
+	if ( $fd = @fopen ($filepath, "rb") ) {
+		header('Content-Type: application/octet-stream');
+		header("Content-Disposition: attachment; filename=\"".$path_parts["basename"]."\"");
+		header('Content-Transfer-Encoding: binary');
+		header('Connection: Keep-Alive');
+		header('Expires: 0');
+		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+		header('Pragma: public');
 		header("Content-length: $fsize");
-		header("Cache-control: private"); //use this to open files directly
 		$failed = false;
 		while( !feof($fd) ) {
-			$buffer = fread($fd, 2048);
+			$buffer = @fread($fd, 1024*8);
 			echo $buffer;
+			ob_flush();
+			flush();
 			if ( connection_status() != 0 ) {
 				$failed = true;
 				break;

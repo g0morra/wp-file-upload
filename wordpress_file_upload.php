@@ -4,7 +4,7 @@ if( !session_id() ) { session_start(); }
 /*
 Plugin URI: http://www.iptanus.com/support/wordpress-file-upload
 Description: Simple interface to upload files from a page.
-Version: 3.2.0
+Version: 3.2.1
 Author: Nickolas Bossinas
 Author URI: http://www.iptanus.com
 */
@@ -31,7 +31,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //set global db variables
 //wfu_tb_log_version v2.0 changes:
 //  sessionid field added
-$wfu_tb_log_version = "2.0";
+//wfu_tb_log_version v3.0 changes:
+//  uploadtime field added
+//  blogid field added
+$wfu_tb_log_version = "3.0";
 $wfu_tb_userdata_version = "1.0";
 
 /* do not load plugin if this is the login page */
@@ -132,8 +135,9 @@ function wordpress_file_upload_function($incomingfromhandler) {
 	$shortcode_tag = 'wordpress_file_upload';
 	$params = wfu_plugin_parse_array($incomingfromhandler);
 	$sid = $params["uploadid"];
-	// store current page id in params array
+	// store current page and blog id in params array
 	$params["pageid"] = $post->ID;
+	$params["blogid"] = $blog_id;
 
 	if ( !isset($_SESSION['wfu_token_'.$sid]) || $_SESSION['wfu_token_'.$sid] == "" )
 		$_SESSION['wfu_token_'.$sid] = uniqid(mt_rand(), TRUE);
@@ -152,10 +156,10 @@ function wordpress_file_upload_function($incomingfromhandler) {
 	//check if user is allowed to view plugin, otherwise do not generate it
 	$uploadroles = explode(",", $params["uploadrole"]);
 	foreach ( $uploadroles as &$uploadrole ) {
-		$uploadrole = strtolower(trim($uploadrole));
+		$uploadrole = trim($uploadrole);
 	}
 	$plugin_upload_user_role = wfu_get_user_role($user, $uploadroles);		
-	if ( !in_array($plugin_upload_user_role, $uploadroles) && $plugin_upload_user_role != 'administrator' && $params["uploadrole"] != 'all' ) return;
+	if ( $plugin_upload_user_role == 'nomatch' ) return;
 
 	//activate debug mode only for admins
 	if ( $plugin_upload_user_role != 'administrator' ) $params["debugmode"] = "false";

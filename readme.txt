@@ -129,6 +129,14 @@ There is an option in plugin's settings in Dashboard to relax the CSS rules, so 
 
 == Changelog ==
 
+= 3.2.1 =
+* removed 'form-field' class from admin table tr elements
+* corrected bug that was causing problems in uploadrole and uploaduser attributes when a username or role contained uppercase letters
+* uploadrole and uploaduser attributes logic modified; guests are allowed only if 'guests' word is included in the attribute
+* modifications to the download functionality script to be more robust
+* corrected bug that was not showing options below a line item of admin tables in Internet Explorer
+* several feature additions and bug fixes in Professional version
+
 = 3.2.0 =
 * added option in plugin's settings to relax CSS rules so that plugin inherits theme styling
 * modifications in html and css of editable subfolders feature to look better
@@ -468,6 +476,12 @@ Added the option to allow anyone to upload files, by setting the attribute uploa
 Initial version.
 
 == Upgrade Notice ==
+
+= 3.2.1 =
+Upgrade to fix some bugs and add some features.
+
+= 3.2.0 =
+Upgrade to fix some bugs and add some features.
 
 = 3.1.2 =
 Upgrade to fix an important bug.

@@ -527,7 +527,7 @@ function wfu_process_files($params, $method) {
 
 		if ( $file_finished_successfully && !$ignore_server_actions ) {
 			/* log file upload action if file has finished uploading successfully */
-			wfu_log_action('upload', $target_path, $user->ID, $unique_id, $params['pageid'], $sid, $userdata_fields);
+			wfu_log_action('upload', $target_path, $user->ID, $unique_id, $params['pageid'], $params['blogid'], $sid, $userdata_fields);
 			/* Apply wfu_after_file_upload filter after failed upload, in order to allow the user to perform any post-upload actions.
 			   If additional data are required, such as user_id or userdata values or filepath, they can be retrieved by implementing
 			   the previous filters wfu_before_file_check and wfu_before_file_upload, corresponding them to the unique file id.

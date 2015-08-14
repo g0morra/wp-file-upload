@@ -130,7 +130,7 @@ function wfu_attribute_definitions() {
 			"name"		=> "Upload Roles",
 			"attribute"	=> "uploadrole",
 			"type"		=> "rolelist",
-			"listitems"	=> null,
+			"listitems"	=> array("default_administrator"),
 			"value"		=> WFU_UPLOADROLE,
 			"mode"		=> "free",
 			"category"	=> "general",
@@ -138,7 +138,7 @@ function wfu_attribute_definitions() {
 			"parent"	=> "",
 			"dependencies"	=> null,
 			"variables"	=> null,
-			"help"		=> "Defines the categories (roles) of users allowed to upload files. Multiple selections can be made. If 'all' is selected, then all users, even guests (non logged users) can upload files. Please use carefully."
+			"help"		=> "Defines the categories (roles) of users allowed to upload files. Multiple selections can be made. If 'Select All' is checked, then all logged users can upload files. If 'Include Guests' is checked, then guests (not logged users) can also upload files. Default value is 'all,guests'."
 		),
 		array(
 			"name"		=> "Allowed File Extensions",

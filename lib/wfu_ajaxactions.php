@@ -352,7 +352,7 @@ function wfu_ajax_action_download_file_monitor() {
 		$filepath = wfu_get_filepath_from_safe($file_code);
 		if ( $filepath === false ) die();
 		$filepath = wfu_path_rel2abs(wfu_flatten_path($filepath));
-		wfu_log_action('download', $filepath, $user->ID, '', 0, '', null);
+		wfu_log_action('download', $filepath, $user->ID, '', 0, 0, '', null);
 		die('wfu_ajax_action_download_file_monitor:'.$_SESSION['wfu_download_status_'.$id].':');
 	}
 	else {

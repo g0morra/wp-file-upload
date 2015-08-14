@@ -155,7 +155,7 @@ function wfu_shortcode_composer($data = '', $shortcode_tag = 'wordpress_file_upl
 		//check if new sub-category must be generated
 		if ( $def['subcategory'] != $prevsubcat ) {
 			$prevsubcat = $def['subcategory'];
-			$echo_str .= "\n\t\t\t\t".'<tr class="form-field wfu_subcategory">';
+			$echo_str .= "\n\t\t\t\t".'<tr class="wfu_subcategory">';
 			$echo_str .= "\n\t\t\t\t\t".'<th scope="row" colspan="3">';
 			$echo_str .= "\n\t\t\t\t\t\t".'<h3 style="margin-bottom: 10px; margin-top: 10px;">'.$prevsubcat.'</h3>';
 			$echo_str .= "\n\t\t\t\t\t".'</th>';
@@ -173,7 +173,7 @@ function wfu_shortcode_composer($data = '', $shortcode_tag = 'wordpress_file_upl
 			}
 			$dlp = "\n\t\t\t\t\t\t\t\t";
 		}
-		$echo_str .= $dlp.'<tr class="form-field">';
+		$echo_str .= $dlp.'<tr>';
 		$echo_str .= $dlp."\t".'<th scope="row"><div class="wfu_td_div">';
 		if ( $def['parent'] == "" ) $echo_str .= $dlp."\t\t".'<div class="wfu_shadow wfu_shadow_'.$governor['attribute'].$governor['inv'].'" style="display:'.( $governor['active'] ? 'none' : 'block' ).';"></div>';
 		$echo_str .= $dlp."\t\t".'<div class="wfu_restore_container" title="Double-click to restore defaults setting"><img src="'.WFU_IMAGE_ADMIN_RESTOREDEFAULT.'" ondblclick="wfu_apply_value(\''.$attr.'\', \''.$def['type'].'\', \''.$def['default'].'\');" /></div>';
@@ -239,10 +239,16 @@ function wfu_shortcode_composer($data = '', $shortcode_tag = 'wordpress_file_upl
 		elseif ( $def['type'] == "integer" ) {
 			$val = str_replace(array( "%n%", "%dq%", "%brl%", "%brr%" ), array( "\n", "&quot;", "[", "]" ), $def['value']);
 			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="number" name="wfu_text_elements" class="wfu_short_text" min="1" value="'.$val.'" />';
+			if ( isset($def['listitems']['unit']) ) $echo_str .= $dlp."\t\t".'<label> '.$def['listitems']['unit'].'</label>';
 		}
 		elseif ( $def['type'] == "float" ) {
 			$val = str_replace(array( "%n%", "%dq%", "%brl%", "%brr%" ), array( "\n", "&quot;", "[", "]" ), $def['value']);
 			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="number" name="wfu_text_elements" class="wfu_short_text" step="any" min="0" value="'.$val.'" />';
+			if ( isset($def['listitems']['unit']) ) $echo_str .= $dlp."\t\t".'<label> '.$def['listitems']['unit'].'</label>';
+		}
+		elseif ( $def['type'] == "date" ) {
+			$val = $def['value'];
+			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="date" name="wfu_date_elements" value="'.$val.'" />';
 		}
 		elseif ( $def['type'] == "radio" ) {
 			$echo_str .= $dlp."\t\t";
@@ -383,30 +389,139 @@ function wfu_shortcode_composer($data = '', $shortcode_tag = 'wordpress_file_upl
 		}
 		elseif ( $def['type'] == "rolelist" ) {
 			$roles = $wp_roles->get_names();
-			$def['value'] = strtolower($def['value']);
-			if ( $def['value'] == "all" ) $selected = array("administrator");
-			else $selected = explode(",", $def['value']);
+			$selected = explode(",", $def['value']);
+			$default_administrator = ( is_array($def['listitems']) && in_array('default_administrator', $def['listitems']) );
+			if ( in_array('all', $selected) ) $rolesselected = ( $default_administrator ? array("administrator") : array( ) );
+			else $rolesselected = $selected;
 			foreach ( $selected as $key => $item ) $selected[$key] = trim($item);
-			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.count($roles).'" onchange="wfu_update_rolelist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' disabled="disabled"' : '' ).'>';
+			$echo_str .= $dlp."\t\t".'<table class="wfu_rolelist_container"><tbody><tr><td>';
+			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.count($roles).'" onchange="wfu_update_rolelist_value(\''.$attr.'\');"'.( in_array('all', $selected) ? ' disabled="disabled"' : '' ).'>';
 			foreach ( $roles as $roleid => $rolename )
-				$echo_str .= $dlp."\t\t\t".'<option value="'.$roleid.'"'.( in_array($roleid, $selected) ? ' selected="selected"' : '' ).'>'.$rolename.'</option>';
+				$echo_str .= $dlp."\t\t\t".'<option value="'.$roleid.'"'.( in_array($roleid, $rolesselected) ? ' selected="selected"' : '' ).'>'.$rolename.'</option>';
 			$echo_str .= $dlp."\t\t".'</select>';
-			$echo_str .= $dlp."\t\t".'<div class="wfu_rolelist_checkall"><input id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_rolelist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_all"> Select all</label></div>';
+			$echo_str .= $dlp."\t\t".'</td><td>';
+			$echo_str .= $dlp."\t\t".'<div class="wfu_rolelist_checkbtn"><input class="'.( $default_administrator ? 'wfu_default_administrator' : '' ).'" id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_rolelist_value(\''.$attr.'\');"'.( in_array('all', $selected) ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_all"> Select all</label></div><br />';
+			$echo_str .= $dlp."\t\t".'<div class="wfu_rolelist_checkbtn"><input id="wfu_attribute_'.$attr.'_guests" type="checkbox" onchange="wfu_update_rolelist_value(\''.$attr.'\');"'.( in_array("guests", $selected) ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_guests"> Include guests</label></div>';
+			$echo_str .= $dlp."\t\t".'</td></tr></tbody></table>';
 		}
 		elseif ( $def['type'] == "userlist" ) {
 			$users = get_users();
-			$def['value'] = strtolower($def['value']);
-			if ( $def['value'] == "all" ) $selected = array($users[0]->user_login);
-			else $selected = explode(",", $def['value']);
-			$echo_str .= $dlp."\t\t".'<table class="wfu_userlist_container"><tbody><tr><td>';
-			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.min(count($users), 10).'" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' disabled="disabled"' : '' ).'>';
+			$selected = explode(",", $def['value']);
+			$default_0 = ( is_array($def['listitems']) && in_array('default_0', $def['listitems']) );
+			if ( in_array('all', $selected) ) $usersselected = ( $default_0 ? array($users[0]->user_login) : array( ) );
+			else $usersselected = $selected;
+			$only_current = false;
+			$echo_str .= $dlp."\t\t".'<table class="wfu_userlist_container"><tbody><tr>';
+			if ( is_array($def['listitems']) && in_array('include_current', $def['listitems']) ) {
+				$only_current = ( $def['value'] == 'current' );
+				if ( $only_current ) $usersselected = ( $default_0 ? array($users[0]->user_login) : array( ) );
+				$echo_str .= $dlp."\t\t".'<td colspan="2"><div class="wfu_userlist_checkbtn"><input id="wfu_attribute_'.$attr.'_current" type="checkbox" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( $only_current ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_current"> Only From Current User</label></div>';
+				$echo_str .= $dlp."\t\t".'</td></tr><tr>';
+			}
+			$echo_str .= $dlp."\t\t".'<td><select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.min(count($users), 10).'" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( $only_current || in_array('all', $selected) ? ' disabled="disabled"' : '' ).'>';
 			foreach ( $users as $userid => $user )
-				$echo_str .= $dlp."\t\t\t".'<option value="'.$user->user_login.'"'.( in_array($user->user_login, $selected) ? ' selected="selected"' : '' ).'>'.$user->display_name.' ('.$user->user_login.')</option>';
+				$echo_str .= $dlp."\t\t\t".'<option value="'.$user->user_login.'"'.( in_array($user->user_login, $usersselected) ? ' selected="selected"' : '' ).'>'.$user->display_name.' ('.$user->user_login.')</option>';
 			$echo_str .= $dlp."\t\t".'</select>';
 			$echo_str .= $dlp."\t\t".'</td><td>';
-			$echo_str .= $dlp."\t\t".'<div class="wfu_userlist_checkall"><input id="wfu_attribute_'.$attr.'_guests" type="checkbox" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" || in_array("guests", $selected) ? ' checked="checked"' : '' ).( strtolower($def['value']) == "all" ? ' disabled="disabled"' : '' ).' /><label for="wfu_attribute_'.$attr.'_guests"> Include guests</label></div><br />';
-			$echo_str .= $dlp."\t\t".'<div class="wfu_userlist_checkall"><input id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( strtolower($def['value']) == "all" ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_all"> Select all (including guests)</label></div>';
+			$echo_str .= $dlp."\t\t".'<div class="wfu_userlist_checkbtn"><input class="'.( $default_0 ? 'wfu_default_0' : '' ).'" id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( in_array('all', $selected) ? ' checked="checked"' : '' ).( $only_current ? ' disabled="disabled"' : '' ).' /><label for="wfu_attribute_'.$attr.'_all"> Select all</label></div><br />';
+			$echo_str .= $dlp."\t\t".'<div class="wfu_userlist_checkbtn"><input id="wfu_attribute_'.$attr.'_guests" type="checkbox" onchange="wfu_update_userlist_value(\''.$attr.'\');"'.( in_array("guests", $selected) ? ' checked="checked"' : '' ).( $only_current ? ' disabled="disabled"' : '' ).' /><label for="wfu_attribute_'.$attr.'_guests"> Include guests</label></div>';
 			$echo_str .= $dlp."\t\t".'</td></tr></tbody></table>';
+		}
+		elseif ( $def['type'] == "postlist" ) {
+			$processed = false;
+			if ( is_array($def['listitems']) ) {
+				$has_current = in_array('include_current', $def['listitems']);
+				if ( $has_current ) unset($def['listitems'][array_search('include_current', $def['listitems'])]);
+				foreach ( $def['listitems'] as $post_type ) {
+					// if a post type cannot be found then we reset the list so that it is not processed at all
+					if ( get_post_type_object( $post_type ) == null ) {
+						$def['listitems'] = array();
+						break;
+					}
+				}
+				if ( count($def['listitems']) > 0 ) {
+					$selected = explode(",", $def['value']);
+					$only_current = false;
+					$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'_postlist" type="hidden" value="'.implode(",", $def['listitems']).'" />';
+					$echo_str .= $dlp."\t\t".'<table class="wfu_postlist_container"><tbody><tr>';
+					if ( $has_current ) {
+						$only_current = ( $def['value'] == 'current' );
+						if ( $only_current ) $sselected = array();
+						$echo_str .= $dlp."\t\t".'<td colspan="'.count($def['listitems']).'"><div class="wfu_postlist_checkbtn"><input id="wfu_attribute_'.$attr.'_current" type="checkbox" onchange="wfu_update_postlist_value(\''.$attr.'\');"'.( $only_current ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_current"> Only From Current Post/Page</label></div>';
+						$echo_str .= $dlp."\t\t".'</td></tr><tr>';
+					}
+					$postargs = array( 'post_type' => $def['listitems'], 'post_status' => "publish,private,draft", 'posts_per_page' => -1 );
+					$posts = get_posts($postargs);
+					$list = wfu_construct_post_list($posts);
+					foreach ( $def['listitems'] as $post_type ) {
+						$flatlist = wfu_flatten_post_list($list[$post_type]);
+						$postobj = get_post_type_object( $post_type );
+						$echo_str .= $dlp."\t\t".'<td><div class="wfu_postlist_header"><label>'.$postobj->label.'</label><div class="wfu_postlist_selectall"><input id="wfu_attribute_'.$attr.'_all_'.$post_type.'" type="checkbox" onchange="wfu_update_postlist_value(\''.$attr.'\');"'.( in_array('all', $selected) || in_array('all'.$post_type, $selected) ? ' checked="checked"' : '' ).( $only_current ? ' disabled="disabled"' : '' ).' /><label for="wfu_attribute_'.$attr.'_all_'.$post_type.'"> Select all</label></div></div>';
+						$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'_'.$post_type.'" multiple="multiple" size="'.min(count($flatlist), 10).'" onchange="wfu_update_postlist_value(\''.$attr.'\');"'.( $only_current || in_array('all', $selected) || in_array('all'.$post_type, $selected) ? ' disabled="disabled"' : '' ).'>';
+						foreach ( $flatlist as $item )
+							$echo_str .= $dlp."\t\t\t".'<option value="'.$item['id'].'"'.( in_array($item['id'], $selected) ? ' selected="selected"' : '' ).'>'.str_repeat('&nbsp;', 4 * $item['level']).( $item['status'] == 1 ? '[Private]' : ( $item['status'] == 2 ? '[Draft]' : '' ) ).$item['title'].'</option>';
+						$echo_str .= $dlp."\t\t".'</select></td>';
+					}
+					$echo_str .= $dlp."\t\t".'</tr></tbody></table>';
+					$processed = true;
+				}
+			}
+			if ( !processed ) {
+				$val = str_replace(array( "%n%", "%dq%", "%brl%", "%brr%" ), array( "\n", "&quot;", "[", "]" ), $def['value']);
+				$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="text" name="wfu_text_elements" value="'.$val.'" />';				
+			}
+		}
+		elseif ( $def['type'] == "bloglist" ) {
+			if ( function_exists('wp_get_sites') ) {
+				$blogs = wp_get_sites( );
+				$selected = explode(",", $def['value']);
+				if ( in_array('all', $selected) ) $blogsselected = array( );
+				else $blogsselected = $selected;
+				$only_current = false;
+				$echo_str .= $dlp."\t\t".'<table class="wfu_bloglist_container"><tbody><tr>';
+				if ( is_array($def['listitems']) && in_array('include_current', $def['listitems']) ) {
+					$only_current = ( $def['value'] == 'current' );
+					if ( $only_current ) $blogsselected = array( );
+					$echo_str .= $dlp."\t\t".'<td colspan="2"><div class="wfu_bloglist_checkbtn"><input id="wfu_attribute_'.$attr.'_current" type="checkbox" onchange="wfu_update_bloglist_value(\''.$attr.'\');"'.( $only_current ? ' checked="checked"' : '' ).' /><label for="wfu_attribute_'.$attr.'_current"> Only From Current Site</label></div>';
+					$echo_str .= $dlp."\t\t".'</td></tr><tr>';
+				}
+				$echo_str .= $dlp."\t\t".'<td><select id="wfu_attribute_'.$attr.'" multiple="multiple" size="'.min(count($blogs), 10).'" onchange="wfu_update_bloglist_value(\''.$attr.'\');"'.( $only_current || in_array('all', $selected) ? ' disabled="disabled"' : '' ).'>';
+				foreach ( $blogs as $blog )
+					$echo_str .= $dlp."\t\t\t".'<option value="'.$blog->blog_id.'"'.( in_array($blog->blog_id, $blogsselected) ? ' selected="selected"' : '' ).'>'.$blog->path.'</option>';
+				$echo_str .= $dlp."\t\t".'</select>';
+				$echo_str .= $dlp."\t\t".'</td><td>';
+				$echo_str .= $dlp."\t\t".'<div class="wfu_bloglist_checkbtn"><input id="wfu_attribute_'.$attr.'_all" type="checkbox" onchange="wfu_update_bloglist_value(\''.$attr.'\');"'.( in_array('all', $selected) ? ' checked="checked"' : '' ).( $only_current ? ' disabled="disabled"' : '' ).' /><label for="wfu_attribute_'.$attr.'_all"> Select all</label></div>';
+				$echo_str .= $dlp."\t\t".'</td></tr></tbody></table>';
+			}
+			else {
+				$val = str_replace(array( "%n%", "%dq%", "%brl%", "%brr%" ), array( "\n", "&quot;", "[", "]" ), $def['value']);
+				$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'" type="text" name="wfu_text_elements" value="'.$val.'" />';				
+			}
+		}
+		elseif ( $def['type'] == "stringmatch" ) {
+			$matchfield = "";
+			$matchcriterion = "equal to";
+			$matchvalue = "";
+			preg_match('/^field:(.*?);\s*criterion:(.*?)\s*;\s*value:(.*)$/', $def['value'], $matches);
+			if ( count($matches) == 4 ) {
+				$matchfield = $matches[1];
+				$matchcriterion = $matches[2];
+				$matchvalue = $matches[3];
+			}
+			$echo_str .= $dlp."\t\t".'<div style="white-space:nowrap;">';
+			$echo_str .= $dlp."\t\t".'<label>Field </label><input id="wfu_attribute_'.$attr.'_matchfield" type="text" name="wfu_stringmatch_elements" value="'.$matchfield.'" />';
+			$echo_str .= $dlp."\t\t".'<select id="wfu_attribute_'.$attr.'_matchcriterion" value="'.$matchcriterion.'" onchange="wfu_update_stringmatch_value(\''.$attr.'\');">';
+			$echo_str .= $dlp."\t\t\t".'<option value="equal to"'.( $matchcriterion == "equal to" ? 'selected="selected"' : '' ).'>equal to</option>';
+			$echo_str .= $dlp."\t\t\t".'<option value="starts with"'.( $matchcriterion == "starts with" ? 'selected="selected"' : '' ).'>starts with</option>';
+			$echo_str .= $dlp."\t\t\t".'<option value="ends with"'.( $matchcriterion == "ends with" ? 'selected="selected"' : '' ).'>ends with</option>';
+			$echo_str .= $dlp."\t\t\t".'<option value="contains"'.( $matchcriterion == "contains" ? 'selected="selected"' : '' ).'>contains</option>';
+			$echo_str .= $dlp."\t\t\t".'<option value="not equal to"'.( $matchcriterion == "not equal to" ? 'selected="selected"' : '' ).'>not equal to</option>';
+			$echo_str .= $dlp."\t\t\t".'<option value="does not start with"'.( $matchcriterion == "does not start with" ? 'selected="selected"' : '' ).'>does not start with</option>';
+			$echo_str .= $dlp."\t\t\t".'<option value="does not end with"'.( $matchcriterion == "does not end with" ? 'selected="selected"' : '' ).'>does not end with</option>';
+			$echo_str .= $dlp."\t\t\t".'<option value="does not contain"'.( $matchcriterion == "does not contain" ? 'selected="selected"' : '' ).'>does not contain</option>';
+			$echo_str .= $dlp."\t\t".'</select>';
+			$echo_str .= $dlp."\t\t".'<input id="wfu_attribute_'.$attr.'_matchvalue" type="text" name="wfu_stringmatch_elements" value="'.$matchvalue.'" />';
+			$echo_str .= $dlp."\t\t".'</div>';
 		}
 		elseif ( $def['type'] == "columns" ) {
 			$selected = explode(",", $def['value']);

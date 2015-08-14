@@ -21,6 +21,10 @@ function wfu_upload_plugin_wildcard_to_preg($pattern) {
 	return '/^' . str_replace(array('\*', '\?', '\[', '\]'), array('.*', '.', '[', ']+'), preg_quote($pattern)) . '$/is';
 }
 
+function wfu_upload_plugin_wildcard_to_mysqlregexp($pattern) {
+	return str_replace("\\", "\\\\", '^'.str_replace(array('\*', '\?', '\[', '\]'), array('.*', '.', '[', ']+'), preg_quote($pattern)).'$');
+}
+
 function wfu_upload_plugin_wildcard_match($pattern, $str) {
 	$pattern = wfu_upload_plugin_wildcard_to_preg($pattern);
 	return preg_match($pattern, $str);
@@ -647,24 +651,22 @@ function wfu_human_filesize($size, $unit = "") {
 //********************* User Functions *****************************************************************************************************
 
 function wfu_get_user_role($user, $param_roles) {
+	$result_role = 'nomatch';
 	if ( !empty( $user->roles ) && is_array( $user->roles ) ) {
 		/* Go through the array of the roles of the current user */
 		foreach ( $user->roles as $user_role ) {
 			$user_role = strtolower($user_role);
-			/* If one role of the current user matches to the roles allowed to upload */
-			if ( in_array($user_role, $param_roles) || $user_role == 'administrator' ) {
-				/*  We affect this role to current user */
+			/* if this role matches to the roles in $param_roles or it is administrator or $param_roles allow all roles then it is approved */
+			if ( in_array($user_role, $param_roles) || $user_role == 'administrator' || in_array('all', $param_roles) ) {
+				/*  We approve this role of the user and exit */
 				$result_role = $user_role;
 				break;
 			}
-			else {
-				/* We affect the 'visitor' role to current user */
-				$result_role = 'visitor';
-			}
 		}
 	}
-	else {
-		$result_role = 'visitor';
+	/*  if the user has no roles (guest) and guests are allowed, then it is approved */
+	elseif ( in_array('guests', $param_roles) ) {
+		$result_role = 'guest';
 	}
 	return $result_role;		
 }
@@ -690,7 +692,7 @@ function wfu_get_user_valid_role_names($user) {
 //*********************** DB Functions *****************************************************************************************************
 
 //log action to database
-function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $userdata) {
+function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $blogid, $sid, $userdata) {
 	global $wpdb;
 	$table_name1 = $wpdb->prefix . "wfu_log";
 	$table_name2 = $wpdb->prefix . "wfu_userdata";
@@ -721,12 +723,14 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 			array(
 				'userid' 	=> $userid,
 				'uploaduserid' 	=> $userid,
+				'uploadtime' 	=> time(),
 				'sessionid' => session_id(),
 				'filepath' 	=> $relativepath,
 				'filehash' 	=> $filehash,
 				'filesize' 	=> $filesize,
 				'uploadid' 	=> $uploadid,
 				'pageid' 	=> $pageid,
+				'blogid' 	=> $blogid,
 				'sid' 		=> $sid,
 				'date_from' 	=> $now_date,
 				'date_to' 	=> 0,
@@ -735,11 +739,13 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 			array(
 				'%d',
 				'%d',
+				'%d',
 				'%s',
 				'%s',
 				'%s',
 				'%d',
 				'%s',
+				'%d',
 				'%d',
 				'%s',
 				'%s',
@@ -797,19 +803,21 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 				array(
 					'userid' 	=> $userid,
 					'uploaduserid' 	=> $filerec->uploaduserid,
+					'uploadtime' 	=> $filerec->uploadtime,
 					'sessionid' => $filerec->sessionid,
 					'filepath' 	=> $relativepath,
 					'filehash' 	=> $filerec->filehash,
 					'filesize' 	=> $filerec->filesize,
 					'uploadid' 	=> $filerec->uploadid,
 					'pageid' 	=> $filerec->pageid,
+					'blogid' 	=> $filerec->blogid,
 					'sid' 		=> $filerec->sid,
 					'date_from' 	=> $now_date,
 					'date_to' 	=> 0,
 					'action' 	=> 'rename',
 					'linkedto' 	=> $filerec->idlog
 				),
-				array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' ) ) !== false )
+				array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d' ) ) !== false )
 				$retid = $wpdb->insert_id;
 		}
 	}
@@ -831,19 +839,21 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 				array(
 					'userid' 	=> $userid,
 					'uploaduserid' 	=> $filerec->uploaduserid,
+					'uploadtime' 	=> $filerec->uploadtime,
 					'sessionid' => $filerec->sessionid,
 					'filepath' 	=> $filerec->filepath,
 					'filehash' 	=> $filerec->filehash,
 					'filesize' 	=> $filerec->filesize,
 					'uploadid' 	=> $filerec->uploadid,
 					'pageid' 	=> $filerec->pageid,
+					'blogid' 	=> $filerec->blogid,
 					'sid' 		=> $filerec->sid,
 					'date_from' 	=> $now_date,
 					'date_to' 	=> $now_date,
 					'action' 	=> 'delete',
 					'linkedto' 	=> $filerec->idlog
 				),
-				array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
+				array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
 				$retid = $wpdb->insert_id;
 		}
 	}
@@ -865,19 +875,21 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 				array(
 					'userid' 	=> $userid,
 					'uploaduserid' 	=> $filerec->uploaduserid,
+					'uploadtime' 	=> $filerec->uploadtime,
 					'sessionid' => $filerec->sessionid,
 					'filepath' 	=> $filerec->filepath,
 					'filehash' 	=> $filerec->filehash,
 					'filesize' 	=> $filerec->filesize,
 					'uploadid' 	=> $filerec->uploadid,
 					'pageid' 	=> $filerec->pageid,
+					'blogid' 	=> $filerec->blogid,
 					'sid' 		=> $filerec->sid,
 					'date_from' 	=> $now_date,
 					'date_to' 	=> 0,
 					'action' 	=> 'download',
 					'linkedto' 	=> $filerec->idlog
 				),
-				array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
+				array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
 				$retid = $wpdb->insert_id;
 		}
 	}
@@ -900,19 +912,21 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 				array(
 					'userid' 	=> $userid,
 					'uploaduserid' 	=> $filerec->uploaduserid,
+					'uploadtime' 	=> $filerec->uploadtime,
 					'sessionid' => $filerec->sessionid,
 					'filepath' 	=> $filerec->filepath,
 					'filehash' 	=> $filerec->filehash,
 					'filesize' 	=> $filerec->filesize,
 					'uploadid' 	=> $filerec->uploadid,
 					'pageid' 	=> $filerec->pageid,
+					'blogid' 	=> $filerec->blogid,
 					'sid' 		=> $filerec->sid,
 					'date_from' 	=> $now_date,
 					'date_to' 	=> 0,
 					'action' 	=> 'modify',
 					'linkedto' 	=> $filerec->idlog
 				),
-				array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
+				array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
 				$retid = $wpdb->insert_id;
 		}
 	}
@@ -924,19 +938,21 @@ function wfu_log_action($action, $filepath, $userid, $uploadid, $pageid, $sid, $
 			array(
 				'userid' 	=> $userid,
 				'uploaduserid' 	=> -1,
+				'uploadtime' 	=> 0,
 				'sessionid'	=> '',
 				'filepath' 	=> $info,
 				'filehash' 	=> '',
 				'filesize' 	=> 0,
 				'uploadid' 	=> '',
 				'pageid' 	=> 0,
+				'blogid' 	=> 0,
 				'sid' 		=> '',
 				'date_from' 	=> $now_date,
 				'date_to' 	=> $now_date,
 				'action' 	=> 'other',
 				'linkedto' 	=> -1
 			),
-			array( '%d','%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
+			array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d' )) != false )
 			$retid = $wpdb->insert_id;
 	}
 	return $retid;
@@ -1077,6 +1093,116 @@ function wfu_get_recs_of_user($userid) {
 		$filerecs = $wpdb->get_results('SELECT * FROM '.$table_name1.' WHERE action <> \'other\' AND uploaduserid = 0 AND sessionid = \''.substr($userid, 5).'\' AND date_to = 0');
 	else
 		$filerecs = $wpdb->get_results('SELECT * FROM '.$table_name1.' WHERE action <> \'other\' AND uploaduserid = '.$userid.' AND date_to = 0');
+	$out = array();
+	foreach( $filerecs as $filerec ) {
+		$obsolete = true;
+		//calculate full file path
+		$filepath = wfu_path_rel2abs($filerec->filepath);
+		if ( file_exists($filepath) ) {
+			if ( $plugin_options['hashfiles'] == '1' ) {
+				$filehash = md5_file($filepath);
+				if ( $filehash == $filerec->filehash ) $obsolete = false;
+			}
+			else {
+				$filesize = filesize($filepath);
+				if ( $filesize == $filerec->filesize ) $obsolete = false;
+			}
+		}
+		if ( $obsolete ) {
+			$now_date = date('Y-m-d H:i:s');
+			//make previous record obsolete
+			$wpdb->update($table_name1,
+				array( 'date_to' => $now_date ),
+				array( 'idlog' => $filerec->idlog ),
+				array( '%s' ),
+				array( '%d' )
+			);
+		}
+		else {
+			$filerec->userdata = null;
+			if ( $filerec->uploadid != '' ) 
+				$filerec->userdata = $wpdb->get_results('SELECT * FROM '.$table_name2.' WHERE uploadid = \''.$filerec->uploadid.'\' AND date_to = 0');
+			array_push($out, $filerec);
+		}
+	}
+	
+	return $out;
+}
+
+function wfu_get_filtered_recs($filter) {
+	global $wpdb;
+	$table_name1 = $wpdb->prefix . "wfu_log";
+	$table_name2 = $wpdb->prefix . "wfu_userdata";
+	$plugin_options = wfu_decode_plugin_options(get_option( "wordpress_file_upload_options" ));
+
+	$queries = array();
+	// add default filters
+	array_push($queries, 'action <> \'other\'');
+	array_push($queries, 'date_to = 0');
+	// construct user filter
+	if ( isset($filter['user']) ) {
+		if ( $filter['user']['all'] ) {
+			if ( $filter['user']['guests'] ) $query = 'uploaduserid >= 0';
+			else $query = 'uploaduserid > 0';
+		}
+		elseif ( count($filter['user']['ids']) == 1 && substr($filter['user']['ids'][0], 0, 5) == 'guest' )
+			$query = 'uploaduserid = 0 AND sessionid = \''.substr($filter['user']['ids'][0], 5).'\'';
+		else {
+			if ( $filter['user']['guests'] ) array_push($filter['user']['ids'], '0');
+			if ( count($filter['user']['ids']) == 1 ) $query = 'uploaduserid = '.$filter['user']['ids'][0];
+			else $query = 'uploaduserid in ('.implode(",",$filter['user']['ids']).')';
+		}
+		array_push($queries, $query);
+	}
+	// construct size filter
+	if ( isset($filter['size']) ) {
+		if ( isset($filter['size']['lower']) && isset($filter['size']['upper']) )
+			$query = 'filesize > '.$filter['size']['lower'].' AND filesize < '.$filter['size']['upper'];
+		elseif ( isset($filter['size']['lower']) ) $query = 'filesize > '.$filter['size']['lower'];
+		else $query = 'filesize < '.$filter['size']['upper'];
+		array_push($queries, $query);
+	}
+	// construct date filter
+	if ( isset($filter['date']) ) {
+		if ( isset($filter['date']['lower']) && isset($filter['date']['upper']) )
+			$query = 'uploadtime > '.$filter['date']['lower'].' AND uploadtime < '.$filter['date']['upper'];
+		elseif ( isset($filter['date']['lower']) ) $query = 'uploadtime > '.$filter['date']['lower'];
+		else $query = 'uploadtime < '.$filter['date']['upper'];
+		array_push($queries, $query);
+	}
+	// construct file pattern filter
+	if ( isset($filter['pattern']) ) {
+		$query = 'filepath REGEXP \''.wfu_upload_plugin_wildcard_to_mysqlregexp($filter['pattern']).'\'';
+		array_push($queries, $query);
+	}
+	// construct page/post filter
+	if ( isset($filter['post']) ) {
+		if ( count($filter['post']['ids']) == 1 ) $query = 'pageid = '.$filter['post']['ids'][0];
+			else $query = 'pageid in ('.implode(",",$filter['post']['ids']).')';
+		array_push($queries, $query);
+	}
+	// construct blog filter
+	if ( isset($filter['blog']) ) {
+		if ( count($filter['blog']['ids']) == 1 ) $query = 'blogid = '.$filter['blog']['ids'][0];
+			else $query = 'blogid in ('.implode(",",$filter['blog']['ids']).')';
+		array_push($queries, $query);
+	}
+	// construct userdata filter
+	if ( isset($filter['userdata']) ) {
+		if ( $filter['userdata']['criterion'] == "equal to" ) $valuecriterion = 'propvalue = \''.$filter['userdata']['value'].'\'';
+		elseif ( $filter['userdata']['criterion'] == "starts with" ) $valuecriterion = 'propvalue LIKE \''.$filter['userdata']['value'].'%\'';
+		elseif ( $filter['userdata']['criterion'] == "ends with" ) $valuecriterion = 'propvalue LIKE \'%'.$filter['userdata']['value'].'\'';
+		elseif ( $filter['userdata']['criterion'] == "contains" ) $valuecriterion = 'propvalue LIKE \'%'.$filter['userdata']['value'].'%\'';
+		elseif ( $filter['userdata']['criterion'] == "not equal to" ) $valuecriterion = 'propvalue <> \''.$filter['userdata']['value'].'\'';
+		elseif ( $filter['userdata']['criterion'] == "does not start with" ) $valuecriterion = 'propvalue NOT LIKE \''.$filter['userdata']['value'].'%\'';
+		elseif ( $filter['userdata']['criterion'] == "does not end with" ) $valuecriterion = 'propvalue NOT LIKE \'%'.$filter['userdata']['value'].'\'';
+		elseif ( $filter['userdata']['criterion'] == "does not contain" ) $valuecriterion = 'propvalue NOT LIKE \'%'.$filter['userdata']['value'].'%\'';
+		else $valuecriterion = 'propvalue = \''.$filter['userdata']['value'].'\'';
+		$query = 'uploadid in (SELECT DISTINCT uploadid FROM '.$table_name2.' WHERE date_to = 0 AND property = \''.$filter['userdata']['field'] .'\' AND '.$valuecriterion.')';
+		array_push($queries, $query);
+	}
+	
+	$filerecs = $wpdb->get_results('SELECT * FROM '.$table_name1.' WHERE '.implode(' AND ', $queries));
 	$out = array();
 	foreach( $filerecs as $filerec ) {
 		$obsolete = true;
